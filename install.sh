@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# alirezaserver 0.2.0 — single-file ONLINE installer; rerun to repair/resume.
+# alirezaserver 0.3.0 — single-file ONLINE installer; rerun to repair/resume.
 # Supported target: Ubuntu 24.04 or Debian 12/13, systemd, amd64/arm64.
 # Add-on source and notices are embedded below; original upstream programs are
 # downloaded from pinned official URLs. This is not an offline bundle.
@@ -11,8 +11,8 @@
 #        sudo bash install.sh --rollback
 #        sudo bash install.sh --backup
 # DNS_ALLOWED_CIDRS="203.0.113.12/32,198.51.100.0/24" sudo -E bash install.sh
-# By default DNS allows localhost/private VPN clients. Add external clients in
-# AdGuard Home > DNS settings > Access settings, or use DNS_ALLOWED_CIDRS above.
+# DNS serves public clients by default with AdGuard rate limiting. To restrict
+# clients, use AdGuard Access settings or DNS_ALLOWED_CIDRS on first install.
 # Upstream Nova variables, including NOVA_JOIN_URL/TOKEN/PIN, remain unchanged.
 set -Eeuo pipefail
 umask 077
@@ -162,8 +162,8 @@ printf 'alirezaserver\n' > "$ROOT/.installer-owned"
 MANAGED=1
 # ALIREZA_EMBEDDED_FILES
 
-cat > "$APP/NOTICE.txt" <<'ALIREZA_A5E0C6C965A9348580E0C2B0'
-alirezaserver add-on 0.2.0
+cat > "$APP/NOTICE.txt" <<'ALIREZA_9A192610D704119A4FABBF42'
+alirezaserver add-on 0.3.0
 
 The new integration modules in this directory are licensed under GPL-3.0-or-later.
 OpenVPN configuration/profile conventions were adapted from Sir-MmD/vpn-ui,
@@ -176,8 +176,9 @@ in this installer and is not relicensed. Its proprietary license continues to
 apply. UI integration and private customization do not transfer ownership.
 
 AdGuard Home is separately downloaded from AdguardTeam/AdGuardHome, v0.107.79,
-and remains GPL-3.0 licensed. The complete original UI is proxied; only a color
-stylesheet is injected. Its original source and notices remain upstream.
+and remains GPL-3.0 licensed. The complete original UI is proxied; shared colors,
+effects and Nova's embedded Vazirmatn font are applied without rearranging controls.
+Its original source and notices remain upstream.
 OpenVPN and OS packages retain their own upstream licenses.
 
 Scope and verification:
@@ -202,13 +203,19 @@ Scope and verification:
 - DNS serves TCP/UDP port 53 on loopback and the default IPv4 interface address.
   Its admin HTTP port 18085 is loopback-only. Direct IPv6 DNS listening and
   standalone encrypted DNS listeners are not preconfigured; all original AdGuard
-  settings are available. Public DNS clients must be allowed in Access settings.
+  settings are available. Fresh installations accept public DNS clients with
+  AdGuard's 20 queries/second rate limit. Custom access lists remain enforced.
+  Repair replaces only the exact private-only ACL and DoH upstream pair shipped
+  as 0.2 defaults. Access restrictions can be set in AdGuard Access settings.
 - Firewall changes affect dedicated ALIREZA_* chains, never flush system chains.
   Provider firewalls cannot be modified without provider access.
 - Base packages require internet access; install.sh is a one-file online installer.
 - Re-running install.sh repairs/resumes this integration and preserves its stored
-  DNS configuration, accounts and certificates. Recognized existing data is backed
+  custom DNS settings, accounts and certificates. Recognized existing data is backed
   up before repair. Root-only logs are written to /var/log/alirezaserver.
+- Existing OpenVPN configurations are regenerated with the IPv4-only tunnel
+  recipe and client IPv6 blocking. Accounts, CA and TLS-Crypt keys are retained;
+  the previous server.conf is saved as server.conf.before-0.3.
 - Installation success requires owner-authenticated UI/API checks through both
   the internal listener and the local HTTPS front. Temporary DNS verification
   rewrites are removed after checking TCP/UDP resolution. External upstream
@@ -220,12 +227,29 @@ Scope and verification:
 Local tests cover input validation, Python authentication/device limits, expiry,
 traffic calculations, owner authorization and CSRF checks, HTTP proxying, branding,
 and installer/script syntax. See the verification record embedded in install.sh.
-ALIREZA_A5E0C6C965A9348580E0C2B0
+ALIREZA_9A192610D704119A4FABBF42
 
-cat > "$APP/VERIFICATION.txt" <<'ALIREZA_BB087484885DD32CE9B89054'
-alirezaserver 0.2.0 verification record, 2026-09-20
+cat > "$APP/VERIFICATION.txt" <<'ALIREZA_8D54CC5CA1F9E072D44ACB47'
+alirezaserver 0.3.0 verification record, 2026-09-21
 
 Development platform: Windows, Node.js 24.19.0.
+
+0.3 repair regression checks:
+PASS: 7 additional automated tests: fragmented OpenVPN management replies,
+explicit error replies with CRLF, premature EOF, subnet allocation, persisted
+configuration migration/key retention, public DNS address presentation and exact
+reuse of Nova's embedded Vazirmatn font. The management endpoint is a real local
+TCP test double, not a live OpenVPN daemon.
+PASS: Official AdGuard binary accepted the old-default ACL/upstream migration;
+blocked clients/hosts remained intact, custom ACL/upstreams were preserved, and
+repeated repair was idempotent. Test settings were restored afterwards.
+PASS: Original AdGuard dashboard and OpenVPN creation form visually inspected
+inside the original Nova panel with the new dark colors/effects; AdGuard computed
+body font was Vazirmatn. No original Nova application files were edited.
+
+OpenVPN configuration references:
+https://openvpn.net/community-docs/community-articles/openvpn-2-6-manual.html
+https://openvpn.net/community-docs/management-interface.html
 
 PASS: 10 automated tests covering validation, generated OpenVPN configuration,
 password hashing shared by Node/Python, concurrent device limits, expiry/disabled
@@ -271,7 +295,7 @@ Repair/resume:       sudo bash install.sh
 Add-on backup:       sudo bash install.sh --backup
 Disable add-ons:     sudo bash install.sh --rollback
 Back up the original Nova data separately using Nova's own backup facilities.
-ALIREZA_BB087484885DD32CE9B89054
+ALIREZA_8D54CC5CA1F9E072D44ACB47
 
 cat > "$APP/auth.py" <<'ALIREZA_8FD1D5E2FD0138ACA837582B'
 #!/usr/bin/python3
@@ -332,7 +356,7 @@ if __name__ == '__main__':
     except Exception: sys.exit(1)
 ALIREZA_8FD1D5E2FD0138ACA837582B
 
-cat > "$APP/backend.mjs" <<'ALIREZA_8381DEE56726B17A4CC329A4'
+cat > "$APP/backend.mjs" <<'ALIREZA_E3A85F4B0CC1100A3D1E019B'
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync, writeFileSync, mkdirSync, renameSync, existsSync, rmSync, chmodSync } from 'node:fs';
@@ -360,7 +384,7 @@ export function servers() { return database().prepare('SELECT data FROM servers 
 function server(sid) { const s=servers().find(s=>s.id===id(sid)); if(!s) fail('OpenVPN server not found',404); return s; }
 const unit=sid=>`alireza-openvpn@${id(sid)}.service`;
 export async function run(cmd,args,options={}) {
-  try {return (await exec(cmd,args,{timeout:30000,maxBuffer:1024*1024,...options})).stdout;}
+  try {return (await exec(cmd,args,{timeout:30000,maxBuffer:1024*1024,env:{...process.env,PATH:'/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'},...options})).stdout;}
   catch(e){throw Object.assign(new Error(`${cmd}: ${String(e.stderr||e.message).slice(0,700)}`),{status:500});}
 }
 export function atomic(path,text,mode=0o600) { const tmp=path+'.new';writeFileSync(tmp,text,{mode});chmodSync(tmp,mode);renameSync(tmp,path); }
@@ -375,7 +399,23 @@ async function portFree(s) {
   });
 }
 function ipv4(v){return v.split('.').reduce((n,p)=>(n*256+Number(p))>>>0,0);}
-function overlap(a,b){const[aa,ap]=a.split('/'),[bb,bp]=b.split('/');if(!aa||!bb||ap===undefined||bp===undefined)return false;const p=Math.min(+ap,+bp);if(!p)return false;const mask=(0xffffffff<<(32-p))>>>0;return (ipv4(aa)&mask)===(ipv4(bb)&mask);}
+export function overlap(a,b){const[aa,ap]=a.split('/'),[bb,bp]=b.split('/');if(!aa||!bb||ap===undefined||bp===undefined)return false;const p=Math.min(+ap,+bp);if(!p)return false;const mask=(0xffffffff<<(32-p))>>>0;return (ipv4(aa)&mask)===(ipv4(bb)&mask);}
+export function freeSubnet(routes,existing){
+  const occupied=[...routes.map(r=>r.dst).filter(Boolean),...existing.map(s=>s.subnet)];
+  const candidates=[];for(let n=10;n<250;n++)candidates.push(`10.231.${n}.0/24`,`172.27.${n}.0/24`,`192.168.${n}.0/24`);
+  const result=candidates.find(net=>!occupied.some(other=>overlap(net,other)));
+  if(!result)fail('No non-overlapping private /24 subnet found. Review the server routes.',409);return result;
+}
+export async function serverDefaults(){
+  const list=servers(),routes=JSON.parse(await run('ip',['-j','-4','route','show','table','all']));
+  const subnet=freeSubnet(routes,list);let port=1194;
+  for(;port<1300;port++){
+    if(list.some(s=>s.port===port&&s.proto==='udp'))continue;
+    try{await portFree({port,proto:'udp'});break;}catch{}
+  }
+  if(port===1300)fail('No free UDP port in the suggested range; choose a free port manually.',409);
+  return{subnet,dns:subnet.replace('.0/24','.1'),port};
+}
 async function subnetFree(s,previous) {
   for(const other of servers()) if(other.id!==s.id&&overlap(s.subnet,other.subnet)) fail('Subnet overlaps another OpenVPN server');
   const routes=JSON.parse(await run('ip',['-j','-4','route','show','table','all']));
@@ -383,14 +423,20 @@ async function subnetFree(s,previous) {
 }
 async function certificates(s) {
   const dir=`${ROOT}/openvpn/${s.id}`; mkdirSync(dir,{recursive:true,mode:0o700});
-  if(existsSync(`${dir}/server.crt`)) return;
-  await run('openssl',['ecparam','-name','prime256v1','-genkey','-noout','-out',`${dir}/ca.key`]);
-  await run('openssl',['req','-x509','-new','-sha256','-days','3650','-key',`${dir}/ca.key`,'-subj',`/CN=alirezaserver-${s.id}-CA`,'-addext','basicConstraints=critical,CA:TRUE','-addext','keyUsage=critical,keyCertSign,cRLSign','-out',`${dir}/ca.crt`]);
+  if(!existsSync(`${dir}/tls-crypt.key`)) {
+    await run('openvpn',['--genkey','secret',`${dir}/tls-crypt.key.new`]);
+    chmodSync(`${dir}/tls-crypt.key.new`,0o600);renameSync(`${dir}/tls-crypt.key.new`,`${dir}/tls-crypt.key`);
+  }
+  if(existsSync(`${dir}/server.crt`)&&existsSync(`${dir}/server.key`)&&existsSync(`${dir}/ca.crt`)) return;
+  if(existsSync(`${dir}/ca.key`)!==existsSync(`${dir}/ca.crt`))fail('The existing CA is incomplete. Restore its backup before repairing this server; existing client trust was preserved.',409);
+  if(!existsSync(`${dir}/ca.crt`)){
+    await run('openssl',['ecparam','-name','prime256v1','-genkey','-noout','-out',`${dir}/ca.key`]);
+    await run('openssl',['req','-x509','-new','-sha256','-days','3650','-key',`${dir}/ca.key`,'-subj',`/CN=alirezaserver-${s.id}-CA`,'-addext','basicConstraints=critical,CA:TRUE','-addext','keyUsage=critical,keyCertSign,cRLSign','-out',`${dir}/ca.crt`]);
+  }
   await run('openssl',['ecparam','-name','prime256v1','-genkey','-noout','-out',`${dir}/server.key`]);
   await run('openssl',['req','-new','-key',`${dir}/server.key`,'-subj',`/CN=alirezaserver-${s.id}`,'-out',`${dir}/server.csr`]);
   atomic(`${dir}/server.ext`,'basicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature\nextendedKeyUsage=serverAuth\n');
   await run('openssl',['x509','-req','-in',`${dir}/server.csr`,'-CA',`${dir}/ca.crt`,'-CAkey',`${dir}/ca.key`,'-CAcreateserial','-days','825','-sha256','-extfile',`${dir}/server.ext`,'-out',`${dir}/server.crt`]);
-  await run('openvpn',['--genkey','secret',`${dir}/tls-crypt.key`]);
   for(const f of ['ca.key','server.key','tls-crypt.key']) chmodSync(`${dir}/${f}`,0o600);
 }
 export async function save(input,sid) {
@@ -415,7 +461,16 @@ export async function save(input,sid) {
     throw error;
   }
 }
-async function ready(s) {
+export function refreshConfigs(){
+  for(const s of servers()){
+    const path=`${ROOT}/openvpn/${id(s.id)}/server.conf`;
+    mkdirSync(`${ROOT}/openvpn/${s.id}`,{recursive:true,mode:0o700});
+    if(existsSync(path)&&!existsSync(path+'.before-0.3'))atomic(path+'.before-0.3',readFileSync(path,'utf8'));
+    atomic(path,serverConfig(s,ROOT));
+  }
+  firewallFile();
+}
+export async function ready(s) {
   for(let n=0;n<12;n++) {
     await new Promise(r=>setTimeout(r,500));
     try{const out=await management(s.id,'state');if(out.includes('CONNECTED,SUCCESS'))return;}catch{}
@@ -448,13 +503,32 @@ export async function saveUser(input,uid) {
 }
 export async function removeUser(uid){const u=users().find(u=>u.id===id(uid));if(!u)fail('User not found',404);database().prepare('UPDATE users SET enabled=0 WHERE id=?').run(uid);await disconnect(u.username);database().prepare('DELETE FROM users WHERE id=?').run(uid);database().prepare('DELETE FROM sessions WHERE name=?').run(u.username);}
 export async function resetUsage(uid) {const u=users().find(u=>u.id===id(uid));if(!u)fail('User not found',404);await collect();database().prepare('UPDATE users SET used=0 WHERE id=?').run(uid);}
+const managementQueues=new Map();
 export function management(sid,command) {
-  id(sid);return new Promise((resolve,reject)=>{
-    const sock=createConnection(`${ROOT}/openvpn/${sid}/management.sock`);let data='',sent=false;
-    const timer=setTimeout(()=>sock.destroy(new Error('OpenVPN management timeout')),3000);
-    sock.on('data',b=>{data+=b.toString();if(data.length>1024*1024){sock.destroy(new Error('Management reply too large'));return;}
-      if(!sent&&data.includes('>INFO:')){sent=true;data='';sock.write(command+'\nquit\n');}});
-    sock.on('error',reject);sock.on('close',()=>{clearTimeout(timer);resolve(data)});
+  id(sid);
+  const current=(managementQueues.get(sid)||Promise.resolve()).catch(()=>{}).then(()=>managementReply(`${ROOT}/openvpn/${sid}/management.sock`,command));
+  managementQueues.set(sid,current);
+  const cleanup=()=>{if(managementQueues.get(sid)===current)managementQueues.delete(sid);};
+  current.then(cleanup,cleanup);return current;
+}
+export function managementReply(address,command) {
+  if(/[\r\n]/.test(command))return Promise.reject(new Error('Invalid management command'));
+  return new Promise((resolve,reject)=>{
+    const sock=createConnection(address);let data='',sent=false,done=false;
+    const finish=(error)=>{if(done)return;done=true;clearTimeout(timer);sock.destroy();error?reject(error):resolve(data);};
+    const timer=setTimeout(()=>finish(new Error('OpenVPN management timeout')),5000);
+    sock.on('data',b=>{
+      data+=b.toString();if(data.length>1024*1024){finish(new Error('Management reply too large'));return;}
+      if(!sent){const line=data.indexOf('\n');if(line<0)return;
+        if(!data.slice(0,line).startsWith('>INFO:')){finish(new Error('Unexpected management greeting'));return;}
+        sent=true;data=data.slice(line+1);sock.write(command+'\n');
+      }
+      // Wait for the protocol terminator. Sending quit alongside state could
+      // close the management session before its buffered answer was delivered.
+      if(/(?:^|\n)ERROR:[^\n]*\n/.test(data)){finish(new Error(data.trim()));return;}
+      if(/(?:^|\n)(?:END\r?|SUCCESS:[^\n]*)\n/.test(data))finish();
+    });
+    sock.on('error',finish);sock.on('end',()=>{if(!done)finish(new Error('Incomplete management response'));});
   });
 }
 async function disconnect(username) {
@@ -506,7 +580,7 @@ export function profile(sid){const s=server(sid),dir=`${ROOT}/openvpn/${s.id}`;r
 export async function logs(sid){server(sid);return run('journalctl',['-u',unit(sid),'-n','80','--no-pager']);}
 export async function toggle(sid){const s=server(sid);return save({...s,enabled:!s.enabled},sid);}
 export function startCollector(){const timer=setInterval(()=>collect().catch(e=>console.error('alirezaserver accounting:',e.message)),5000);timer.unref();}
-ALIREZA_8381DEE56726B17A4CC329A4
+ALIREZA_E3A85F4B0CC1100A3D1E019B
 
 cat > "$APP/backup.py" <<'ALIREZA_4EA261D051D0879E99E621E4'
 #!/usr/bin/python3
@@ -610,7 +684,57 @@ done
 printf 'Local service checks passed. External reachability and VPN client traffic require a client test.\n'
 ALIREZA_585469B65F55CD435B13A561
 
-cat > "$APP/firewall.py" <<'ALIREZA_ADA76C5410C27E547677D234'
+cat > "$APP/dns-repair.py" <<'ALIREZA_9758260493588EA4B7BB2A6F'
+#!/usr/bin/python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Migrate only the known 0.2 defaults through AdGuard's own API.
+Preserve filters, rewrites, custom access lists and custom upstream servers.
+"""
+import json, os, pathlib, urllib.request
+LEGACY_CLIENTS=['127.0.0.0/8','10.0.0.0/8','172.16.0.0/12','192.168.0.0/16','::1','fc00::/7']
+LEGACY_UPSTREAMS=['https://dns.cloudflare.com/dns-query','https://dns.quad9.net/dns-query']
+ROOT=pathlib.Path(os.environ.get('ALIREZA_ROOT','/var/lib/alirezaserver'))
+BASE=os.environ.get('ALIREZA_ADGUARD_API','http://127.0.0.1:18085/control/')
+def api(route,data=None):
+    payload=None if data is None else json.dumps(data).encode()
+    req=urllib.request.Request(BASE+route,data=payload,headers={'Content-Type':'application/json'})
+    with urllib.request.urlopen(req,timeout=15) as response:
+        raw=response.read();return json.loads(raw) if raw.strip() else None
+def planned_changes(access,dns):
+    new_access=None;new_dns={}
+    if set(access.get('allowed_clients') or [])==set(LEGACY_CLIENTS):
+        new_access={key:access.get(key) or [] for key in ['allowed_clients','disallowed_clients','blocked_hosts']}
+        new_access['allowed_clients']=[]
+    if dns.get('upstream_dns')==LEGACY_UPSTREAMS and not dns.get('upstream_dns_file'):
+        new_dns['upstream_dns']=['1.1.1.1','9.9.9.9']
+    return new_access,new_dns
+def main():
+    status=api('status')
+    if status.get('dns_port')!=53 and not os.environ.get('ALIREZA_DNS_TEST'):
+        raise RuntimeError('AdGuard must listen on DNS port 53; its stored configuration uses another port.')
+    access=api('access/list');dns=api('dns_info')
+    new_access,new_dns=planned_changes(access,dns)
+    ROOT.mkdir(parents=True,exist_ok=True)
+    before=ROOT/'dns-settings-before-0.3.json'
+    if (new_access is not None or new_dns) and not before.exists():
+        with open(before,'x',encoding='utf-8') as f:json.dump({'access':access,'dns':dns},f,indent=2)
+        os.chmod(before,0o600)
+    changed_access=False
+    try:
+        if new_access is not None:api('access/set',new_access);changed_access=True
+        if new_dns:api('dns_config',new_dns)
+    except Exception:
+        if changed_access:
+            try:api('access/set',{k:access.get(k) or [] for k in ['allowed_clients','disallowed_clients','blocked_hosts']})
+            except Exception:pass
+        raise
+    if new_access is not None:print('DNS access: migrated old private-only default to public clients; rate limiting and block lists retained.')
+    if new_dns:print('DNS upstreams: replaced the old default DoH-only pair with standard resolvers; custom settings retained.')
+    print('AdGuard DNS configuration checked; custom filters, rewrites and accounts preserved.')
+if __name__=='__main__':main()
+ALIREZA_9758260493588EA4B7BB2A6F
+
+cat > "$APP/firewall.py" <<'ALIREZA_3ABB9D4B1413044B7FBD9714'
 #!/usr/bin/python3
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Own chains only. Never flush a system/UFW/Nova chain or change its policy."""
@@ -637,7 +761,7 @@ def main():
             return
         settings=json.load(open(ROOT+'/install.json'))
         servers=json.load(open(ROOT+'/firewall.json'))
-        default=json.loads(cmd(['ip','-j','-4','route','show','default']).stdout)
+        default=json.loads(cmd(['ip','-j','-4','route','get','1.1.1.1']).stdout)
         if not default or not re.fullmatch(r'[A-Za-z0-9_.:-]{1,15}',default[0].get('dev','')): raise RuntimeError('No usable IPv4 default interface')
         wan=default[0]['dev']
         for table,parent,chain in chains:hook(table,parent,chain)
@@ -666,9 +790,9 @@ def main():
 if __name__=='__main__':
     try:main()
     except Exception as e:print(str(e),file=sys.stderr);sys.exit(1)
-ALIREZA_ADA76C5410C27E547677D234
+ALIREZA_3ABB9D4B1413044B7FBD9714
 
-cat > "$APP/model.mjs" <<'ALIREZA_6576B3A99D7EC4C09FED377D'
+cat > "$APP/model.mjs" <<'ALIREZA_432AFB97A4C3912B3644CBC4'
 // SPDX-License-Identifier: GPL-3.0-or-later
 // OpenVPN profile/configuration conventions adapted from Sir-MmD/vpn-ui,
 // web/service/openvpn.go (8044e0ad45c60149439546ea0fd99371a4d3c03d).
@@ -711,8 +835,11 @@ export function serverConfig(s, root='/var/lib/alirezaserver') {
   id(s.id); const dir=`${root}/openvpn/${s.id}`; const cbc=s.ciphers.find(c=>c.endsWith('-CBC'));
   return [
     `port ${s.port}`,`proto ${s.proto==='tcp'?'tcp-server':'udp'}`,`dev az${s.id.slice(0,8)}`,'dev-type tun','topology subnet',
-    `server ${s.subnet.split('/')[0]} 255.255.255.0`,`server-ipv6 fd42:61:${parseInt(s.id.slice(0,4),16).toString(16)}::/64`,
-    'push "redirect-gateway def1 ipv6"','push "block-ipv6"',`push "dhcp-option DNS ${s.dns}"`,
+    `server ${s.subnet.split('/')[0]} 255.255.255.0`,
+    // Block IPv6 on the client without requiring IPv6 on the VPS tunnel device.
+    // OpenVPN's documented IPv4-only recipe works when host IPv6 is disabled.
+    'push "ifconfig-ipv6 fd15:53b6:dead::2/64 fd15:53b6:dead::1"',
+    'push "redirect-gateway def1 ipv6"','push "block-ipv6"','block-ipv6',`push "dhcp-option DNS ${s.dns}"`,
     `tun-mtu ${s.mtu}`,`mssfix ${Math.min(1400,s.mtu)}`,`max-clients ${s.maxClients}`,
     `ca ${dir}/ca.crt`,`cert ${dir}/server.crt`,`key ${dir}/server.key`,s.tlsCrypt?`tls-crypt ${dir}/tls-crypt.key`:'',
     'dh none','tls-version-min 1.2',`data-ciphers ${s.ciphers.join(':')}`,cbc?`data-ciphers-fallback ${cbc}`:'',
@@ -750,14 +877,14 @@ export function parseStatus(text) {
   }
   return {stamp,clients};
 }
-ALIREZA_6576B3A99D7EC4C09FED377D
+ALIREZA_432AFB97A4C3912B3644CBC4
 
-cat > "$APP/openvpn.html" <<'ALIREZA_214140FFDFA8D76EE4F90A02'
+cat > "$APP/openvpn.html" <<'ALIREZA_2F88015A53409E5BC7A4783E'
 <!doctype html>
 <html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark light"><title>alirezaserver · OpenVPN</title>
 <style>
-:root{font-family:Tahoma,Arial,sans-serif;color-scheme:dark;--bg:#090b10;--panel:#12151d;--line:#282d3b;--text:#edf0f7;--muted:#969eb3;--accent:#a78bfa;--input:#0b0e15}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 15% 0%,#24194388,transparent 45%),var(--bg);color:var(--text);min-height:100vh}main{max-width:1300px;margin:auto;padding:32px}header{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:28px}.eyebrow{color:var(--accent);font-size:12px;letter-spacing:2px}h1{font-size:32px;margin:10px 0}p{color:var(--muted);line-height:1.9;margin:8px 0}button,input,select{font:inherit}button{cursor:pointer;border:1px solid var(--line);border-radius:10px;padding:10px 16px;background:var(--panel);color:var(--text);transition:background .15s,transform .15s}button:hover{border-color:var(--accent)}button:active{transform:translateY(1px)}button:disabled{opacity:.5;cursor:wait}.primary{background:#7c3aed;color:white;border-color:#8b5cf6}.danger{color:#fda4af}.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:24px 0}.stat,.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 32px #00000012}.stat{padding:20px}.stat span{color:var(--muted);font-size:13px}.stat strong{display:block;font-size:28px;margin-top:12px}.card{margin:22px 0;overflow:hidden}.card-head{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--line);gap:10px}h2{font-size:17px;margin:0}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;text-align:start;white-space:nowrap}th,td{padding:16px 20px;border-bottom:1px solid var(--line);text-align:start}th{font-size:12px;color:var(--muted);font-weight:400}td{font-size:13px}tr:last-child td{border-bottom:0}td button{font-size:12px;padding:7px 10px}.badge{border-radius:20px;padding:5px 10px;background:#152d26;color:#7be5b3;font-size:11px}.badge.off{background:#312429;color:#fda4af}.muted{color:var(--muted)}.empty{padding:44px;text-align:center;color:var(--muted)}#message{display:none;padding:16px 20px;border:1px solid #773643;background:#351921;border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8}dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:18px;width:min(680px,96vw);max-height:92vh;padding:0;box-shadow:0 24px 90px #0008}dialog::backdrop{background:#0009;backdrop-filter:blur(4px)}.dialog-body{padding:24px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}label{display:grid;gap:9px;font-size:13px}input,select{width:100%;padding:11px;background:var(--input);color:var(--text);border:1px solid var(--line);border-radius:9px;min-width:0}input:focus,select:focus{outline:2px solid #8b5cf666;border-color:#8b5cf6}input[type=checkbox]{width:auto;accent-color:#8b5cf6}.check{display:flex;align-items:center;gap:10px}.full{grid-column:1/-1}.hint{font-size:12px;color:var(--muted);line-height:1.8}.dialog-foot{padding:18px 24px;display:flex;justify-content:end;gap:10px;border-top:1px solid var(--line)}pre{direction:ltr;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.7 monospace}.mono{font-family:ui-monospace,monospace;direction:ltr;unicode-bidi:embed}.progress{height:4px;background:var(--line);border-radius:3px;margin-top:7px}.progress i{display:block;height:100%;background:#a78bfa;border-radius:3px}a{color:var(--accent)}@media(max-width:700px){main{padding:16px}.stats{grid-template-columns:1fr 1fr;gap:10px}.stat{padding:15px}.form-grid{grid-template-columns:1fr}.full{grid-column:auto}header{align-items:start}h1{font-size:25px}.card-head{padding:16px;flex-wrap:wrap}}@media(prefers-color-scheme:light){:root{color-scheme:light;--bg:#f6f7fb;--panel:white;--line:#e3e6ee;--text:#202536;--muted:#6b7285;--accent:#7c3aed;--input:#f8f9fc}body{background:radial-gradient(ellipse at 15% 0%,#e8ddff,transparent 45%),var(--bg)}#message{background:#fff0f3;color:#9f1239}}
-</style></head><body><main>
+:root{font-family:Vazirmatn,Tahoma,Arial,sans-serif;color-scheme:dark;--bg:#090b10;--panel:#12151d;--line:#282d3b;--text:#edf0f7;--muted:#969eb3;--accent:#a78bfa;--input:#0b0e15}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 15% 0%,#24194388,transparent 45%),var(--bg);color:var(--text);min-height:100vh}main{max-width:1300px;margin:auto;padding:32px}header{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:28px}.eyebrow{color:var(--accent);font-size:12px;letter-spacing:2px}h1{font-size:32px;margin:10px 0}p{color:var(--muted);line-height:1.9;margin:8px 0}button,input,select{font:inherit}button{cursor:pointer;border:1px solid var(--line);border-radius:10px;padding:10px 16px;background:var(--panel);color:var(--text);transition:background .15s,transform .15s}button:hover{border-color:var(--accent)}button:active{transform:translateY(1px)}button:disabled{opacity:.5;cursor:wait}.primary{background:#7c3aed;color:white;border-color:#8b5cf6}.danger{color:#fda4af}.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:24px 0}.stat,.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 32px #00000012}.stat{padding:20px}.stat span{color:var(--muted);font-size:13px}.stat strong{display:block;font-size:28px;margin-top:12px}.card{margin:22px 0;overflow:hidden}.card-head{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--line);gap:10px}h2{font-size:17px;margin:0}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;text-align:start;white-space:nowrap}th,td{padding:16px 20px;border-bottom:1px solid var(--line);text-align:start}th{font-size:12px;color:var(--muted);font-weight:400}td{font-size:13px}tr:last-child td{border-bottom:0}td button{font-size:12px;padding:7px 10px}.badge{border-radius:20px;padding:5px 10px;background:#152d26;color:#7be5b3;font-size:11px}.badge.off{background:#312429;color:#fda4af}.muted{color:var(--muted)}.empty{padding:44px;text-align:center;color:var(--muted)}#message{display:none;padding:16px 20px;border:1px solid #773643;background:#351921;border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8}dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:18px;width:min(680px,96vw);max-height:92vh;padding:0;box-shadow:0 24px 90px #0008}dialog::backdrop{background:#0009;backdrop-filter:blur(4px)}.dialog-body{padding:24px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}label{display:grid;gap:9px;font-size:13px}input,select{width:100%;padding:11px;background:var(--input);color:var(--text);border:1px solid var(--line);border-radius:9px;min-width:0}input:focus,select:focus{outline:2px solid #8b5cf666;border-color:#8b5cf6}input[type=checkbox]{width:auto;accent-color:#8b5cf6}.check{display:flex;align-items:center;gap:10px}.full{grid-column:1/-1}.hint{font-size:12px;color:var(--muted);line-height:1.8}.dialog-foot{padding:18px 24px;display:flex;justify-content:end;gap:10px;border-top:1px solid var(--line)}pre{direction:ltr;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.7 monospace}.mono{font-family:ui-monospace,monospace;direction:ltr;unicode-bidi:embed}.progress{height:4px;background:var(--line);border-radius:3px;margin-top:7px}.progress i{display:block;height:100%;background:#a78bfa;border-radius:3px}a{color:var(--accent)}@media(max-width:700px){main{padding:16px}.stats{grid-template-columns:1fr 1fr;gap:10px}.stat{padding:15px}.form-grid{grid-template-columns:1fr}.full{grid-column:auto}header{align-items:start}h1{font-size:25px}.card-head{padding:16px;flex-wrap:wrap}}@media(prefers-color-scheme:light){:root{color-scheme:light;--bg:#f6f7fb;--panel:white;--line:#e3e6ee;--text:#202536;--muted:#6b7285;--accent:#7c3aed;--input:#f8f9fc}body{background:radial-gradient(ellipse at 15% 0%,#e8ddff,transparent 45%),var(--bg)}#message{background:#fff0f3;color:#9f1239}}
+</style><link rel="stylesheet" href="../assets/font.css"><link rel="stylesheet" href="../assets/theme.css"><script src="../assets/theme.js" data-surface="openvpn"></script></head><body><main>
 <header><div><div class="eyebrow">ALIREZASERVER</div><h1>OpenVPN</h1><p data-t="intro"></p></div><div class="actions"><button id="lang">English</button><button id="refresh" data-t="refresh"></button></div></header>
 <div id="message" role="alert"></div><div class="stats" id="stats"></div>
 <section class="card"><div class="card-head"><h2 data-t="servers"></h2><button class="primary" id="add-server" data-t="addServer"></button></div><div class="scroll" id="servers"></div></section>
@@ -771,7 +898,7 @@ const STR={fa:{intro:'مدیریت اتصال‌ها، حساب‌ها و فای
 let lang=localStorage.getItem('alireza-lang')||'fa', data={servers:[],users:[],sessions:[]},editing=null,busy=false;
 const t=k=>STR[lang][k]||k, $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const base=location.pathname.replace(/openvpn\/$/,'');
-async function api(path,method='GET',body){const r=await fetch(base+'api/'+path,{method,credentials:'same-origin',cache:'no-store',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});const j=await r.json();if(!r.ok)throw Error(j.error||r.status);return j;}
+async function api(path,method='GET',body){const r=await fetch(base+'api/'+path,{method,credentials:'same-origin',cache:'no-store',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});const text=await r.text();let j;try{j=JSON.parse(text);}catch{throw Error('HTTP '+r.status+': '+text.slice(0,400));}if(!r.ok)throw Error(j.error||r.status);return j;}
 function message(text=''){const e=$('#message');e.textContent=text;e.style.display=text?'block':'none';}
 function bytes(n){return (Number(n||0)/1e9).toLocaleString(lang==='fa'?'fa-IR':'en-US',{maximumFractionDigits:2})+' GB';}
 function render(){document.documentElement.lang=lang;document.documentElement.dir=lang==='fa'?'rtl':'ltr';document.querySelectorAll('[data-t]').forEach(e=>e.textContent=t(e.dataset.t));$('#lang').textContent=lang==='fa'?'English':'فارسی';
@@ -783,22 +910,23 @@ function render(){document.documentElement.lang=lang;document.documentElement.di
 async function refresh(){try{data=await api('status');render();message();}catch(e){message(e.message);}}
 function field(key,value,type='text',extra=''){return `<label>${esc(t(key))}<input name="${key}" type="${type}" value="${esc(value)}" ${extra}></label>`;}
 function check(key,value){return `<label class="check"><input type="checkbox" name="${key}" ${value?'checked':''}>${esc(t(key))}</label>`;}
-function edit(kind,key){if(kind==='users'&&!data.servers.length){message(t('requiredServer'));return;}const old=data[kind].find(x=>x.id===key);editing={kind,key};$('#edit-title').textContent=t(old?'edit':kind==='servers'?'addServer':'addUser');$('#form-error').textContent='';
-  if(kind==='servers'){const s=old||{name:'OpenVPN',proto:'udp',port:1194+data.servers.length,host:location.hostname,subnet:`10.231.${10+data.servers.length}.0/24`,dns:'10.231.'+(10+data.servers.length)+'.1',mtu:1500,maxClients:100,enabled:true,tlsCrypt:true,clientToClient:false,ciphers:['AES-256-GCM','AES-128-GCM','CHACHA20-POLY1305']};
+async function edit(kind,key){if(busy)return;if(kind==='users'&&!data.servers.length){message(t('requiredServer'));return;}const old=data[kind].find(x=>x.id===key);editing={kind,key};$('#edit-title').textContent=t(old?'edit':kind==='servers'?'addServer':'addUser');$('#form-error').textContent='';
+  let suggested={};if(kind==='servers'&&!old){busy=true;try{suggested=await api('server-defaults');}catch(e){message(e.message);}finally{busy=false;}}
+  if(kind==='servers'){const s=old||{name:'OpenVPN',proto:'udp',port:suggested.port??(1194+data.servers.length),host:location.hostname,subnet:suggested.subnet||`10.231.${10+data.servers.length}.0/24`,dns:suggested.dns||('10.231.'+(10+data.servers.length)+'.1'),mtu:1500,maxClients:100,enabled:true,tlsCrypt:true,clientToClient:false,ciphers:['AES-256-GCM','AES-128-GCM','CHACHA20-POLY1305']};
     $('#fields').innerHTML=field('name',s.name,'text','required maxlength="80"')+field('host',s.host,'text','required dir="ltr"')+`<label>${t('transport')}<select name="proto"><option value="udp" ${s.proto==='udp'?'selected':''}>UDP</option><option value="tcp" ${s.proto==='tcp'?'selected':''}>TCP</option></select></label>`+field('port',s.port,'number','required min="1024" max="65535"')+field('subnet',s.subnet,'text','required dir="ltr"')+field('dns',s.dns,'text','required dir="ltr"')+field('mtu',s.mtu,'number','min="1280" max="1500"')+field('maxClients',s.maxClients,'number','min="1" max="1000"')+`<label class="full">${t('ciphers')}<select name="ciphers" multiple size="5">${['AES-256-GCM','AES-128-GCM','CHACHA20-POLY1305','AES-256-CBC','AES-128-CBC'].map(c=>`<option ${s.ciphers.includes(c)?'selected':''}>${c}</option>`).join('')}</select></label>`+check('tlsCrypt',s.tlsCrypt)+check('clientToClient',s.clientToClient)+check('enabled',s.enabled);$('#form-note').textContent=t('serverNote');
   }else{const u=old||{username:'',serverIds:data.servers.map(s=>s.id),enabled:true,devices:1,quota:0,expiry:0};const date=u.expiry?new Date(u.expiry*1000-new Date(u.expiry*1000).getTimezoneOffset()*60000).toISOString().slice(0,16):'';
     $('#fields').innerHTML=field('username',u.username,'text',`required dir="ltr" ${old?'readonly':''} maxlength="64"`)+field('password','','password',`${old?'':'required'} minlength="12" maxlength="128" autocomplete="new-password" dir="ltr"`)+field('quota',u.quota/1e9,'number','min="0" step="0.01"')+field('devices',u.devices,'number','min="1" max="64"')+field('expiry',date,'datetime-local')+check('enabled',u.enabled)+`<label class="full">${t('choose')}<select name="serverIds" multiple size="${Math.min(5,data.servers.length)}" required>${data.servers.map(s=>`<option value="${s.id}" ${u.serverIds.includes(s.id)?'selected':''}>${esc(s.name)} · ${s.proto.toUpperCase()} ${s.port}</option>`).join('')}</select></label>`;$('#form-note').textContent=t('userNote');}
   $('#editor').showModal();
 }
-$('#form').onsubmit=async e=>{e.preventDefault();if(busy)return;busy=true;const submit=e.submitter;submit.disabled=true;const f=new FormData(e.target),o=Object.fromEntries(f);for(const k of ['enabled','tlsCrypt','clientToClient'])o[k]=f.has(k);o.ciphers=f.getAll('ciphers');o.serverIds=f.getAll('serverIds');o.quotaGB=o.quota;if(o.expiry)o.expiry=new Date(o.expiry).toISOString();try{await api(editing.kind+(editing.key?'/'+editing.key:''),editing.key?'PUT':'POST',o);$('#editor').close();await refresh();}catch(e){$('#form-error').textContent=e.message;}finally{busy=false;submit.disabled=false;}};
+$('#form').onsubmit=async e=>{e.preventDefault();if(busy)return;busy=true;const submit=e.submitter||e.target.querySelector('[type="submit"]');submit.disabled=true;const f=new FormData(e.target),o=Object.fromEntries(f);for(const k of ['enabled','tlsCrypt','clientToClient'])o[k]=f.has(k);o.ciphers=f.getAll('ciphers');o.serverIds=f.getAll('serverIds');o.quotaGB=o.quota;if(o.expiry)o.expiry=new Date(o.expiry).toISOString();try{await api(editing.kind+(editing.key?'/'+editing.key:''),editing.key?'PUT':'POST',o);$('#editor').close();await refresh();}catch(e){$('#form-error').textContent=e.message;}finally{busy=false;submit.disabled=false;}};
 document.querySelectorAll('.close').forEach(b=>b.onclick=()=>{if(!busy)$('#editor').close();});$('#close-logs').onclick=()=>$('#log-dialog').close();
 document.body.addEventListener('click',async e=>{const b=e.target.closest('[data-op]');if(!b||busy)return;const{kind,key,op}=b.dataset;if(op==='edit'){edit(kind,key);return;}if(op==='profile'){const a=document.createElement('a');a.href=base+'api/servers/'+key+'/profile';a.download='alirezaserver.ovpn';a.click();return;}if(op!=='logs'&&!confirm(t('confirm')))return;busy=true;b.disabled=true;try{if(op==='logs'){$('#log-text').textContent=(await api('servers/'+key+'/logs')).logs;$('#log-dialog').showModal();}else{await api(kind+'/'+key+(op==='delete'?'':'/'+op),op==='delete'?'DELETE':'POST',{});await refresh();}}catch(e){message(e.message);}finally{busy=false;b.disabled=false;}});
 $('#add-server').onclick=()=>edit('servers');$('#add-user').onclick=()=>edit('users');$('#refresh').onclick=refresh;$('#lang').onclick=()=>{lang=lang==='fa'?'en':'fa';localStorage.setItem('alireza-lang',lang);render();};
 render();refresh();setInterval(()=>{if(!document.hidden&&!busy&&!$('#editor').open&&!$('#log-dialog').open)refresh();},15000);
 </script></body></html>
-ALIREZA_214140FFDFA8D76EE4F90A02
+ALIREZA_2F88015A53409E5BC7A4783E
 
-cat > "$APP/preload.mjs" <<'ALIREZA_14CD2497233BCE1FAD6D3774'
+cat > "$APP/preload.mjs" <<'ALIREZA_F1DEF3F57E5BD2D2DB009F40'
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Loaded only into Nova's existing Node process. Original Nova files are unmodified.
 import http from 'node:http';
@@ -807,6 +935,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import * as backend from './backend.mjs';
+import {fontCSS,dnsStatusForPanel} from './theme.mjs';
 const HERE=dirname(fileURLToPath(import.meta.url));
 const previous=http.Server.prototype.emit;
 let readonly;
@@ -873,7 +1002,7 @@ async function body(req) {
 }
 export function redirectLocation(value,prefix) {
   if(value?.startsWith('/')&&!value.startsWith('//'))return prefix+value.slice(1);
-  if(value?.startsWith('http://127.0.0.1:18085/'))return prefix+value.slice('http://127.0.0.1:18085/'.length);
+  try{const u=new URL(value,'http://127.0.0.1:18085');if(['127.0.0.1','localhost','0.0.0.0','[::1]'].includes(u.hostname))return prefix+u.pathname.replace(/^\//,'')+u.search+u.hash;}catch{}
   return value;
 }
 function adguard(req,res,path,prefix) {
@@ -884,10 +1013,17 @@ function adguard(req,res,path,prefix) {
     const out={...response.headers,'x-frame-options':'SAMEORIGIN','cache-control':'no-store'};
     if(out.location)out.location=redirectLocation(out.location,prefix);
     if(out['set-cookie'])out['set-cookie']=out['set-cookie'].map(c=>c.replace(/Path=\//i,'Path='+prefix));
-    if(String(out['content-type']).includes('text/html')) {
+    if(path.split('?')[0]==='control/status'&&response.statusCode===200){
+      let body='';response.on('data',b=>{body+=b;if(body.length>131072)remote.destroy(new Error('Upstream status too large'));});
+      response.on('end',()=>{if(res.destroyed||res.writableEnded)return;try{
+        const status=JSON.parse(body);const publicHost=String(settings()?.host||new URL('http://'+req.headers.host).hostname);
+        const result=JSON.stringify(dnsStatusForPanel(status,publicHost));delete out['content-length'];delete out.etag;res.writeHead(200,out);res.end(result);
+      }catch{json(res,502,{error:'Invalid AdGuard status response'});}});
+    }else if(String(out['content-type']).includes('text/html')) {
       let chunks=[],size=0;response.on('data',b=>{size+=b.length;if(size>4194304)remote.destroy(new Error('Upstream page too large'));else chunks.push(b);});
       response.on('end',()=>{if(res.destroyed||res.writableEnded)return;let content=Buffer.concat(chunks).toString('utf8');
-        content=content.replace('</head>',`<style data-alireza-colors>:root{--primary:#8b5cf6;--primary-bg:#8b5cf6;--primary-color:#8b5cf6} .btn-primary{background-color:#8b5cf6!important;border-color:#8b5cf6!important}a,.nav-link.active{color:#8b5cf6}.custom-switch-input:checked~.custom-switch-indicator{background:#8b5cf6}</style></head>`);
+        const assets=prefix.replace(/dns\/$/,'')+'assets/';
+        content=content.replace('</head>',`<link data-alireza-colors rel="stylesheet" href="${assets}font.css"><link rel="stylesheet" href="${assets}theme.css"><script src="${assets}theme.js" data-surface="dns"></script></head>`);
         delete out['content-length'];delete out.etag;res.writeHead(response.statusCode||502,out);res.end(content);
       });
     }else {res.writeHead(response.statusCode||502,out);response.pipe(res);}
@@ -908,6 +1044,10 @@ async function handle(req,res,base,tail) {
   if(!auth){json(res,401,{error:'Sign in to the main panel first.'});return;}
   if(auth.role!=='owner'){json(res,403,{error:'These services are available to the panel owner.'});return;}
   if(!['GET','HEAD'].includes(req.method)&&!sameOrigin(req)){json(res,403,{error:'Same-origin request required'});return;}
+  if(tail==='assets/font.css'&&req.method==='GET'){res.writeHead(200,{'content-type':'text/css; charset=utf-8','cache-control':'private, max-age=86400'});res.end(fontCSS());return;}
+  if(tail==='assets/theme.css'&&req.method==='GET'){file(res,'theme.css','text/css; charset=utf-8');return;}
+  if(tail==='assets/theme.js'&&req.method==='GET'){file(res,'theme.js','text/javascript; charset=utf-8');return;}
+  if(tail==='api/server-defaults'&&req.method==='GET'){json(res,200,await backend.serverDefaults());return;}
   if(tail==='openvpn/'&&req.method==='GET'){file(res,'openvpn.html','text/html; charset=utf-8');return;}
   if(tail.startsWith('dns/')){adguard(req,res,tail.slice(4),base+'/alireza/dns/');return;}
   if(tail==='api/status'&&req.method==='GET'){json(res,200,await backend.status());return;}
@@ -942,7 +1082,7 @@ if(process.env.ALIREZA_NO_HOOK!=='1') {
   };
   backend.startCollector();
 }
-ALIREZA_14CD2497233BCE1FAD6D3774
+ALIREZA_F1DEF3F57E5BD2D2DB009F40
 
 cat > "$APP/reset-sessions.py" <<'ALIREZA_9D3D2A690AE74AB0156A9F9F'
 #!/usr/bin/python3
@@ -975,6 +1115,85 @@ if systemctl cat nova-agent.service >/dev/null 2>&1; then systemctl restart nova
 elif systemctl cat nova-node-agent.service >/dev/null 2>&1; then systemctl restart nova-node-agent.service; fi
 echo 'alirezaserver add-ons disabled; original Nova files and add-on data preserved.'
 ALIREZA_5268350BD706A64686202416
+
+cat > "$APP/theme.css" <<'ALIREZA_795FE37FD4E8B8A4BF11F9F8'
+/* SPDX-License-Identifier: GPL-3.0-or-later
+   Shared appearance only. No positioning, ordering or control removal in AdGuard. */
+:root{--az-bg:#070809;--az-panel:#0c0e12;--az-card:#101319;--az-card2:#0b0d11;--az-bd:#1c2027;--az-bd2:#262b34;--az-tx:#e9edf4;--az-tx2:#aeb6c4;--az-mu:#7c8698;--az-ac:#22d3ee;--az-ac2:#7c5cff;--az-ac-ink:#04121a;--az-grad:linear-gradient(120deg,#22d3ee,#7c5cff);--az-ok:#34d399;--az-dg:#f87171}
+html[data-alireza-surface]{--bg:var(--az-bg);--panel:var(--az-panel);--line:var(--az-bd);--text:var(--az-tx);--muted:var(--az-mu);--accent:var(--az-ac);--input:var(--az-card2);--primary:var(--az-ac);--primary-bg:var(--az-ac);--primary-color:var(--az-ac);font-family:Vazirmatn,Tahoma,sans-serif!important}
+html[data-alireza-surface] body{font-family:Vazirmatn,Tahoma,sans-serif!important;background:radial-gradient(ellipse at 10% 0%,color-mix(in srgb,var(--az-ac) 9%,transparent),transparent 48%),radial-gradient(ellipse at 95% 10%,color-mix(in srgb,var(--az-ac2) 9%,transparent),transparent 40%),var(--az-bg)!important;color:var(--az-tx)!important}
+html[data-alireza-surface] :is(button,input,select,textarea,.btn,.form-control){font-family:Vazirmatn,Tahoma,sans-serif!important}
+html[data-alireza-surface] :is(.card,.stat,.modal-content,dialog,.dropdown-menu,.popover){background:var(--az-card)!important;color:var(--az-tx)!important;border-color:var(--az-bd)!important;border-radius:16px;box-shadow:0 12px 36px #0002,inset 0 1px 0 color-mix(in srgb,var(--az-tx) 4%,transparent)}
+html[data-alireza-surface] :is(.card-header,.card-head,.card-footer,.modal-header,.modal-footer,.dialog-foot,.header,.footer,.navbar){background:var(--az-panel)!important;color:var(--az-tx)!important;border-color:var(--az-bd)!important}
+html[data-alireza-surface] :is(h1,h2,h3,h4,h5,h6,.card-title,.form-label,.nav-link,.dropdown-item){color:var(--az-tx)!important}
+html[data-alireza-surface] :is(.text-muted,.hint,.card-subtitle,.form-text,.form-description){color:var(--az-mu)!important}
+html[data-alireza-surface] :is(a,.nav-link.active,.eyebrow){color:var(--az-ac)!important}
+html[data-alireza-surface] :is(input:not([type=checkbox]):not([type=radio]),select,textarea,.form-control,.input-group-text){background:var(--az-card2)!important;color:var(--az-tx)!important;border-color:var(--az-bd2)!important;border-radius:10px}
+html[data-alireza-surface] :is(button,.btn,input,select,textarea,.card,.stat){transition:background-color .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+html[data-alireza-surface] :is(input,select,textarea):focus{outline:none!important;border-color:var(--az-ac)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--az-ac) 18%,transparent)!important}
+html[data-alireza-surface] :is(button,.btn){border-radius:10px}
+html[data-alireza-surface] :is(button,.btn):not(:disabled):hover{border-color:var(--az-ac)!important;box-shadow:0 0 18px color-mix(in srgb,var(--az-ac) 12%,transparent)}
+html[data-alireza-surface] :is(.btn-primary,.primary){background:var(--az-grad)!important;border-color:transparent!important;color:#fff!important;box-shadow:0 5px 22px color-mix(in srgb,var(--az-ac2) 20%,transparent)}
+html[data-alireza-surface] :is(.btn-secondary,.btn-outline-secondary){background:var(--az-card2)!important;color:var(--az-tx)!important;border-color:var(--az-bd2)!important}
+html[data-alireza-surface] :is(table,.table,.ReactTable,.rt-table,.rt-thead,.rt-tbody,.rt-tr,.rt-td,.rt-th){background:transparent!important;color:var(--az-tx)!important;border-color:var(--az-bd)!important}
+html[data-alireza-surface] :is(th,td,.rt-tr-group){border-color:var(--az-bd)!important}
+html[data-alireza-surface] :is(tbody tr,.rt-tr-group):hover{background:color-mix(in srgb,var(--az-ac) 5%,transparent)!important}
+html[data-alireza-surface] .custom-switch-input:checked~.custom-switch-indicator{background:var(--az-ac)!important}
+html[data-alireza-surface] :is(.progress i,.progress-bar){background:var(--az-grad)!important}
+html[data-alireza-surface] :is(input[type=checkbox],input[type=radio]){accent-color:var(--az-ac)}
+html[data-alireza-surface] dialog::backdrop{background:#0009;backdrop-filter:blur(8px)}
+html[data-alireza-surface] :is(.alert-danger,#message){background:color-mix(in srgb,var(--az-dg) 12%,var(--az-card))!important;color:var(--az-tx)!important;border-color:color-mix(in srgb,var(--az-dg) 45%,var(--az-bd))!important}
+html[data-alireza-surface] .az-connection{padding:12px 18px;margin:12px 0;border:1px solid var(--az-bd2);border-radius:12px;background:var(--az-panel);line-height:1.9}
+@media(prefers-reduced-motion:reduce){html[data-alireza-surface] *{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+ALIREZA_795FE37FD4E8B8A4BF11F9F8
+
+cat > "$APP/theme.js" <<'ALIREZA_61592532497513AA58EFACF7'
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+(()=>{
+  const root=document.documentElement;
+  root.dataset.alirezaSurface=document.currentScript?.dataset.surface||'dns';
+  function sync(){
+    try{
+      if(parent===window)return;
+      const host=parent.document.documentElement,css=parent.getComputedStyle(host);
+      for(const token of ['bg','panel','card','card2','bd','bd2','tx','tx2','mu','ac','ac2','ac-ink','ac-hover','grad','ok','wn','dg']){
+        const value=css.getPropertyValue('--'+token).trim();if(value)root.style.setProperty('--az-'+token,value);
+      }
+      const light=host.dataset.theme==='light'||(host.dataset.theme!=='dark'&&parent.matchMedia('(prefers-color-scheme: light)').matches);
+      root.style.colorScheme=light?'light':'dark';root.dataset.azTheme=light?'light':'dark';
+    }catch{}
+  }
+  sync();
+  try{new MutationObserver(sync).observe(parent.document.documentElement,{attributes:true,attributeFilter:['data-theme','class','style']});}catch{}
+  matchMedia('(prefers-color-scheme: light)').addEventListener('change',sync);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync();});
+})();
+ALIREZA_61592532497513AA58EFACF7
+
+cat > "$APP/theme.mjs" <<'ALIREZA_65D697BEB11FB9F040BF8499'
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Reuse the installed Nova font without changing or copying its original files.
+import{readFileSync}from'node:fs';
+import{isIP}from'node:net';
+let cached;
+export function fontCSS(){
+  if(cached)return cached;
+  const panel=readFileSync(process.env.ALIREZA_NOVA_PANEL||'/opt/nova-node-agent/src/web/panel.html','utf8');
+  const face=[...panel.matchAll(/@font-face\s*\{[^}]+\}/g)].map(m=>m[0]).find(s=>/Vazirmatn/.test(s)&&/data:font\/woff2;base64,/.test(s));
+  if(!face)throw Error('The installed Nova Vazirmatn font was not found');
+  return cached=face+'\n';
+}
+export function dnsStatusForPanel(status,publicHost){
+  const result={...status};
+  const usable=a=>typeof a==='string'&&a!=='::1'&&!a.startsWith('127.')&&a!=='0.0.0.0'&&a!=='::';
+  const addresses=(Array.isArray(status.dns_addresses)?status.dns_addresses:[]).filter(usable);
+  // This field is only an advertised address for the UI; listeners remain real.
+  // DNS listeners in this integration are IPv4. A panel domain may point to a
+  // CDN or IPv6-only proxy, so it must not be advertised as a DNS listener.
+  if(isIP(publicHost||'')===4&&usable(publicHost))addresses.unshift(publicHost);
+  result.dns_addresses=[...new Set(addresses)];return result;
+}
+ALIREZA_65D697BEB11FB9F040BF8499
 
 cat > "$APP/verify-install.mjs" <<'ALIREZA_81984B06A9A160437D03A905'
 // SPDX-License-Identifier: GPL-3.0-or-later
@@ -1755,13 +1974,14 @@ python3 - <<'PY'
 import ipaddress,json,os
 root='/var/lib/alirezaserver'
 address=str(ipaddress.IPv4Address(os.environ['DNS_ADDRESS']))
-allowed=['127.0.0.0/8','10.0.0.0/8','172.16.0.0/12','192.168.0.0/16','::1','fc00::/7']
+allowed=[]
+if os.environ.get('DNS_ALLOWED_CIDRS','').strip():allowed=['127.0.0.0/8','10.0.0.0/8','172.16.0.0/12','192.168.0.0/16','::1','fc00::/7']
 for item in os.environ.get('DNS_ALLOWED_CIDRS','').split(','):
     if item.strip():allowed.append(str(ipaddress.ip_network(item.strip(),strict=False)))
 config={
  'http':{'address':'127.0.0.1:18085'},'users':[],
- 'dns':{'bind_hosts':['127.0.0.1',address],'port':53,'allowed_clients':allowed,
-        'upstream_dns':['https://dns.cloudflare.com/dns-query','https://dns.quad9.net/dns-query'],
+ 'dns':{'bind_hosts':[address,'127.0.0.1'],'port':53,'allowed_clients':allowed,'ratelimit':20,
+        'upstream_dns':['1.1.1.1','9.9.9.9'],
         'bootstrap_dns':['1.1.1.1','9.9.9.9'],'cache_size':4194304},
  'filtering':{'protection_enabled':True,'filtering_enabled':True},
  'filters':[{'enabled':True,'url':'https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt','name':'AdGuard DNS filter','id':1}],
@@ -1771,7 +1991,7 @@ if not os.path.exists(root+'/adguard/AdGuardHome.yaml'):
     # JSON is valid YAML; AdGuard reads it and rewrites its native YAML on save.
     with open(root+'/adguard/AdGuardHome.yaml','w') as f:json.dump(config,f,indent=2)
 if not os.path.exists(root+'/install.json'):
-    with open(root+'/install.json','w') as f:json.dump({'dns_address':address,'dns_allowed_clients':allowed,'version':'0.2.0'},f)
+    with open(root+'/install.json','w') as f:json.dump({'dns_address':address,'dns_allowed_clients':allowed,'version':'0.3.0'},f)
 if not os.path.exists(root+'/firewall.json'):
     with open(root+'/firewall.json','w') as f:json.dump([],f)
 PY
@@ -1847,14 +2067,21 @@ HOOK_CHANGED=1
 systemctl daemon-reload
 systemctl show nova-agent.service -p ExecStart --value | grep -q -- '--import=/opt/alirezaserver/preload.mjs' || die 'Another service override prevented the integration from loading.'
 systemctl enable AdGuardHome.service alireza-firewall.service
+node --input-type=module -e 'const m=await import("file:///opt/alirezaserver/backend.mjs");m.refreshConfigs();'
 systemctl restart AdGuardHome.service alireza-firewall.service
 # Restarting the firewall unit can stop dependent OpenVPN instances; restore only
-# instances the user had configured as enabled. Configurations remain unchanged.
+# instances configured as enabled, with repaired configs and unchanged accounts.
 node --input-type=module - <<'JS'
-import{servers,run}from'/opt/alirezaserver/backend.mjs';
-for(const s of servers())if(s.enabled)await run('systemctl',['start','alireza-openvpn@'+s.id+'.service']);
+import{servers,run,ready}from'/opt/alirezaserver/backend.mjs';
+for(const s of servers())if(s.enabled){await run('systemctl',['restart','alireza-openvpn@'+s.id+'.service']);await ready(s);}
 JS
 systemctl restart nova-agent.service
+STAGE=dns-configuration-repair
+for attempt in {1..20}; do
+  if curl -fsS --max-time 2 http://127.0.0.1:18085/control/status >/dev/null; then break; fi
+  sleep 1
+done
+python3 "$APP/dns-repair.py"
 STAGE=integration-verification
 log '[5/5] Verifying the actual panel, branding, OpenVPN and AdGuard through Nova.'
 VERIFIED=0
@@ -1866,7 +2093,7 @@ done
 cat "$WORK/verify.log"
 [[ $VERIFIED == 1 ]] || die 'The integrated panel did not pass verification. Existing add-on data is retained; rerun this file to repair.'
 bash "$APP/check.sh"
-printf '{"version":"0.2.0","nova":"1.85.4","adguard":"%s"}\n' "$AG_VERSION" > "$ROOT/installed.json"
+printf '{"version":"0.3.0","nova":"1.85.4","adguard":"%s"}\n' "$AG_VERSION" > "$ROOT/installed.json"
 rm -f "$ROOT/failed-stage"
 HOOK_CHANGED=0
 log 'ALIREZASERVER READY — panel branding, OpenVPN management and AdGuard integration verified.'
@@ -1875,7 +2102,7 @@ printf '%s\n' \
  'DNS: AdGuard Home, TCP/UDP 53; owner-only web access through the main panel.' \
  'OpenVPN: create servers/accounts using the new OpenVPN menu.' \
  'Existing Nova protocols, node enrollment scripts and upstream files are unchanged.' \
- 'DNS access defaults to this server/private VPN clients. Add external client IPs in AdGuard Access settings.' \
+ 'DNS accepts public clients on your server IPv4:53. Restrict access in AdGuard Access settings if desired.' \
  'A provider firewall/security group must separately allow DNS TCP/UDP 53 and your selected OpenVPN port.' \
  'Rollback add-ons: sudo bash install.sh --rollback' \
  'Diagnostics: sudo bash install.sh --check' \
