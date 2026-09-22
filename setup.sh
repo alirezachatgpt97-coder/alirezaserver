@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# alirezaserver bootstrap — downloads the content-verified 0.3.0 installer.
+# alirezaserver bootstrap — downloads the content-verified 0.4.0 installer.
 # Repository: https://github.com/alirezachatgpt97-coder/alirezaserver
 # Videos: https://www.youtube.com/@Alirezacoder12
 # This launcher does not replace or modify the actual installer.
 set -Eeuo pipefail
 umask 077
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-VERSION=0.3.0
+VERSION=0.4.0
 REF=main
-SHA256=0c9e01b8297b1f6468b088b2db1da699a024efc7460d3a660e1e7419d36a7ecd
+SHA256=d2fa0e70daa72d3b0bcfafb9b8c650fbeca2a477569e6a1b5f85bd579475430f
 URL="https://raw.githubusercontent.com/alirezachatgpt97-coder/alirezaserver/$REF/install.sh"
 CACHE=/var/cache/alirezaserver
 PARTIAL=''
@@ -23,6 +23,8 @@ Run as root on Ubuntu 24.04 or Debian 12/13 (amd64/arm64):
   bash setup.sh --repair         Same repair flow; keeps existing add-on data
   bash setup.sh --check          Check the currently installed integration
   bash setup.sh --backup         Back up the currently installed add-on data
+  bash setup.sh --update         Check/retry the guarded official Nova update
+  bash setup.sh --update-status  Show the last guarded update result
   bash setup.sh --rollback       Disable add-ons and restore the original Nova launch
   bash setup.sh --download-only  Download and verify, without running the installer
 
@@ -34,12 +36,18 @@ HELP
 [[ $# -le 1 ]] || die 'Use one option at a time. See --help.'
 case "${1:-}" in
   --help|-h) usage; exit 0 ;;
-  ''|--repair|--check|--backup|--rollback|--download-only) ;;
+  ''|--repair|--check|--backup|--rollback|--download-only|--update|--update-status) ;;
   *) die 'Unknown option. Use --help.' ;;
 esac
 [[ $EUID == 0 ]] || die 'Open a root shell (sudo -i), then run this script.'
 [[ -d /run/systemd/system ]] || die 'A Linux VPS running systemd is required.'
 case "${1:-}" in
+  --update)
+    [[ -f /opt/alirezaserver/update.py ]] || die 'Install the 0.4 integration first.'
+    exec python3 /opt/alirezaserver/update.py --retry ;;
+  --update-status)
+    [[ -f /var/lib/alirezaserver/update-status.json ]] || die 'No update check has run yet.'
+    cat /var/lib/alirezaserver/update-status.json; exit ;;
   --check|--rollback)
     action="${1#--}"
     [[ -f "/opt/alirezaserver/$action.sh" ]] || die 'No installed integration was found.'

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# alirezaserver 0.3.0 — single-file ONLINE installer; rerun to repair/resume.
+# alirezaserver 0.4.0 — single-file ONLINE installer; rerun to repair/resume.
 # Supported target: Ubuntu 24.04 or Debian 12/13, systemd, amd64/arm64.
 # Add-on source and notices are embedded below; original upstream programs are
 # downloaded from pinned official URLs. This is not an offline bundle.
@@ -10,6 +10,8 @@
 #        sudo bash install.sh --check
 #        sudo bash install.sh --rollback
 #        sudo bash install.sh --backup
+#        sudo bash install.sh --update
+#        sudo bash install.sh --update-status
 # DNS_ALLOWED_CIDRS="203.0.113.12/32,198.51.100.0/24" sudo -E bash install.sh
 # DNS serves public clients by default with AdGuard rate limiting. To restrict
 # clients, use AdGuard Access settings or DNS_ALLOWED_CIDRS on first install.
@@ -30,10 +32,12 @@ download(){ curl --fail --location --proto '=https' --tlsv1.2 --connect-timeout 
 verify(){ printf '%s  %s\n' "$2" "$1" | sha256sum --check --status || die "Checksum mismatch: $1"; }
 [[ $EUID == 0 ]] || die 'Run with sudo bash install.sh'
 case "${1:-}" in
+  --update) [[ -f "$APP/update.py" ]] || die 'Install this version first'; exec python3 "$APP/update.py" --retry ;;
+  --update-status) [[ -f "$ROOT/update-status.json" ]] || die 'No update check has run yet'; cat "$ROOT/update-status.json"; exit ;;
   --rollback) [[ -f "$APP/rollback.sh" ]] || die 'No add-on installation found'; exec bash "$APP/rollback.sh" ;;
   --check) [[ -f "$APP/check.sh" ]] || die 'No add-on installation found'; exec bash "$APP/check.sh" ;;
   --backup) [[ -f "$APP/backup.py" ]] || die 'No add-on installation found'; exec python3 "$APP/backup.py" ;;
-  --help|-h) sed -n '2,19p' "$0"; exit 0 ;;
+  --help|-h) sed -n '2,21p' "$0"; exit 0 ;;
   ''|--repair) ;;
   *) die 'Unknown option. Use --help.' ;;
 esac
@@ -99,7 +103,7 @@ if systemctl cat AdGuardHome.service >/dev/null 2>&1; then
 fi
 if [[ -f /opt/nova-node-agent/package.json ]]; then
   [[ -f /etc/systemd/system/nova-agent.service ]] || die 'Unsupported Nova service layout.'
-  node -e 'const p=require("/opt/nova-node-agent/package.json");if(p.version!=="1.85.4")throw Error("Expected Nova 1.85.4; found "+p.version)'
+  node -e 'const p=require("/opt/nova-node-agent/package.json");if(p.name!=="nova-node-agent")throw Error("Unrecognized Nova installation")'
 fi
 STAGE=prerequisites
 log 'Installing prerequisites (no source compilation for this add-on).'
@@ -142,7 +146,7 @@ log '[2/5] Installing/checking the Nova base. Wait for ALIREZASERVER READY at th
 if [[ -f /opt/nova-node-agent/package.json ]]; then
   log 'Using the existing Nova installation; its installer will not be rerun.'
   [[ -f /etc/systemd/system/nova-agent.service ]] || die 'Unsupported Nova service layout.'
-  node -e 'const p=require("/opt/nova-node-agent/package.json"); if(p.version!=="1.85.4") { console.error("This installer was prepared against Nova 1.85.4; found "+p.version+". Existing installation left untouched.");process.exit(1) }'
+  node -e 'const p=require("/opt/nova-node-agent/package.json");if(p.name!=="nova-node-agent")throw Error("Unrecognized Nova installation")'
 else
   log 'Installing the pinned, original Nova release. Its own setup questions follow.'
   download "$NOVA_BASE/nova-node.sh" "$WORK/nova-node.sh"
@@ -162,8 +166,8 @@ printf 'alirezaserver\n' > "$ROOT/.installer-owned"
 MANAGED=1
 # ALIREZA_EMBEDDED_FILES
 
-cat > "$APP/NOTICE.txt" <<'ALIREZA_9A192610D704119A4FABBF42'
-alirezaserver add-on 0.3.0
+cat > "$APP/NOTICE.txt" <<'ALIREZA_8307E6C336F3F1346F851491'
+alirezaserver add-on 0.4.0
 
 The new integration modules in this directory are licensed under GPL-3.0-or-later.
 OpenVPN configuration/profile conventions were adapted from Sir-MmD/vpn-ui,
@@ -182,8 +186,27 @@ Its original source and notices remain upstream.
 OpenVPN and OS packages retain their own upstream licenses.
 
 Scope and verification:
-- Original Nova files, existing protocol configurations and node enrollment
-  command URLs are not renamed or replaced. Only displayed panel branding changes.
+- A separate systemd timer checks official Nova releases every six hours.
+  Metadata, archive and checksum come from one immutable upstream commit.
+  Code/template/auth contracts and post-start UI/API checks gate activation.
+  The default Nova data/config layout is snapshotted while Nova is stopped;
+  code/data rollback and boot-time recovery retain the previous release on failure.
+  Two snapshots are retained. A rejected commit is not retried automatically.
+  Custom symlink/database layouts fail closed for explicit compatibility review.
+  The current native updater is redirected to the guarded service; read-only
+  service mounts prevent unguarded native code replacement. These mounts/timers
+  have not been exercised on a Linux VPS in this Windows development environment.
+  No mechanism can guarantee compatibility with every unknown future release.
+- OpenVPN personal links grant their holder access to that account's username,
+  password, usage and permitted profiles. Links are random, revocable and separate
+  from the admin path. Password copies/tokens are AES-256-GCM encrypted with a
+  root-only local key; VPN authentication still uses scrypt. Protect backups and
+  use HTTPS. Existing password hashes cannot be recovered: set a new password
+  once to enable sharing for an old account. This is a web/download link, not a
+  universal automatic-import protocol for every OpenVPN client.
+- Branding does not rename original Nova files, protocol identifiers or node
+  enrollment command URLs. The guarded updater installs official Nova code;
+  branding itself changes only the displayed panel.
 - An HTTP request hook runs inside the original Nova process through a systemd
   drop-in. Original requests go to the original handler; addon routes require an
   owner session validated by Nova's own /admin/whoami endpoint on each request.
@@ -227,12 +250,31 @@ Scope and verification:
 Local tests cover input validation, Python authentication/device limits, expiry,
 traffic calculations, owner authorization and CSRF checks, HTTP proxying, branding,
 and installer/script syntax. See the verification record embedded in install.sh.
-ALIREZA_9A192610D704119A4FABBF42
+ALIREZA_8307E6C336F3F1346F851491
 
-cat > "$APP/VERIFICATION.txt" <<'ALIREZA_8D54CC5CA1F9E072D44ACB47'
-alirezaserver 0.3.0 verification record, 2026-09-21
+cat > "$APP/VERIFICATION.txt" <<'ALIREZA_454F3842BCF5990BD02ECE4F'
+alirezaserver 0.4.0 verification record, 2026-09-22
 
 Development platform: Windows, Node.js 24.19.0.
+
+0.4 additions:
+PASS: Personal subscription encryption, password edits, link rotation/revocation,
+inactive/expired/exhausted account denial, assigned-profile scoping, HTTP response
+privacy headers and legacy-account migration (6 tests). Original owner-session
+integration tests also verify subscription administration and CSRF gating.
+PASS: Update transaction against real temporary files with mocked systemctl:
+success, failed-health rollback of code/database, interrupted-update recovery,
+snapshot failure recovery, archive traversal/symlink rejection, extraction of
+the actual official Nova archive (6 tests). Native update spawn routing tested
+without altering unrelated process commands.
+PASS: Compatibility checker against actual Nova 1.85.4 exports, templates,
+embedded font/theme and JavaScript syntax. This does not certify future releases.
+PASS: Subscription page and owner link dialog in the browser. Light/dark shared
+theme and AdGuard light-theme contrast inspected. Real Nova/AdGuard HTTPS proxy
+verification and actual local TCP/UDP DNS tests passed again.
+NOT TESTED: Linux mount restrictions, systemd update timer, live Linux update,
+power-loss recovery on a real VPS, or future Nova versions. Filesystem transaction
+tests mock service lifecycle; they do not establish production reliability.
 
 0.3 repair regression checks:
 PASS: 7 additional automated tests: fragmented OpenVPN management replies,
@@ -295,7 +337,7 @@ Repair/resume:       sudo bash install.sh
 Add-on backup:       sudo bash install.sh --backup
 Disable add-ons:     sudo bash install.sh --rollback
 Back up the original Nova data separately using Nova's own backup facilities.
-ALIREZA_8D54CC5CA1F9E072D44ACB47
+ALIREZA_454F3842BCF5990BD02ECE4F
 
 cat > "$APP/auth.py" <<'ALIREZA_8FD1D5E2FD0138ACA837582B'
 #!/usr/bin/python3
@@ -356,7 +398,7 @@ if __name__ == '__main__':
     except Exception: sys.exit(1)
 ALIREZA_8FD1D5E2FD0138ACA837582B
 
-cat > "$APP/backend.mjs" <<'ALIREZA_E3A85F4B0CC1100A3D1E019B'
+cat > "$APP/backend.mjs" <<'ALIREZA_256EFF43BCD6990FB4F69582'
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync, writeFileSync, mkdirSync, renameSync, existsSync, rmSync, chmodSync } from 'node:fs';
@@ -366,6 +408,7 @@ import { randomBytes, scrypt } from 'node:crypto';
 import { createConnection, createServer } from 'node:net';
 import { createSocket } from 'node:dgram';
 import { id, fail, validateServer, validateUser, serverConfig, clientConfig, parseStatus } from './model.mjs';
+import {seal,unseal,newToken,tokenHash} from './vault.mjs';
 const exec=promisify(execFile), hash=promisify(scrypt);
 export const ROOT=process.env.ALIREZA_ROOT||'/var/lib/alirezaserver';
 let db;
@@ -377,7 +420,8 @@ export function database() {
     CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,username TEXT UNIQUE NOT NULL,hash TEXT NOT NULL,salt TEXT NOT NULL,
     serverIds TEXT NOT NULL,enabled INTEGER NOT NULL,expiry INTEGER NOT NULL,quota INTEGER NOT NULL,used INTEGER NOT NULL DEFAULT 0,devices INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS sessions(sid TEXT,name TEXT,peer TEXT,connected INTEGER,rx INTEGER,tx INTEGER,seen INTEGER,ended INTEGER,
-    PRIMARY KEY(sid,name,peer));`);
+    PRIMARY KEY(sid,name,peer));
+    CREATE TABLE IF NOT EXISTS shares(uid TEXT PRIMARY KEY,token_hash TEXT UNIQUE,sealed TEXT NOT NULL);`);
   chmodSync(`${ROOT}/addon.db`,0o600); return db;
 }
 export function servers() { return database().prepare('SELECT data FROM servers ORDER BY id').all().map(r=>JSON.parse(r.data)); }
@@ -495,13 +539,26 @@ export async function saveUser(input,uid) {
   const salt=u.password?randomBytes(16).toString('hex'):previous.salt;
   const digest=u.password?(await hash(u.password,Buffer.from(salt,'hex'),32,{N:16384,r:8,p:1})).toString('hex'):previous.hash;
   const key=previous?.id||randomBytes(6).toString('hex');
-  try {database().prepare(`INSERT INTO users(id,username,hash,salt,serverIds,enabled,expiry,quota,used,devices) VALUES(?,?,?,?,?,?,?,?,?,?)
-    ON CONFLICT(id) DO UPDATE SET hash=excluded.hash,salt=excluded.salt,serverIds=excluded.serverIds,enabled=excluded.enabled,expiry=excluded.expiry,quota=excluded.quota,devices=excluded.devices`).run(key,u.username,digest,salt,JSON.stringify(u.serverIds),+u.enabled,u.expiry,u.quota,previous?.used||0,u.devices);}
-  catch(e){if(String(e).includes('UNIQUE'))fail('Username already exists');throw e;}
+  const d=database();d.exec('BEGIN IMMEDIATE');
+  try {d.prepare(`INSERT INTO users(id,username,hash,salt,serverIds,enabled,expiry,quota,used,devices) VALUES(?,?,?,?,?,?,?,?,?,?)
+    ON CONFLICT(id) DO UPDATE SET hash=excluded.hash,salt=excluded.salt,serverIds=excluded.serverIds,enabled=excluded.enabled,expiry=excluded.expiry,quota=excluded.quota,devices=excluded.devices`).run(key,u.username,digest,salt,JSON.stringify(u.serverIds),+u.enabled,u.expiry,u.quota,previous?.used||0,u.devices);
+    if(u.password){const row=d.prepare('SELECT * FROM shares WHERE uid=?').get(key);const token=row?unseal(row.sealed,key).token:newToken();d.prepare('INSERT INTO shares VALUES(?,?,?) ON CONFLICT(uid) DO UPDATE SET token_hash=excluded.token_hash,sealed=excluded.sealed').run(key,token?tokenHash(token):null,seal({token,password:u.password},key));}
+    d.exec('COMMIT');
+  }catch(e){d.exec('ROLLBACK');if(String(e).includes('UNIQUE'))fail('Username already exists');throw e;}
   if(previous) await disconnect(u.username);
   return {id:key};
 }
-export async function removeUser(uid){const u=users().find(u=>u.id===id(uid));if(!u)fail('User not found',404);database().prepare('UPDATE users SET enabled=0 WHERE id=?').run(uid);await disconnect(u.username);database().prepare('DELETE FROM users WHERE id=?').run(uid);database().prepare('DELETE FROM sessions WHERE name=?').run(u.username);}
+export async function removeUser(uid){const u=users().find(u=>u.id===id(uid));if(!u)fail('User not found',404);database().prepare('UPDATE users SET enabled=0 WHERE id=?').run(uid);await disconnect(u.username);database().prepare('DELETE FROM shares WHERE uid=?').run(uid);database().prepare('DELETE FROM users WHERE id=?').run(uid);database().prepare('DELETE FROM sessions WHERE name=?').run(u.username);}
+export function shareInfo(uid){id(uid);if(!users().some(u=>u.id===uid))fail('User not found',404);const row=database().prepare('SELECT * FROM shares WHERE uid=?').get(uid);if(!row)return{needsPassword:true};const value=unseal(row.sealed,uid);return{token:value.token,needsPassword:false};}
+export function rotateShare(uid,revoke=false){id(uid);const row=database().prepare('SELECT * FROM shares WHERE uid=?').get(uid);if(!row)fail('Set a new password for this existing account before creating its subscription.',409);const value=unseal(row.sealed,uid);value.token=revoke?null:newToken();database().prepare('UPDATE shares SET token_hash=?,sealed=? WHERE uid=?').run(value.token?tokenHash(value.token):null,seal(value,uid),uid);return shareInfo(uid);}
+export function subscription(token){
+  if(!/^[A-Za-z0-9_-]{43}$/.test(token))fail('Subscription unavailable',404);
+  const row=database().prepare('SELECT * FROM shares WHERE token_hash=?').get(tokenHash(token));
+  const u=row&&database().prepare('SELECT username,enabled,expiry,quota,used,devices,serverIds,id FROM users WHERE id=?').get(row.uid);
+  if(!u||!u.enabled||(u.expiry&&u.expiry<=Date.now()/1000)||(u.quota&&u.used>=u.quota))fail('Subscription unavailable or account inactive',404);
+  const value=unseal(row.sealed,u.id),allowed=JSON.parse(u.serverIds);return{username:u.username,password:value.password,used:u.used,quota:u.quota,expiry:u.expiry,devices:u.devices,servers:servers().filter(s=>s.enabled&&allowed.includes(s.id)).map(s=>({id:s.id,name:s.name,host:s.host,port:s.port,proto:s.proto}))};
+}
+export function subscriptionProfile(token,sid){const data=subscription(token);if(!data.servers.some(s=>s.id===sid))fail('Profile not available to this account',404);return profile(sid);}
 export async function resetUsage(uid) {const u=users().find(u=>u.id===id(uid));if(!u)fail('User not found',404);await collect();database().prepare('UPDATE users SET used=0 WHERE id=?').run(uid);}
 const managementQueues=new Map();
 export function management(sid,command) {
@@ -580,9 +637,9 @@ export function profile(sid){const s=server(sid),dir=`${ROOT}/openvpn/${s.id}`;r
 export async function logs(sid){server(sid);return run('journalctl',['-u',unit(sid),'-n','80','--no-pager']);}
 export async function toggle(sid){const s=server(sid);return save({...s,enabled:!s.enabled},sid);}
 export function startCollector(){const timer=setInterval(()=>collect().catch(e=>console.error('alirezaserver accounting:',e.message)),5000);timer.unref();}
-ALIREZA_E3A85F4B0CC1100A3D1E019B
+ALIREZA_256EFF43BCD6990FB4F69582
 
-cat > "$APP/backup.py" <<'ALIREZA_4EA261D051D0879E99E621E4'
+cat > "$APP/backup.py" <<'ALIREZA_88B0DFEB38DB40AC66F1761D'
 #!/usr/bin/python3
 # Consistent SQLite snapshot plus add-on configuration, certificates and data.
 # Run alongside Nova's own backup; this archive deliberately does not replace it.
@@ -602,12 +659,15 @@ with tempfile.TemporaryDirectory(prefix='alirezaserver-backup-') as temp:
     with tarfile.open(target,'w:gz') as tar:
         for name in ['opt/alirezaserver','var/lib/alirezaserver','etc/systemd/system/AdGuardHome.service','etc/systemd/system/alireza-firewall.service','etc/systemd/system/alireza-openvpn@.service','etc/systemd/system/nova-agent.service.d/alirezaserver.conf','etc/systemd/system/nova-agent.service.d/zz-alirezaserver.conf']:
             if pathlib.Path('/'+name).exists():tar.add('/'+name,arcname=name,filter=filter_entry)
+        for name in ['alireza-update.service','alireza-update.timer','alireza-update-recover.service']:
+            path=pathlib.Path('/etc/systemd/system')/name
+            if path.exists():tar.add(path,arcname='etc/systemd/system/'+name)
         tar.add(snap,arcname='var/lib/alirezaserver/addon.db')
 os.chmod(target,0o600)
 print(target)
-ALIREZA_4EA261D051D0879E99E621E4
+ALIREZA_88B0DFEB38DB40AC66F1761D
 
-cat > "$APP/brand.js" <<'ALIREZA_BAB70C98D74AFF8A610D4E35'
+cat > "$APP/brand.js" <<'ALIREZA_653D90EB5A1694CB0C391F68'
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 (()=>{'use strict';
   const base=window.__NOVA_BASE__||'', prefix=base+'/alireza/';
@@ -634,17 +694,18 @@ cat > "$APP/brand.js" <<'ALIREZA_BAB70C98D74AFF8A610D4E35'
     const nav=document.querySelector('.side-nav');
     if(nav&&!nav.querySelector('.az-nav')&&owner){for(const [kind,label]of[['dns','DNS · AdGuard Home'],['openvpn','OpenVPN']]){const b=document.createElement('button');b.type='button';b.className='nav-item az-nav';b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6h.01M7 17h.01"/></svg><span></span>';b.querySelector('span').textContent=label;b.onclick=()=>open(kind);nav.append(b);}}
     if(!nav){document.querySelectorAll('.az-nav').forEach(el=>el.remove());if(overlay&&!overlay.hidden){overlay.hidden=true;overlay.querySelector('iframe').src='about:blank';}}
-    observer.observe(document.body,{childList:true,subtree:true,characterData:true});
+    observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['href']});
   }
   let queued=false;
   function schedule(){if(!queued){queued=true;requestAnimationFrame(()=>{queued=false;apply();});}}
   const observer=new MutationObserver(schedule);apply();checkOwner();
+  document.addEventListener('click',event=>{if(event.target.closest('.social a')){event.preventDefault();event.stopImmediatePropagation();}},true);
   // Recheck after login/logout; no background network polling.
   document.addEventListener('submit',()=>setTimeout(checkOwner,1000),true);
   document.addEventListener('click',event=>{if(event.target.closest('button[type="submit"],#gate-submit,#logout,[data-action="logout"]'))setTimeout(checkOwner,1000);},true);
   let hadNav=!!document.querySelector('.side-nav');new MutationObserver(()=>{const has=!!document.querySelector('.side-nav');if(has!==hadNav){hadNav=has;checkOwner();}}).observe(document.body,{childList:true,subtree:true});
 })();
-ALIREZA_BAB70C98D74AFF8A610D4E35
+ALIREZA_653D90EB5A1694CB0C391F68
 
 cat > "$APP/check-dns.mjs" <<'ALIREZA_937B0EB65E80D2549D02F37C'
 // SPDX-License-Identifier: GPL-3.0-or-later
@@ -683,6 +744,26 @@ for proto in udp tcp; do
 done
 printf 'Local service checks passed. External reachability and VPN client traffic require a client test.\n'
 ALIREZA_585469B65F55CD435B13A561
+
+cat > "$APP/compat-check.mjs" <<'ALIREZA_091F6DE7D95439A5BC9081BE'
+// Fail closed when an upstream release removes the integration contracts.
+import{readFileSync,existsSync,readdirSync}from'node:fs';import{resolve,join}from'node:path';import{pathToFileURL}from'node:url';import{spawnSync}from'node:child_process';
+const dir=resolve(process.argv[2]||'/opt/nova-node-agent'),pkg=JSON.parse(readFileSync(join(dir,'package.json'),'utf8'));
+if(pkg.name!=='nova-node-agent'||!/^\d+\.\d+\.\d+$/.test(pkg.version))throw Error('Unrecognized Nova package');
+const engine=String(pkg.engines?.node||''),minimum=engine.match(/^>=\s*(\d+)(?:\.(\d+))?(?:\.(\d+))?$/);
+const current=process.versions.node.split('.').map(Number),required=minimum?.slice(1).map(v=>Number(v||0));
+const firstDifference=required?.findIndex((v,i)=>v!==current[i]);
+if(!minimum||(firstDifference>=0&&required[firstDifference]>current[firstDifference]))throw Error('This release needs a different Node runtime; current panel retained');
+for(const file of ['bin/nova-agent.mjs','src/server.mjs','src/auth.mjs','src/kv/sqlite.mjs','src/web/panel.html'])if(!existsSync(join(dir,file)))throw Error('Missing integration file: '+file);
+const panel=readFileSync(join(dir,'src/web/panel.html'),'utf8');
+for(const token of ['side-nav','social','__NOVA_BASE__','Vazirmatn','data-theme="light"','--bg:','--shadow-card:'])if(!panel.includes(token))throw Error('Panel contract changed: '+token);
+const auth=await import(pathToFileURL(join(dir,'src/auth.mjs'))),server=await import(pathToFileURL(join(dir,'src/server.mjs')));
+for(const name of ['makeSession','resolveSession','readAuthCookie'])if(typeof auth[name]!=='function')throw Error('Authentication contract changed: '+name);
+if(typeof server.createServer!=='function')throw Error('HTTP server contract changed');
+process.env.ALIREZA_NOVA_PANEL=join(dir,'src/web/panel.html');const theme=await import('./theme.mjs');theme.fontCSS();theme.themeCSS();
+function syntax(path){for(const entry of readdirSync(path,{withFileTypes:true})){if(entry.name==='node_modules')continue;const file=join(path,entry.name);if(entry.isDirectory())syntax(file);else if(file.endsWith('.mjs')){const r=spawnSync(process.execPath,['--check',file],{timeout:15000,encoding:'utf8'});if(r.status!==0)throw Error('Syntax check failed: '+file);}}}
+syntax(join(dir,'src'));syntax(join(dir,'bin'));console.log('Nova '+pkg.version+': integration contracts, themes and JavaScript syntax PASS');
+ALIREZA_091F6DE7D95439A5BC9081BE
 
 cat > "$APP/dns-repair.py" <<'ALIREZA_9758260493588EA4B7BB2A6F'
 #!/usr/bin/python3
@@ -879,7 +960,7 @@ export function parseStatus(text) {
 }
 ALIREZA_432AFB97A4C3912B3644CBC4
 
-cat > "$APP/openvpn.html" <<'ALIREZA_2F88015A53409E5BC7A4783E'
+cat > "$APP/openvpn.html" <<'ALIREZA_766ADC50D917E11CBE4D9DDF'
 <!doctype html>
 <html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark light"><title>alirezaserver · OpenVPN</title>
 <style>
@@ -892,9 +973,11 @@ cat > "$APP/openvpn.html" <<'ALIREZA_2F88015A53409E5BC7A4783E'
 <p class="hint" data-t="note"></p>
 </main><dialog id="editor"><form id="form"><div class="card-head"><h2 id="edit-title"></h2><button type="button" class="close" aria-label="Close">✕</button></div><div class="dialog-body"><div class="form-grid" id="fields"></div><p class="hint" id="form-note"></p><p id="form-error" role="alert" style="color:#fb7185;white-space:pre-wrap"></p></div><div class="dialog-foot"><button type="button" class="close" data-t="cancel"></button><button type="submit" class="primary" data-t="save"></button></div></form></dialog>
 <dialog id="log-dialog"><div class="card-head"><h2 data-t="logs"></h2><button type="button" id="close-logs">✕</button></div><div class="dialog-body"><pre id="log-text"></pre></div></dialog>
+<dialog id="share-dialog"><div class="card-head"><h2>OpenVPN · لینک اشتراک</h2><button type="button" id="close-share">✕</button></div><div class="dialog-body"><p id="share-note"></p><label>Subscription URL<input id="share-url" readonly dir="ltr"></label><div class="actions"><button id="share-copy">کپی لینک / Copy</button><a id="share-open" target="_blank" rel="noreferrer">بازکردن / Open</a><button id="share-rotate">تعویض لینک / Rotate</button><button id="share-revoke" class="danger">لغو لینک / Revoke</button></div><p class="hint">دارندهٔ لینک به نام کاربری، رمز و کانفیگ‌های همین حساب دسترسی دارد.</p></div></dialog>
 <script>
 'use strict';
 const STR={fa:{intro:'مدیریت اتصال‌ها، حساب‌ها و فایل‌های اتصال OpenVPN',refresh:'تازه‌سازی',servers:'سرورهای OpenVPN',users:'حساب‌های OpenVPN',addServer:'＋ افزودن سرور',addUser:'＋ افزودن حساب',active:'فعال',inactive:'متوقف',online:'دستگاه آنلاین',traffic:'مصرف کل',name:'نام',transport:'انتقال',port:'پورت',status:'وضعیت',actions:'عملیات',edit:'ویرایش',remove:'حذف',profile:'فایل اتصال',logs:'گزارش',start:'فعال‌کردن',stop:'متوقف‌کردن',username:'نام کاربری',password:'رمز عبور',quota:'سهمیه (GB؛ صفر یعنی نامحدود)',expiry:'تاریخ انقضا؛ خالی یعنی نامحدود',devices:'حداکثر دستگاه هم‌زمان',used:'مصرف / سهمیه',reset:'صفرکردن مصرف',save:'ذخیره',cancel:'انصراف',empty:'هنوز موردی اضافه نشده است.',host:'آدرس عمومی سرور یا دامنه',subnet:'شبکه اختصاصی کاربران (/24)',dns:'آدرس DNS کاربران',mtu:'MTU',maxClients:'حداکثر اتصال سرور',tlsCrypt:'پنهان‌سازی کانال کنترل TLS-Crypt',clientToClient:'اجازه ارتباط کاربران با یکدیگر',enabled:'فعال',ciphers:'رمزنگاری‌های مجاز',choose:'انتخاب سرورهای مجاز',confirm:'این عملیات انجام شود؟',requiredServer:'ابتدا یک سرور OpenVPN بسازید.',note:'حساب‌های این بخش مستقل از حساب‌های قبلی پنل هستند. فایل اتصال را دریافت کنید و با نام کاربری و رمز عبور وارد شوید. سهمیه و انقضا برای همین اتصال‌های OpenVPN محاسبه می‌شوند.',serverNote:'برای تغییر سرور، اتصال‌های همان سرور دوباره برقرار می‌شوند. آدرس عمومی باید مستقیم به این سرور برسد. خروجی اینترنت IPv4 است و نشت IPv6 در پروفایل مسدود می‌شود.',userNote:'رمز عبور حداقل ۱۲ نویسه است. هنگام ویرایش، خالی بماند تا تغییر نکند. تغییر حساب اتصال‌های فعلی آن را قطع می‌کند.',working:'در حال انجام…',unlimited:'نامحدود'},en:{intro:'Manage OpenVPN connections, accounts and connection profiles',refresh:'Refresh',servers:'OpenVPN servers',users:'OpenVPN accounts',addServer:'＋ Add server',addUser:'＋ Add account',active:'Active',inactive:'Stopped',online:'Online devices',traffic:'Total traffic',name:'Name',transport:'Transport',port:'Port',status:'Status',actions:'Actions',edit:'Edit',remove:'Delete',profile:'Download profile',logs:'Logs',start:'Enable',stop:'Stop',username:'Username',password:'Password',quota:'Quota (GB; 0 = unlimited)',expiry:'Expiry date; blank = unlimited',devices:'Concurrent devices',used:'Used / quota',reset:'Reset usage',save:'Save',cancel:'Cancel',empty:'Nothing here yet.',host:'Public server address or hostname',subnet:'Private client network (/24)',dns:'Client DNS address',mtu:'MTU',maxClients:'Maximum server clients',tlsCrypt:'TLS-Crypt control-channel protection',clientToClient:'Allow clients to reach each other',enabled:'Enabled',ciphers:'Allowed ciphers',choose:'Allowed servers',confirm:'Proceed with this operation?',requiredServer:'Create an OpenVPN server first.',note:'These accounts are separate from existing panel accounts. Download the connection profile and sign in with the account username and password. Quotas and expiry apply to these OpenVPN connections.',serverNote:'Editing a server reconnects its clients. The public address must reach this server directly. Internet egress is IPv4; the profile blocks IPv6 leaks.',userNote:'Passwords need at least 12 characters. Leave blank when editing to keep the current password. Updating an account disconnects its current sessions.',working:'Working…',unlimited:'Unlimited'}};
+STR.fa.share='لینک اشتراک';STR.en.share='Subscription link';
 let lang=localStorage.getItem('alireza-lang')||'fa', data={servers:[],users:[],sessions:[]},editing=null,busy=false;
 const t=k=>STR[lang][k]||k, $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const base=location.pathname.replace(/openvpn\/$/,'');
@@ -905,7 +988,7 @@ function render(){document.documentElement.lang=lang;document.documentElement.di
   $('#stats').innerHTML=[[t('servers'),data.servers.length],[t('users'),data.users.length],[t('online'),data.sessions.length],[t('traffic'),bytes(data.users.reduce((n,u)=>n+u.used,0))]].map(([k,v])=>'<div class="stat"><span>'+esc(k)+'</span><strong>'+esc(v)+'</strong></div>').join('');
   const button=(kind,key,op,label,cls='')=>`<button class="${cls}" data-kind="${kind}" data-key="${key}" data-op="${op}">${esc(t(label))}</button>`;
   $('#servers').innerHTML=data.servers.length?`<table><thead><tr>${['name','transport','port','status','actions'].map(k=>'<th>'+t(k)+'</th>').join('')}</tr></thead><tbody>${data.servers.map(s=>`<tr><td><b>${esc(s.name)}</b><div class="hint mono">${esc(s.host)}</div></td><td>${esc(s.proto.toUpperCase())}</td><td class="mono">${s.port}</td><td><span class="badge ${s.status==='active'?'':'off'}">${t(s.status==='active'?'active':'inactive')}</span></td><td><div class="actions">${button('servers',s.id,'edit','edit')}${button('servers',s.id,'profile','profile')}${button('servers',s.id,'toggle',s.enabled?'stop':'start')}${button('servers',s.id,'logs','logs')}${button('servers',s.id,'delete','remove','danger')}</div></td></tr>`).join('')}</tbody></table>`:'<div class="empty">'+t('empty')+'</div>';
-  $('#users').innerHTML=data.users.length?`<table><thead><tr>${['username','servers','used','expiry','devices','status','actions'].map(k=>'<th>'+t(k)+'</th>').join('')}</tr></thead><tbody>${data.users.map(u=>{const active=u.enabled&&(!u.expiry||u.expiry>Date.now()/1000)&&(!u.quota||u.used<u.quota);return `<tr><td class="mono">${esc(u.username)}</td><td>${esc(u.serverIds.map(id=>data.servers.find(s=>s.id===id)?.name||id).join(', '))}</td><td>${esc(bytes(u.used))} / ${u.quota?esc(bytes(u.quota)):t('unlimited')}<div class="progress"><i style="width:${u.quota?Math.min(100,u.used/u.quota*100):0}%"></i></div></td><td>${u.expiry?esc(new Date(u.expiry*1000).toLocaleString(lang==='fa'?'fa-IR':'en-US')):'—'}</td><td>${data.sessions.filter(s=>s.name===u.username).length} / ${u.devices}</td><td><span class="badge ${active?'':'off'}">${t(active?'active':'inactive')}</span></td><td><div class="actions">${button('users',u.id,'edit','edit')}${button('users',u.id,'reset','reset')}${button('users',u.id,'delete','remove','danger')}</div></td></tr>`;}).join('')}</tbody></table>`:'<div class="empty">'+t('empty')+'</div>';
+  $('#users').innerHTML=data.users.length?`<table><thead><tr>${['username','servers','used','expiry','devices','status','actions'].map(k=>'<th>'+t(k)+'</th>').join('')}</tr></thead><tbody>${data.users.map(u=>{const active=u.enabled&&(!u.expiry||u.expiry>Date.now()/1000)&&(!u.quota||u.used<u.quota);return `<tr><td class="mono">${esc(u.username)}</td><td>${esc(u.serverIds.map(id=>data.servers.find(s=>s.id===id)?.name||id).join(', '))}</td><td>${esc(bytes(u.used))} / ${u.quota?esc(bytes(u.quota)):t('unlimited')}<div class="progress"><i style="width:${u.quota?Math.min(100,u.used/u.quota*100):0}%"></i></div></td><td>${u.expiry?esc(new Date(u.expiry*1000).toLocaleString(lang==='fa'?'fa-IR':'en-US')):'—'}</td><td>${data.sessions.filter(s=>s.name===u.username).length} / ${u.devices}</td><td><span class="badge ${active?'':'off'}">${t(active?'active':'inactive')}</span></td><td><div class="actions">${button('users',u.id,'edit','edit')}${button('users',u.id,'share','share')}${button('users',u.id,'reset','reset')}${button('users',u.id,'delete','remove','danger')}</div></td></tr>`;}).join('')}</tbody></table>`:'<div class="empty">'+t('empty')+'</div>';
 }
 async function refresh(){try{data=await api('status');render();message();}catch(e){message(e.message);}}
 function field(key,value,type='text',extra=''){return `<label>${esc(t(key))}<input name="${key}" type="${type}" value="${esc(value)}" ${extra}></label>`;}
@@ -920,13 +1003,18 @@ async function edit(kind,key){if(busy)return;if(kind==='users'&&!data.servers.le
 }
 $('#form').onsubmit=async e=>{e.preventDefault();if(busy)return;busy=true;const submit=e.submitter||e.target.querySelector('[type="submit"]');submit.disabled=true;const f=new FormData(e.target),o=Object.fromEntries(f);for(const k of ['enabled','tlsCrypt','clientToClient'])o[k]=f.has(k);o.ciphers=f.getAll('ciphers');o.serverIds=f.getAll('serverIds');o.quotaGB=o.quota;if(o.expiry)o.expiry=new Date(o.expiry).toISOString();try{await api(editing.kind+(editing.key?'/'+editing.key:''),editing.key?'PUT':'POST',o);$('#editor').close();await refresh();}catch(e){$('#form-error').textContent=e.message;}finally{busy=false;submit.disabled=false;}};
 document.querySelectorAll('.close').forEach(b=>b.onclick=()=>{if(!busy)$('#editor').close();});$('#close-logs').onclick=()=>$('#log-dialog').close();
-document.body.addEventListener('click',async e=>{const b=e.target.closest('[data-op]');if(!b||busy)return;const{kind,key,op}=b.dataset;if(op==='edit'){edit(kind,key);return;}if(op==='profile'){const a=document.createElement('a');a.href=base+'api/servers/'+key+'/profile';a.download='alirezaserver.ovpn';a.click();return;}if(op!=='logs'&&!confirm(t('confirm')))return;busy=true;b.disabled=true;try{if(op==='logs'){$('#log-text').textContent=(await api('servers/'+key+'/logs')).logs;$('#log-dialog').showModal();}else{await api(kind+'/'+key+(op==='delete'?'':'/'+op),op==='delete'?'DELETE':'POST',{});await refresh();}}catch(e){message(e.message);}finally{busy=false;b.disabled=false;}});
+document.body.addEventListener('click',async e=>{const b=e.target.closest('[data-op]');if(!b||busy)return;const{kind,key,op}=b.dataset;if(op==='share'){showShare(key);return;}if(op==='edit'){edit(kind,key);return;}if(op==='profile'){const a=document.createElement('a');a.href=base+'api/servers/'+key+'/profile';a.download='alirezaserver.ovpn';a.click();return;}if(op!=='logs'&&!confirm(t('confirm')))return;busy=true;b.disabled=true;try{if(op==='logs'){$('#log-text').textContent=(await api('servers/'+key+'/logs')).logs;$('#log-dialog').showModal();}else{await api(kind+'/'+key+(op==='delete'?'':'/'+op),op==='delete'?'DELETE':'POST',{});await refresh();}}catch(e){message(e.message);}finally{busy=false;b.disabled=false;}});
 $('#add-server').onclick=()=>edit('servers');$('#add-user').onclick=()=>edit('users');$('#refresh').onclick=refresh;$('#lang').onclick=()=>{lang=lang==='fa'?'en':'fa';localStorage.setItem('alireza-lang',lang);render();};
-render();refresh();setInterval(()=>{if(!document.hidden&&!busy&&!$('#editor').open&&!$('#log-dialog').open)refresh();},15000);
+let shareUser=null;
+async function showShare(uid){try{const info=await api('users/'+uid+'/share');shareUser=uid;const url=info.token?location.origin+'/alireza-sub/'+info.token+'/':'';$('#share-url').value=url;$('#share-open').href=url||'#';$('#share-open').hidden=!url;$('#share-copy').disabled=!url;$('#share-rotate').disabled=info.needsPassword;$('#share-revoke').disabled=!url;$('#share-note').textContent=info.needsPassword?(lang==='fa'?'برای نمایش رمز حساب قدیمی، ابتدا از ویرایش حساب یک رمز جدید تعیین کنید.':'Set a new password for this existing account first.'):(url?(lang==='fa'?'این لینک را به صاحب همین حساب بدهید.':'Share this link with this account owner.'):(lang==='fa'?'لینک لغو شده است؛ برای فعال‌کردن دوباره، تعویض لینک را بزنید.':'Link revoked. Rotate to enable a new link.'));if(!$('#share-dialog').open)$('#share-dialog').showModal();}catch(e){message(e.message);}}
+$('#close-share').onclick=()=>$('#share-dialog').close();
+$('#share-copy').onclick=async()=>{try{await navigator.clipboard.writeText($('#share-url').value);$('#share-note').textContent=lang==='fa'?'لینک کپی شد':'Link copied';}catch{$('#share-url').select();}};
+for(const action of ['rotate','revoke'])$('#share-'+action).onclick=async()=>{if(!confirm(lang==='fa'?'لینک قبلی بلافاصله از کار می‌افتد. ادامه می‌دهید؟':'The old link will stop working immediately. Continue?'))return;try{await api('users/'+shareUser+'/share/'+action,'POST',{});await showShare(shareUser);}catch(e){$('#share-note').textContent=e.message;}};
+render();refresh();setInterval(()=>{if(!document.hidden&&!busy&&!$('#editor').open&&!$('#log-dialog').open&&!$('#share-dialog').open)refresh();},15000);
 </script></body></html>
-ALIREZA_2F88015A53409E5BC7A4783E
+ALIREZA_766ADC50D917E11CBE4D9DDF
 
-cat > "$APP/preload.mjs" <<'ALIREZA_F1DEF3F57E5BD2D2DB009F40'
+cat > "$APP/preload.mjs" <<'ALIREZA_2CEC2E77E74D9FA9971562EC'
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Loaded only into Nova's existing Node process. Original Nova files are unmodified.
 import http from 'node:http';
@@ -935,7 +1023,9 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import * as backend from './backend.mjs';
-import {fontCSS,dnsStatusForPanel} from './theme.mjs';
+import {fontCSS,themeCSS,dnsStatusForPanel} from './theme.mjs';
+import {shareHTTP} from './share-http.mjs';
+import './update-hook.mjs';
 const HERE=dirname(fileURLToPath(import.meta.url));
 const previous=http.Server.prototype.emit;
 let readonly;
@@ -1045,9 +1135,15 @@ async function handle(req,res,base,tail) {
   if(auth.role!=='owner'){json(res,403,{error:'These services are available to the panel owner.'});return;}
   if(!['GET','HEAD'].includes(req.method)&&!sameOrigin(req)){json(res,403,{error:'Same-origin request required'});return;}
   if(tail==='assets/font.css'&&req.method==='GET'){res.writeHead(200,{'content-type':'text/css; charset=utf-8','cache-control':'private, max-age=86400'});res.end(fontCSS());return;}
-  if(tail==='assets/theme.css'&&req.method==='GET'){file(res,'theme.css','text/css; charset=utf-8');return;}
+  if(tail==='assets/theme.css'&&req.method==='GET'){res.writeHead(200,{'content-type':'text/css; charset=utf-8','cache-control':'no-store'});res.end(themeCSS());return;}
   if(tail==='assets/theme.js'&&req.method==='GET'){file(res,'theme.js','text/javascript; charset=utf-8');return;}
   if(tail==='api/server-defaults'&&req.method==='GET'){json(res,200,await backend.serverDefaults());return;}
+  const share=tail.match(/^api\/users\/([a-f0-9]{12})\/share(?:\/(rotate|revoke))?$/);
+  if(share){
+    if(req.method==='GET'&&!share[2]){json(res,200,backend.shareInfo(share[1]));return;}
+    if(req.method==='POST'&&share[2]){json(res,200,await serialized(()=>backend.rotateShare(share[1],share[2]==='revoke')));return;}
+    json(res,405,{error:'Method not allowed'});return;
+  }
   if(tail==='openvpn/'&&req.method==='GET'){file(res,'openvpn.html','text/html; charset=utf-8');return;}
   if(tail.startsWith('dns/')){adguard(req,res,tail.slice(4),base+'/alireza/dns/');return;}
   if(tail==='api/status'&&req.method==='GET'){json(res,200,await backend.status());return;}
@@ -1071,7 +1167,7 @@ async function handle(req,res,base,tail) {
 if(process.env.ALIREZA_NO_HOOK!=='1') {
   http.Server.prototype.emit=function(event,...args) {
     if(event!=='request')return previous.call(this,event,...args);
-    const[req,res]=args;const base=basePath();
+    const[req,res]=args;if(shareHTTP(req,res))return true;const base=basePath();
     if(base!==null&&req.url?.startsWith(base+'/alireza/')) {
       // Reject ambiguous URL spellings instead of passing them to another handler.
       const tail=req.url.slice((base+'/alireza/').length);
@@ -1082,7 +1178,7 @@ if(process.env.ALIREZA_NO_HOOK!=='1') {
   };
   backend.startCollector();
 }
-ALIREZA_F1DEF3F57E5BD2D2DB009F40
+ALIREZA_2CEC2E77E74D9FA9971562EC
 
 cat > "$APP/reset-sessions.py" <<'ALIREZA_9D3D2A690AE74AB0156A9F9F'
 #!/usr/bin/python3
@@ -1097,11 +1193,13 @@ for name in ['status.log','management.sock','openvpn.pid']:
     except FileNotFoundError:pass
 ALIREZA_9D3D2A690AE74AB0156A9F9F
 
-cat > "$APP/rollback.sh" <<'ALIREZA_5268350BD706A64686202416'
+cat > "$APP/rollback.sh" <<'ALIREZA_4FEA9F087DEBF8260202EFC1'
 #!/usr/bin/env bash
 # Disable only alirezaserver additions. Keep user databases/certificates for recovery.
 set -euo pipefail
 [[ $EUID == 0 ]] || { echo 'Run as root.' >&2; exit 1; }
+systemctl disable --now alireza-update.timer || true
+systemctl stop alireza-update.service || true
 systemctl list-unit-files 'alireza-openvpn@*.service' --no-legend | while read -r unit _; do
   if [[ "$unit" =~ ^alireza-openvpn@[a-f0-9]{12}\.service$ ]]; then systemctl disable --now "$unit" || true; fi
 done
@@ -1114,9 +1212,62 @@ systemctl daemon-reload
 if systemctl cat nova-agent.service >/dev/null 2>&1; then systemctl restart nova-agent.service
 elif systemctl cat nova-node-agent.service >/dev/null 2>&1; then systemctl restart nova-node-agent.service; fi
 echo 'alirezaserver add-ons disabled; original Nova files and add-on data preserved.'
-ALIREZA_5268350BD706A64686202416
+ALIREZA_4FEA9F087DEBF8260202EFC1
 
-cat > "$APP/theme.css" <<'ALIREZA_795FE37FD4E8B8A4BF11F9F8'
+cat > "$APP/share-http.mjs" <<'ALIREZA_EE2C49E550F5F1E16A7BEAB9'
+// SPDX-License-Identifier: GPL-3.0-or-later
+import{readFileSync}from'node:fs';import{subscription,subscriptionProfile}from'./backend.mjs';import{fontCSS,themeCSS}from'./theme.mjs';
+const limits=new Map();
+export function shareHTTP(req,res){
+  if(!req.url?.startsWith('/alireza-sub/'))return false;
+  const headers={'cache-control':'no-store, private','referrer-policy':'no-referrer','x-content-type-options':'nosniff','x-frame-options':'DENY','content-security-policy':"default-src 'self'; font-src 'self' data:; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",'x-robots-tag':'noindex, nofollow, noarchive'};
+  const send=(code,body,type='text/plain; charset=utf-8')=>{res.writeHead(code,{...headers,'content-type':type});res.end(req.method==='HEAD'?'':body);};
+  try{
+    if(!['GET','HEAD'].includes(req.method)){send(405,'Method not allowed');return true;}
+    const partToken=req.url.split('/')[2]||'',ip=(req.socket.remoteAddress||'unknown')+'|'+(/^[A-Za-z0-9_-]{43}$/.test(partToken)?partToken:'invalid'),now=Date.now(),bucket=limits.get(ip);
+    if(!bucket||now-bucket.at>60000){if(limits.size>=1024)limits.delete(limits.keys().next().value);limits.set(ip,{at:now,n:1});}else if(++bucket.n>180){send(429,'Please retry later');return true;}
+    const m=req.url.split('?')[0].match(/^\/alireza-sub\/([A-Za-z0-9_-]{43})(?:\/(.*))?$/);
+    if(!m){send(404,'Not found');return true;}
+    const data=subscription(m[1]),part=m[2];
+    if(part===undefined){res.writeHead(302,{...headers,location:'/alireza-sub/'+m[1]+'/'});res.end();return true;}
+    const file=(name,type)=>send(200,readFileSync(new URL(name,import.meta.url)),type);
+    if(part==='')file('share.html','text/html; charset=utf-8');
+    else if(part==='data')send(200,JSON.stringify(data),'application/json; charset=utf-8');
+    else if(part==='font.css')send(200,fontCSS(),'text/css; charset=utf-8');
+    else if(part==='theme.css')send(200,themeCSS(),'text/css; charset=utf-8');
+    else if(part==='share.css')file(part,'text/css; charset=utf-8');
+    else if(['theme.js','share.js'].includes(part))file(part,'text/javascript; charset=utf-8');
+    else if(/^profile\/[a-f0-9]{12}\.ovpn$/.test(part)){const sid=part.slice(8,-5);headers['content-disposition']='attachment; filename="alirezaserver-'+sid+'.ovpn"';send(200,subscriptionProfile(m[1],sid),'application/x-openvpn-profile');}
+    else send(404,'Not found');
+  }catch(e){send(e.status||503,e.status===404?'Subscription unavailable':'Subscription temporarily unavailable');}
+  return true;
+}
+ALIREZA_EE2C49E550F5F1E16A7BEAB9
+
+cat > "$APP/share.css" <<'ALIREZA_5F4531923EF573BEE5001CD5'
+*{box-sizing:border-box}body{margin:0;font-family:Vazirmatn,Tahoma,sans-serif}main{max-width:880px;margin:auto;padding:36px 20px}header{display:flex;gap:18px;align-items:center}header>div:nth-child(2){flex:1}.mark{width:58px;height:58px;display:grid;place-items:center;border-radius:16px;background:var(--az-grad);font-size:36px;font-weight:900;color:white}small{color:var(--az-ac);letter-spacing:2px}h1{font-size:28px;margin:6px 0}h2{font-size:18px}.card{padding:24px;margin-top:24px;border:1px solid var(--az-bd)}p{line-height:1.9;color:var(--az-tx2)}label{display:grid;gap:8px;margin:18px 0 10px}input{font:inherit;padding:14px;width:100%;border:1px solid var(--az-bd2)}button,.download{font:inherit;padding:10px 16px;border:1px solid var(--az-bd2);cursor:pointer;background:var(--az-panel);color:var(--az-tx);text-decoration:none;display:inline-block;border-radius:10px}.download{background:var(--az-grad);color:white!important}.profile{border-top:1px solid var(--az-bd);padding:18px 0;display:flex;justify-content:space-between;align-items:center;gap:15px}.profile p{margin:6px 0;font-size:13px;direction:ltr}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:25px}.stat{padding:18px;border:1px solid var(--az-bd)}.stat b{display:block;margin-top:10px}.hint,footer{font-size:12px;color:var(--az-mu)}footer{text-align:center;padding:32px}#error{color:var(--az-dg);line-height:1.9}#notice{color:var(--az-ok)}@media(max-width:520px){.stats{grid-template-columns:1fr}.profile{flex-wrap:wrap}h1{font-size:22px}header{flex-wrap:wrap}}
+.stat:first-child b{direction:ltr;unicode-bidi:isolate;text-align:right}
+ALIREZA_5F4531923EF573BEE5001CD5
+
+cat > "$APP/share.html" <<'ALIREZA_0651EAED2D4CF0F433CB1D1E'
+<!doctype html><html lang="fa" dir="rtl" data-alireza-surface="subscription"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>alirezaserver · OpenVPN</title><link rel="stylesheet" href="font.css"><link rel="stylesheet" href="theme.css"><link rel="stylesheet" href="share.css"><script src="theme.js" defer></script><script src="share.js" defer></script></head><body><main><header><div class="mark">A</div><div><small>ALIREZASERVER</small><h1>اشتراک OpenVPN</h1></div><button id="theme" type="button">روشن / تیره</button></header><p>اطلاعات ورود و فایل اتصال اختصاصی شما</p><div id="error" role="alert"></div><section id="account" hidden><div class="stats" id="stats"></div><section class="card"><h2>اطلاعات ورود</h2><p class="hint">این لینک حاوی رمز شماست؛ آن را فقط روی دستگاه خودتان باز کنید.</p><label>نام کاربری<input id="username" readonly dir="ltr"></label><button data-copy="username">کپی نام کاربری</button><label>رمز عبور<input id="password" readonly dir="ltr"></label><button data-copy="password">کپی رمز عبور</button><p id="notice" role="status"></p></section><section class="card"><h2>دانلود کانفیگ</h2><p>فایل سرور دلخواه را دانلود و در برنامه OpenVPN وارد کنید؛ سپس نام کاربری و رمز بالا را وارد کنید.</p><div id="profiles"></div></section></section><footer>alirezaserver · OpenVPN</footer></main></body></html>
+ALIREZA_0651EAED2D4CF0F433CB1D1E
+
+cat > "$APP/share.js" <<'ALIREZA_0173A7761B349ADFE2C0C79F'
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+(()=>{'use strict';const $=s=>document.querySelector(s),text=(tag,value,cls)=>{const el=document.createElement(tag);el.textContent=value;if(cls)el.className=cls;return el;};
+$('#theme').onclick=()=>{document.documentElement.dataset.theme=document.documentElement.dataset.azTheme==='light'?'dark':'light';document.dispatchEvent(new Event('alireza-theme'));};
+document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{const input=document.getElementById(b.dataset.copy);try{await navigator.clipboard.writeText(input.value);$('#notice').textContent='کپی شد';}catch{input.focus();input.select();$('#notice').textContent='متن انتخاب شد؛ آن را کپی کنید.';}});
+fetch('data',{cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'}).then(async r=>{if(!r.ok)throw Error('این لینک معتبر نیست یا حساب غیرفعال، منقضی یا تمام‌شده است. با مدیر سرویس تماس بگیرید.');return r.json();}).then(data=>{
+  $('#username').value=data.username;$('#password').value=data.password;
+  for(const [title,value]of[['مصرف / سهمیه',(data.used/1e9).toFixed(2)+' / '+(data.quota?(data.quota/1e9).toFixed(2):'∞')+' GB'],['انقضا',data.expiry?new Date(data.expiry*1000).toLocaleDateString('fa-IR'):'نامحدود'],['دستگاه هم‌زمان',data.devices]]){const box=text('div',title,'stat');box.append(text('b',value));$('#stats').append(box);}
+  for(const s of data.servers){const row=text('div','','profile'),info=text('div',''),a=text('a','دانلود کانفیگ','download primary');info.append(text('b',s.name),text('p',s.host+':'+s.port+' · '+s.proto.toUpperCase()));a.href='profile/'+s.id+'.ovpn';a.download='alirezaserver-'+s.id+'.ovpn';row.append(info,a);$('#profiles').append(row);}
+  if(!data.servers.length)$('#profiles').append(text('p','در حال حاضر سرور فعالی به این حساب اختصاص ندارد.'));$('#account').hidden=false;
+}).catch(e=>$('#error').textContent=e.message);
+})();
+ALIREZA_0173A7761B349ADFE2C0C79F
+
+cat > "$APP/theme.css" <<'ALIREZA_6FE1C12B83F21D174E35C791'
 /* SPDX-License-Identifier: GPL-3.0-or-later
    Shared appearance only. No positioning, ordering or control removal in AdGuard. */
 :root{--az-bg:#070809;--az-panel:#0c0e12;--az-card:#101319;--az-card2:#0b0d11;--az-bd:#1c2027;--az-bd2:#262b34;--az-tx:#e9edf4;--az-tx2:#aeb6c4;--az-mu:#7c8698;--az-ac:#22d3ee;--az-ac2:#7c5cff;--az-ac-ink:#04121a;--az-grad:linear-gradient(120deg,#22d3ee,#7c5cff);--az-ok:#34d399;--az-dg:#f87171}
@@ -1145,18 +1296,46 @@ html[data-alireza-surface] dialog::backdrop{background:#0009;backdrop-filter:blu
 html[data-alireza-surface] :is(.alert-danger,#message){background:color-mix(in srgb,var(--az-dg) 12%,var(--az-card))!important;color:var(--az-tx)!important;border-color:color-mix(in srgb,var(--az-dg) 45%,var(--az-bd))!important}
 html[data-alireza-surface] .az-connection{padding:12px 18px;margin:12px 0;border:1px solid var(--az-bd2);border-radius:12px;background:var(--az-panel);line-height:1.9}
 @media(prefers-reduced-motion:reduce){html[data-alireza-surface] *{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
-ALIREZA_795FE37FD4E8B8A4BF11F9F8
+/* Read the current Nova tokens at runtime: surface geometry stays AdGuard's. */
+html[data-alireza-surface] :is(.card,.stat){box-shadow:var(--az-shadow-card)!important}
+html[data-alireza-surface] :is(.card,.stat):hover{box-shadow:var(--az-shadow-card-hover)!important}
+html[data-alireza-surface] :is(.modal-content,dialog,.dropdown-menu,.popover){box-shadow:var(--az-shadow-pop)!important}
+html[data-alireza-surface] :is(input,select,textarea):focus{box-shadow:var(--az-ring)!important}
+html[data-alireza-surface] :is(.btn-success,.btn-info,.btn-outline-primary){color:var(--az-ac)!important;background:var(--az-card2)!important;border-color:var(--az-ac)!important}
+html[data-alireza-surface] :is(.btn-danger,.text-danger,.badge-danger){color:var(--az-dg)!important}
+html[data-alireza-surface] :is(.badge-success,.text-success){color:var(--az-ok)!important}
+html[data-alireza-surface] :is(.alert,.list-group-item,.pagination .page-link,.custom-select,.custom-file-label,.ReactTable .-pagination,.rt-noData){background:var(--az-panel)!important;color:var(--az-tx)!important;border-color:var(--az-bd)!important}
+html[data-alireza-surface] :is(.dropdown-item,.nav-link):hover{background:color-mix(in srgb,var(--az-ac) 10%,var(--az-card))!important}
+html[data-alireza-surface] :is(.text-muted,.form-text,.rt-resizable-header-content,.pagination-info){color:var(--az-mu)!important}
+html[data-alireza-surface] :is(.tooltip-inner,.toast,.ReactTable .rt-noData){background:var(--az-surface-3)!important;color:var(--az-tx)!important}
+html[data-alireza-surface] :is(.btn-primary,.primary):hover{filter:brightness(1.08)}
+html[data-alireza-surface] :is(button,.btn):focus-visible{outline:none;box-shadow:var(--az-ring)!important}
+html[data-alireza-surface="dns"] body{
+ --bgcolor:var(--az-bg)!important;--header-bgcolor:var(--az-panel)!important;--card-bgcolor:var(--az-card)!important;--card-border-color:var(--az-bd)!important;--border-color:var(--az-bd)!important;
+ --mcolor:var(--az-tx)!important;--scolor:var(--az-tx2)!important;--black:var(--az-tx)!important;--detailed-info-color:var(--az-tx)!important;--logs__text-color:var(--az-tx)!important;
+ --ctrl-bgcolor:var(--az-card2)!important;--ctrl-select-bgcolor:var(--az-card2)!important;--ctrl-dropdown-color:var(--az-tx)!important;--ctrl-dropdown-color-focus:var(--az-tx)!important;--ctrl-dropdown-bgcolor-focus:var(--az-surface-3)!important;
+ --logs__table-bgcolor:var(--az-card)!important;--logs__row--white-bgcolor:var(--az-card)!important;--logs__row--blue-bgcolor:var(--az-ac-soft)!important;
+ --loading-bg:var(--az-panel)!important;--rt-nodata-bgcolor:var(--az-card)!important;--rt-nodata-color:var(--az-mu)!important;
+ --form-disabled-color:var(--az-mu)!important;--form-disabled-bgcolor:var(--az-surface-3)!important;--alert-message-bg:var(--az-surface-2)!important;--alert-message-border:var(--az-bd2)!important;--alert-message-color:var(--az-tx)!important;
+ --checkbox-bg:var(--az-bd2)!important;--radio-bg:var(--az-bd2)!important;--btn-success-bgcolor:var(--az-ac)!important;--green:var(--az-ok)!important;--success:var(--az-ok)!important;--danger:var(--az-dg)!important;--warning:var(--az-wn)!important;
+}
+html[data-alireza-surface="dns"] :is(.header-brand-img,.header-brand-img path){fill:var(--az-tx)!important}
+html[data-alireza-surface="dns"] .stats-card__value{color:var(--az-tx)!important}
+html[data-alireza-surface="dns"] :is(.header__column,.header__row,.header__container){background-color:var(--az-panel)!important}
+html[data-alireza-surface="dns"] .header-brand-img{filter:none!important} html[data-alireza-surface="dns"] body .card a,html[data-alireza-surface="dns"] body .card a span{color:var(--az-ac)!important}
+html[data-alireza-surface="dns"] body .logs__text{color:var(--az-tx)!important} html[data-alireza-surface="dns"] body .logs__text--link{color:var(--az-ac)!important}
+ALIREZA_6FE1C12B83F21D174E35C791
 
-cat > "$APP/theme.js" <<'ALIREZA_61592532497513AA58EFACF7'
+cat > "$APP/theme.js" <<'ALIREZA_019B3CDF9638C016F5D1715D'
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 (()=>{
   const root=document.documentElement;
   root.dataset.alirezaSurface=document.currentScript?.dataset.surface||'dns';
   function sync(){
     try{
-      if(parent===window)return;
+      if(parent===window){const light=root.dataset.theme==='light'||(root.dataset.theme!=='dark'&&matchMedia('(prefers-color-scheme: light)').matches);root.style.colorScheme=light?'light':'dark';root.dataset.azTheme=light?'light':'dark';return;}
       const host=parent.document.documentElement,css=parent.getComputedStyle(host);
-      for(const token of ['bg','panel','card','card2','bd','bd2','tx','tx2','mu','ac','ac2','ac-ink','ac-hover','grad','ok','wn','dg']){
+      for(const token of ['bg','panel','card','card2','bd','bd2','tx','tx2','mu','ac','ac2','ac-ink','ac-hover','grad','ok','wn','dg','surface-1','surface-2','surface-3','input-bg','ring','shadow-pop','shadow-card','shadow-card-hover','r-xs','r-sm','r-md','r-lg']){
         const value=css.getPropertyValue('--'+token).trim();if(value)root.style.setProperty('--az-'+token,value);
       }
       const light=host.dataset.theme==='light'||(host.dataset.theme!=='dark'&&parent.matchMedia('(prefers-color-scheme: light)').matches);
@@ -1164,17 +1343,26 @@ cat > "$APP/theme.js" <<'ALIREZA_61592532497513AA58EFACF7'
     }catch{}
   }
   sync();
-  try{new MutationObserver(sync).observe(parent.document.documentElement,{attributes:true,attributeFilter:['data-theme','class','style']});}catch{}
+  try{if(parent!==window)new MutationObserver(sync).observe(parent.document.documentElement,{attributes:true,attributeFilter:['data-theme','class','style']});}catch{}
   matchMedia('(prefers-color-scheme: light)').addEventListener('change',sync);
+  document.addEventListener('alireza-theme',sync);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync();});
 })();
-ALIREZA_61592532497513AA58EFACF7
+ALIREZA_019B3CDF9638C016F5D1715D
 
-cat > "$APP/theme.mjs" <<'ALIREZA_65D697BEB11FB9F040BF8499'
+cat > "$APP/theme.mjs" <<'ALIREZA_54D05111408D1BDCA9A8EB9E'
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Reuse the installed Nova font without changing or copying its original files.
 import{readFileSync}from'node:fs';
 import{isIP}from'node:net';
+export function themeCSS(){
+  const panel=readFileSync(process.env.ALIREZA_NOVA_PANEL||'/opt/nova-node-agent/src/web/panel.html','utf8');
+  const blocks=[...panel.matchAll(/(:root|html\[data-theme="light"\])\s*\{([^}]+)\}/g)];
+  const declarations=body=>[...body.matchAll(/(--[a-zA-Z0-9-]+)\s*:\s*([^;]+);/g)].map(m=>(m[1]+':'+m[2]+';').replace(/--(?!az-)/g,'--az-')).join('');
+  const dark=blocks.find(m=>m[1]===':root'),light=blocks.find(m=>m[1].includes('light'));
+  if(!dark||!light)throw Error('Nova theme contract changed; update requires compatibility review');
+  return readFileSync(new URL('theme.css',import.meta.url),'utf8')+'\n:root{'+declarations(dark[2])+'}\nhtml[data-az-theme="light"]{'+declarations(light[2])+'}\n';
+}
 let cached;
 export function fontCSS(){
   if(cached)return cached;
@@ -1193,9 +1381,231 @@ export function dnsStatusForPanel(status,publicHost){
   if(isIP(publicHost||'')===4&&usable(publicHost))addresses.unshift(publicHost);
   result.dns_addresses=[...new Set(addresses)];return result;
 }
-ALIREZA_65D697BEB11FB9F040BF8499
+ALIREZA_54D05111408D1BDCA9A8EB9E
 
-cat > "$APP/verify-install.mjs" <<'ALIREZA_81984B06A9A160437D03A905'
+cat > "$APP/update-hook.mjs" <<'ALIREZA_FA5BB14348393917E6E13087'
+// Keep Nova's own update button/automation on the guarded system service.
+import childProcess from 'node:child_process';import{syncBuiltinESMExports}from'node:module';
+export function guardedSpawn(spawn){return function(command,args,options){
+  if(command==='bash'&&Array.isArray(args)&&args[0]==='-c'&&args[2]==='nova-self-update')return spawn.call(this,'systemctl',['start','--no-block','alireza-update.service'],options);
+  return spawn.apply(this,arguments);
+};}
+if(process.platform==='linux'&&process.env.ALIREZA_NO_HOOK!=='1'){
+  const spawn=childProcess.spawn;
+  childProcess.spawn=guardedSpawn(spawn);
+  syncBuiltinESMExports();
+}
+ALIREZA_FA5BB14348393917E6E13087
+
+cat > "$APP/update.py" <<'ALIREZA_633830E0BEEBAF6D0CF79E69'
+#!/usr/bin/python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Official Nova update transaction. Add-on files and VPN/DNS data are separate.
+Run by a systemd service, outside the Nova service's read-only code mount.
+"""
+import datetime, hashlib, json, os, pathlib, re, shutil, signal, subprocess, sys, tarfile, tempfile, time, urllib.request
+ROOT=pathlib.Path('/var/lib/alirezaserver')
+APP=pathlib.Path('/opt/alirezaserver')
+NOVA=pathlib.Path('/opt/nova-node-agent')
+BACKUPS=pathlib.Path('/var/backups/alirezaserver-updates')
+DATA=[pathlib.Path(p) for p in ['/var/lib/nova','/etc/nova','/etc/xray','/etc/sing-box']]
+JOURNAL=ROOT/'update-pending.json'
+SOURCE=ROOT/'nova-source.json'
+STATE=ROOT/'update-status.json'
+NATIVE=pathlib.Path('/opt/nova-update-status')
+class RejectedUpdate(RuntimeError):pass
+
+def write_json(path,value):
+    path.parent.mkdir(parents=True,exist_ok=True)
+    tmp=path.with_name(path.name+'.new')
+    with open(tmp,'w',encoding='utf-8') as f:json.dump(value,f);f.flush();os.fsync(f.fileno())
+    os.chmod(tmp,0o600);os.replace(tmp,path)
+def read_json(path,default=None):
+    try:return json.loads(path.read_text())
+    except FileNotFoundError:return default
+def status(ok,stage,**extra):
+    value={'ok':ok,'stage':stage,'at':int(time.time()*1000),**extra}
+    write_json(STATE,value);write_json(NATIVE,value);print(stage,extra.get('message',''),flush=True)
+def run(args,timeout=180):
+    try:return subprocess.run([str(a) for a in args],check=True,timeout=timeout,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True).stdout
+    except subprocess.CalledProcessError as e:raise RuntimeError(str(args[0])+': '+(e.stdout or str(e))[-1800:]) from e
+class HTTPSOnly(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self,req,fp,code,msg,headers,url):
+        if not url.startswith('https://'):raise RuntimeError('Non-HTTPS release redirect rejected')
+        return super().redirect_request(req,fp,code,msg,headers,url)
+def download(url,dest,limit=128*1024*1024):
+    if not url.startswith('https://'):raise RuntimeError('HTTPS required')
+    req=urllib.request.Request(url,headers={'User-Agent':'alirezaserver-update/0.4','Accept':'application/vnd.github+json' if 'api.github.com' in url else '*/*'})
+    with urllib.request.build_opener(HTTPSOnly).open(req,timeout=45) as r,open(dest,'wb') as f:
+        total=0
+        while True:
+            data=r.read(65536)
+            if not data:break
+            total+=len(data)
+            if total>limit:raise RuntimeError('Release exceeds download limit')
+            f.write(data)
+def safe_extract(archive,dest):
+    with tarfile.open(archive,'r:gz') as tar:
+        members=tar.getmembers()
+        if len(members)>20000 or sum(m.size for m in members)>256*1024*1024:raise RuntimeError('Release exceeds unpacking limits')
+        for member in members:
+            p=pathlib.PurePosixPath(member.name)
+            if p.is_absolute() or '..' in p.parts or '\\' in member.name or not(member.isfile() or member.isdir()):raise RuntimeError('Unsafe archive entry: '+member.name)
+        for member in members:
+            target=dest.joinpath(*pathlib.PurePosixPath(member.name).parts)
+            if member.isdir():target.mkdir(parents=True,exist_ok=True)
+            else:
+                target.parent.mkdir(parents=True,exist_ok=True)
+                with tar.extractfile(member) as src,open(target,'wb') as out:shutil.copyfileobj(src,out)
+                os.chmod(target,0o755 if member.mode&0o111 else 0o644)
+def tree_size(path):return sum(p.stat().st_size for p in path.rglob('*') if p.is_file() and not p.is_symlink()) if path.exists() else 0
+def copy_tree(src,dst):shutil.copytree(src,dst,symlinks=True)
+def restore(journal):
+    backup=pathlib.Path(journal['backup']).resolve()
+    if backup.parent!=BACKUPS.resolve() or not (backup/'nova/package.json').is_file():raise RuntimeError('Invalid rollback snapshot')
+    # Only restore fixed, locally owned paths, never pathnames from the network.
+    replacement=NOVA.with_name('.alireza-restore')
+    if replacement.exists():shutil.rmtree(replacement)
+    copy_tree(backup/'nova',replacement)
+    failed=NOVA.with_name('.alireza-failed')
+    if failed.exists():shutil.rmtree(failed)
+    if NOVA.exists():os.replace(NOVA,failed)
+    os.replace(replacement,NOVA)
+    for index,path in enumerate(DATA):
+        snap=backup/('data-'+str(index))
+        if path.exists():shutil.rmtree(path)
+        if snap.exists():copy_tree(snap,path)
+    old_source=read_json(backup/'source.json')
+    if old_source is not None:write_json(SOURCE,old_source)
+    elif SOURCE.exists():SOURCE.unlink()
+    if failed.exists():shutil.rmtree(failed)
+    old=NOVA.with_name('.alireza-previous')
+    if old.exists():shutil.rmtree(old)
+def health():
+    run(['systemctl','is-active','--quiet','nova-agent.service'])
+    return run(['node',APP/'verify-install.mjs'],timeout=100)
+def retry_health():
+    error=None
+    for _ in range(8):
+        try:return health()
+        except Exception as e:error=e;time.sleep(3)
+    raise RuntimeError('Post-update panel/add-on checks failed') from error
+def activate(candidate,meta):
+    if any(p.is_symlink() for p in [NOVA,*DATA]):raise RuntimeError('Custom symlink layout requires an explicit backup adapter; live installation retained')
+    env=pathlib.Path('/etc/nova/agent.env')
+    if env.exists():
+        for line in env.read_text().splitlines():
+            if line.startswith('NOVA_DB='):
+                db=pathlib.Path(line.split('=',1)[1].strip().strip('\"\''))
+                if not db.resolve().is_relative_to(DATA[0].resolve()):raise RuntimeError('Custom Nova database location is outside the rollback snapshot; live installation retained')
+    BACKUPS.mkdir(parents=True,exist_ok=True,mode=0o700)
+    required=(tree_size(NOVA)+sum(tree_size(p) for p in DATA))*2+tree_size(candidate)+64*1024*1024
+    if min(shutil.disk_usage(BACKUPS).free,shutil.disk_usage(NOVA.parent).free)<required:raise RuntimeError('Not enough free space for update and rollback snapshot')
+    health() # Do not attribute a pre-existing failure to the new release.
+    backup=BACKUPS/datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ')
+    backup.mkdir(mode=0o700)
+    journal={'backup':str(backup),'candidate':meta,'phase':'prepared'}
+    stopped=False;changed=False
+    try:
+        run(['systemctl','stop','nova-agent.service']);stopped=True
+        copy_tree(NOVA,backup/'nova')
+        for i,p in enumerate(DATA):
+            if p.exists():copy_tree(p,backup/('data-'+str(i)))
+        if SOURCE.exists():shutil.copy2(SOURCE,backup/'source.json')
+        write_json(JOURNAL,journal)
+        old=NOVA.with_name('.alireza-previous')
+        if old.exists():raise RuntimeError('Unresolved prior code directory')
+        os.replace(NOVA,old);os.replace(candidate,NOVA);changed=True
+        journal['phase']='checking';write_json(JOURNAL,journal)
+        run(['systemctl','start','nova-agent.service']);stopped=False
+        retry_health()
+        write_json(SOURCE,meta);JOURNAL.unlink()
+        shutil.rmtree(old)
+        status(True,'updated',**meta)
+        # Keep two complete rollback snapshots, not an ever-growing archive.
+        valid=sorted(p for p in BACKUPS.iterdir() if p.is_dir() and (p/'nova/package.json').is_file())
+        for p in valid[:-2]:shutil.rmtree(p)
+    except Exception as error:
+        if JOURNAL.exists():
+            run(['systemctl','stop','nova-agent.service']);restore(journal)
+            # Keep the journal until the restored installation is healthy.
+            run(['systemctl','start','nova-agent.service']);retry_health();JOURNAL.unlink()
+        elif stopped:run(['systemctl','start','nova-agent.service'])
+        if changed:raise RejectedUpdate(str(error)) from error
+        raise
+def recover(start=False):
+    journal=read_json(JOURNAL)
+    if not journal:return
+    if start:run(['systemctl','stop','nova-agent.service'])
+    restore(journal)
+    if start:run(['systemctl','start','nova-agent.service']);retry_health()
+    JOURNAL.unlink();status(False,'recovered',code=26,message='An interrupted update was restored from its snapshot')
+def main():
+    import fcntl
+    if os.geteuid()!=0:raise RuntimeError('Run as root')
+    ROOT.mkdir(parents=True,exist_ok=True,mode=0o700)
+    with open('/run/alirezaserver-update.lock','w') as lock:
+        try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        except BlockingIOError:
+            if '--boot-recover' in sys.argv:return
+            raise RuntimeError('Another update is running')
+        if '--boot-recover' in sys.argv:recover();return
+        if '--recover' in sys.argv:recover(start=True);return
+        with open('/run/alirezaserver-install.lock','w') as install_lock:
+            fcntl.flock(install_lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            recover(start=True)
+            commit=''
+            try:
+                previous=read_json(STATE,{})
+                with tempfile.TemporaryDirectory(prefix='.alireza-stage-',dir=NOVA.parent) as temp:
+                    temp=pathlib.Path(temp)
+                    download('https://api.github.com/repos/IRNova/Nova-Server/commits/main',temp/'commit.json',2*1024*1024)
+                    commit=read_json(temp/'commit.json')['sha']
+                    if not re.fullmatch('[a-f0-9]{40}',commit):raise RuntimeError('Invalid release commit')
+                    base='https://raw.githubusercontent.com/IRNova/Nova-Server/'+commit+'/'
+                    download(base+'nova-node-agent.version',temp/'version',1000)
+                    version=(temp/'version').read_text().strip()
+                    if not re.fullmatch(r'\d+\.\d+\.\d+',version):raise RuntimeError('Invalid release version')
+                    download(base+'nova-node-agent.tar.gz.sha256',temp/'checksum',4096)
+                    sha=(temp/'checksum').read_text().split()[0].lower()
+                    if not re.fullmatch('[a-f0-9]{64}',sha):raise RuntimeError('Invalid release checksum')
+                    meta={'commit':commit,'version':version,'sha256':sha}
+                    if read_json(SOURCE,{}).get('sha256')==sha:status(True,'current',**meta);return
+                    if previous.get('rejected') and previous.get('commit')==commit and '--retry' not in sys.argv:
+                        print('Previously rejected release retained for review; use --retry after resolving the error');return
+                    installed=json.loads((NOVA/'package.json').read_text())['version']
+                    if tuple(map(int,version.split('.')))<tuple(map(int,installed.split('.'))):raise RuntimeError('Automatic downgrade refused')
+                    status(None,'downloading',**meta)
+                    download(base+'nova-node-agent.tar.gz',temp/'agent.tar.gz')
+                    if hashlib.sha256((temp/'agent.tar.gz').read_bytes()).hexdigest()!=sha:raise RejectedUpdate('Release checksum mismatch')
+                    stage=temp/'agent';stage.mkdir();safe_extract(temp/'agent.tar.gz',stage)
+                    if json.loads((stage/'package.json').read_text())['version']!=version:raise RuntimeError('Package version mismatch')
+                    status(None,'compatibility-check',**meta)
+                    try:run(['node',APP/'compat-check.mjs',stage],timeout=180)
+                    except Exception as e:raise RejectedUpdate(str(e)) from e
+                    activate(stage,meta)
+            except Exception as e:
+                status(False,'failed',code=26,commit=commit,rejected=isinstance(e,RejectedUpdate),message=str(e)[:1000]);raise
+if __name__=='__main__':
+    def interrupted(signum,frame):raise RuntimeError('Update interrupted; attempting recovery')
+    signal.signal(signal.SIGTERM,interrupted);signal.signal(signal.SIGINT,interrupted)
+    try:main()
+    except Exception as e:print('Update not completed:',e,file=sys.stderr);sys.exit(1)
+ALIREZA_633830E0BEEBAF6D0CF79E69
+
+cat > "$APP/vault.mjs" <<'ALIREZA_D534FDAC2E9B938FD3087634'
+// SPDX-License-Identifier: GPL-3.0-or-later
+import{readFileSync,writeFileSync,mkdirSync}from'node:fs';
+import{randomBytes,createCipheriv,createDecipheriv,createHash}from'node:crypto';
+const root=process.env.ALIREZA_ROOT||'/var/lib/alirezaserver';
+function key(){mkdirSync(root,{recursive:true,mode:0o700});const path=root+'/subscription.key';try{return readFileSync(path);}catch(e){if(e.code!=='ENOENT')throw e;try{writeFileSync(path,randomBytes(32),{flag:'wx',mode:0o600});}catch(e){if(e.code!=='EEXIST')throw e;}return readFileSync(path);}}
+export function seal(value,uid){const iv=randomBytes(12),c=createCipheriv('aes-256-gcm',key(),iv);c.setAAD(Buffer.from(uid));const data=Buffer.concat([c.update(JSON.stringify(value),'utf8'),c.final()]);return Buffer.concat([iv,c.getAuthTag(),data]).toString('base64');}
+export function unseal(value,uid){const data=Buffer.from(value,'base64'),c=createDecipheriv('aes-256-gcm',key(),data.subarray(0,12));c.setAAD(Buffer.from(uid));c.setAuthTag(data.subarray(12,28));return JSON.parse(Buffer.concat([c.update(data.subarray(28)),c.final()]).toString('utf8'));}
+export const newToken=()=>randomBytes(32).toString('base64url');
+export const tokenHash=token=>createHash('sha256').update(token).digest('hex');
+ALIREZA_D534FDAC2E9B938FD3087634
+
+cat > "$APP/verify-install.mjs" <<'ALIREZA_E4DA42252F2D4D036D0DF0C2'
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Runs locally as root; creates a short-lived owner cookie in memory, never logs it.
 // The native signing key is initialized only if this is the very first session.
@@ -1257,6 +1667,8 @@ async function verify(transport,port){
   requireThat(brand.code===200&&brand.body.includes('DNS · AdGuard Home')&&brand.body.includes('OpenVPN'),'New sidebar menu code is missing');
   const vpn=await get('/alireza/openvpn/');
   requireThat(vpn.code===200&&vpn.body.includes('OpenVPN')&&vpn.body.includes('alirezaserver'),'Owner cannot open OpenVPN management');
+  const theme=await get('/alireza/assets/theme.css'),font=await get('/alireza/assets/font.css');
+  requireThat(theme.code===200&&theme.body.includes('--az-shadow-card')&&font.code===200&&font.body.includes('data:font/woff2;base64,'),'Nova theme or Vazirmatn font is missing');
   const status=await get('/alireza/api/status');
   requireThat(status.code===200&&Array.isArray(JSON.parse(status.body).servers),'Owner cannot use OpenVPN management API');
   const dns=await get('/alireza/dns/control/status');
@@ -1286,7 +1698,7 @@ try {
     console.log('Panel: https://'+(isIP(host)===6?'['+host+']':host)+(port===443?'':':'+port)+base+'/');
   }
 }catch(e){console.error('Integration verification FAILED: '+e.message);process.exitCode=1;}
-ALIREZA_81984B06A9A160437D03A905
+ALIREZA_E4DA42252F2D4D036D0DF0C2
 
 cat > "$APP/COPYING.vpn-ui" <<'ALIREZA_3972DC9744F6499F0F9B2DBF'
                     GNU GENERAL PUBLIC LICENSE
@@ -1969,6 +2381,7 @@ chmod 700 "$APP"/*.py "$APP"/*.sh
 mkdir -p "$APP/adguard" "$ROOT/adguard" "$ROOT/openvpn"
 if [[ ! -x "$APP/adguard/AdGuardHome" ]]; then install -m 755 "$WORK/AdGuardHome/AdGuardHome" "$APP/adguard/AdGuardHome"; fi
 export ALIREZA_ROOT="$ROOT"
+node "$APP/compat-check.mjs" /opt/nova-node-agent
 node --input-type=module -e 'const m=await import("file:///opt/alirezaserver/backend.mjs");m.database();'
 python3 - <<'PY'
 import ipaddress,json,os
@@ -1991,7 +2404,7 @@ if not os.path.exists(root+'/adguard/AdGuardHome.yaml'):
     # JSON is valid YAML; AdGuard reads it and rewrites its native YAML on save.
     with open(root+'/adguard/AdGuardHome.yaml','w') as f:json.dump(config,f,indent=2)
 if not os.path.exists(root+'/install.json'):
-    with open(root+'/install.json','w') as f:json.dump({'dns_address':address,'dns_allowed_clients':allowed,'version':'0.3.0'},f)
+    with open(root+'/install.json','w') as f:json.dump({'dns_address':address,'dns_allowed_clients':allowed,'version':'0.4.0'},f)
 if not os.path.exists(root+'/firewall.json'):
     with open(root+'/firewall.json','w') as f:json.dump([],f)
 PY
@@ -2053,14 +2466,56 @@ CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
 WantedBy=multi-user.target
 UNIT
 STAGE=service-activation
+cat > /etc/systemd/system/alireza-update.service <<'UNIT'
+[Unit]
+Description=alirezaserver verified Nova update with rollback
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/alirezaserver/update.py
+ExecStopPost=/usr/bin/python3 /opt/alirezaserver/update.py --recover
+TimeoutStartSec=15min
+UMask=0077
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+UNIT
+cat > /etc/systemd/system/alireza-update.timer <<'UNIT'
+[Unit]
+Description=Check official Nova updates every six hours
+[Timer]
+OnCalendar=*-*-* 00,06,12,18:00:00
+RandomizedDelaySec=20min
+Persistent=true
+[Install]
+WantedBy=timers.target
+UNIT
+cat > /etc/systemd/system/alireza-update-recover.service <<'UNIT'
+[Unit]
+Description=Recover interrupted alirezaserver Nova update before startup
+After=local-fs.target
+Before=nova-agent.service
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/alirezaserver/update.py --boot-recover
+RemainAfterExit=yes
+UMask=0077
+UNIT
 log '[4/5] Activating AdGuard and loading the integration into Nova.'
 DROPIN=/etc/systemd/system/nova-agent.service.d/zz-alirezaserver.conf
 if [[ -f "$DROPIN" ]]; then cp "$DROPIN" "$WORK/previous-dropin";
 elif [[ -f /etc/systemd/system/nova-agent.service.d/alirezaserver.conf ]]; then cp /etc/systemd/system/nova-agent.service.d/alirezaserver.conf "$WORK/previous-dropin"; fi
 cat > "$DROPIN" <<UNIT
+[Unit]
+Requires=alireza-update-recover.service
+After=alireza-update-recover.service
 [Service]
 ExecStart=
 ExecStart=$NODE_BIN --max-old-space-size=192 --import=/opt/alirezaserver/preload.mjs /opt/nova-node-agent/bin/nova-agent.mjs
+UnsetEnvironment=NOVA_TARBALL_URL NOVA_TARBALL_SHA256 NOVA_UPDATE_STATUS
+# Native update subprocesses cannot overwrite code outside the guarded updater.
+ReadOnlyPaths=/opt/nova-node-agent /opt/alirezaserver
 UNIT
 rm -f /etc/systemd/system/nova-agent.service.d/alirezaserver.conf
 HOOK_CHANGED=1
@@ -2076,6 +2531,13 @@ import{servers,run,ready}from'/opt/alirezaserver/backend.mjs';
 for(const s of servers())if(s.enabled){await run('systemctl',['restart','alireza-openvpn@'+s.id+'.service']);await ready(s);}
 JS
 systemctl restart nova-agent.service
+python3 - <<'PY'
+import json,pathlib
+p=pathlib.Path('/var/lib/alirezaserver/nova-source.json')
+if not p.exists():
+    v=json.loads(pathlib.Path('/opt/nova-node-agent/package.json').read_text())['version']
+    if v=='1.85.4':p.write_text(json.dumps({'version':v,'commit':'17e9373ec17ceede95369fcd26d6fabfda83b504','sha256':'544adcbfd54d09df4ba637a5abeb0803258076308a2abe025e41ea550fa039dc'}))
+PY
 STAGE=dns-configuration-repair
 for attempt in {1..20}; do
   if curl -fsS --max-time 2 http://127.0.0.1:18085/control/status >/dev/null; then break; fi
@@ -2093,7 +2555,9 @@ done
 cat "$WORK/verify.log"
 [[ $VERIFIED == 1 ]] || die 'The integrated panel did not pass verification. Existing add-on data is retained; rerun this file to repair.'
 bash "$APP/check.sh"
-printf '{"version":"0.3.0","nova":"1.85.4","adguard":"%s"}\n' "$AG_VERSION" > "$ROOT/installed.json"
+NOVA_VERSION=$(node -p 'require("/opt/nova-node-agent/package.json").version')
+printf '{"version":"0.4.0","nova":"%s","adguard":"%s"}\n' "$NOVA_VERSION" "$AG_VERSION" > "$ROOT/installed.json"
+systemctl enable --now alireza-update.timer
 rm -f "$ROOT/failed-stage"
 HOOK_CHANGED=0
 log 'ALIREZASERVER READY — panel branding, OpenVPN management and AdGuard integration verified.'
