@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# alirezaserver bootstrap — downloads the content-verified 0.4.0 installer.
+# alirezaserver bootstrap — downloads the content-verified 0.5.0 installer.
 # Repository: https://github.com/alirezachatgpt97-coder/alirezaserver
 # Videos: https://www.youtube.com/@Alirezacoder12
 # This launcher does not replace or modify the actual installer.
 set -Eeuo pipefail
 umask 077
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-VERSION=0.4.0
+VERSION=0.5.0
 REF=main
-SHA256=d2fa0e70daa72d3b0bcfafb9b8c650fbeca2a477569e6a1b5f85bd579475430f
+SHA256=0cdb89884c30e256bc265043f15040819d663e572af537bb99d3533d97825a5c
 URL="https://raw.githubusercontent.com/alirezachatgpt97-coder/alirezaserver/$REF/install.sh"
 CACHE=/var/cache/alirezaserver
 PARTIAL=''
@@ -43,7 +43,7 @@ esac
 [[ -d /run/systemd/system ]] || die 'A Linux VPS running systemd is required.'
 case "${1:-}" in
   --update)
-    [[ -f /opt/alirezaserver/update.py ]] || die 'Install the 0.4 integration first.'
+    [[ -f /opt/alirezaserver/update.py ]] || die 'Install the integration first.'
     exec python3 /opt/alirezaserver/update.py --retry ;;
   --update-status)
     [[ -f /var/lib/alirezaserver/update-status.json ]] || die 'No update check has run yet.'

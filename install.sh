@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# alirezaserver 0.4.0 — single-file ONLINE installer; rerun to repair/resume.
+# alirezaserver 0.5.0 — single-file ONLINE installer; rerun to repair/resume.
 # Supported target: Ubuntu 24.04 or Debian 12/13, systemd, amd64/arm64.
 # Add-on source and notices are embedded below; original upstream programs are
 # downloaded from pinned official URLs. This is not an offline bundle.
@@ -109,7 +109,7 @@ STAGE=prerequisites
 log 'Installing prerequisites (no source compilation for this add-on).'
 export DEBIAN_FRONTEND=noninteractive
 apt-get -o DPkg::Lock::Timeout=300 update
-apt-get -o DPkg::Lock::Timeout=300 install -y ca-certificates curl python3 openssl openvpn iptables iproute2 dnsutils
+apt-get -o DPkg::Lock::Timeout=300 install -y ca-certificates curl python3 python3-paramiko openssl openvpn iptables iproute2 dnsutils
 [[ -c /dev/net/tun ]] || { modprobe tun || true; }
 [[ -c /dev/net/tun ]] || die '/dev/net/tun is unavailable; ask the VPS provider to enable TUN.'
 WORK=$(mktemp -d /tmp/alirezaserver.XXXXXXXX)
@@ -166,8 +166,8 @@ printf 'alirezaserver\n' > "$ROOT/.installer-owned"
 MANAGED=1
 # ALIREZA_EMBEDDED_FILES
 
-cat > "$APP/NOTICE.txt" <<'ALIREZA_8307E6C336F3F1346F851491'
-alirezaserver add-on 0.4.0
+cat > "$APP/NOTICE.txt" <<'ALIREZA_120C9E5B95207BAC6A6B1C54'
+alirezaserver add-on 0.5.0
 
 The new integration modules in this directory are licensed under GPL-3.0-or-later.
 OpenVPN configuration/profile conventions were adapted from Sir-MmD/vpn-ui,
@@ -250,12 +250,39 @@ Scope and verification:
 Local tests cover input validation, Python authentication/device limits, expiry,
 traffic calculations, owner authorization and CSRF checks, HTTP proxying, branding,
 and installer/script syntax. See the verification record embedded in install.sh.
-ALIREZA_8307E6C336F3F1346F851491
 
-cat > "$APP/VERIFICATION.txt" <<'ALIREZA_454F3842BCF5990BD02ECE4F'
-alirezaserver 0.4.0 verification record, 2026-09-22
+HyperDNS is separately downloaded from IzumiRain/HyperDNS, initial release
+v2.2.0-beta.1. It remains AGPL-3.0 licensed; see COPYING.HyperDNS.
+Source: https://github.com/IzumiRain/HyperDNS
+UI compatibility was inspected at commit 4a899a90c682d14aa8fdc4506dd6efd84316956c.
+Its binary is not included or patched. HTTP integration rewrites mount paths and
+isolates browser sessions, and applies display branding inside alirezaserver.
+Original notices and technical protocol identifiers remain intact.
+ALIREZA_120C9E5B95207BAC6A6B1C54
+
+cat > "$APP/VERIFICATION.txt" <<'ALIREZA_E65C0E31435C064147B5C663'
+alirezaserver 0.5.0 verification record, 2026-09-26
 
 Development platform: Windows, Node.js 24.19.0.
+
+0.5 additions:
+PASS: 29 Node regression tests, including owner-only alirezadns routes, CSRF,
+SSH input validation, per-node UI paths/tokens, native admin-path rotation
+persistence and real upstream bundle syntax.
+PASS: 8 remote updater tests using real temporary files and mocked systemd/health:
+success, migration failure restores binary/database/key, rejected-version skip,
+major/downgrade refusal, checksum failure before service changes, snapshot failure,
+interrupted-update recovery and invalid snapshot refusal.
+PASS: SSH probe/auth boundaries tested with fake transport: no authentication on
+probe, changed host key rejected before secrets, private destinations rejected.
+PASS: Official checksum-verified HyperDNS Windows binary served through local TLS
+bridge and integration proxy; actual login, live dashboard and Clients page were
+exercised inside management iframe. alirezadns branding visible, no console errors.
+PASS: Actual Nova/AdGuard front verification and TCP/UDP DNS regression checks
+were rerun with the 0.5 integration, including the alirezadns owner-only routes.
+NOT TESTED: live root SSH installation, public ACME issuance, Linux control socket,
+remote systemd/firewall/reboot, production TLS routing or load on a 1 GiB VPS.
+Future upstream releases can require an integration update.
 
 0.4 additions:
 PASS: Personal subscription encryption, password edits, link rotation/revocation,
@@ -337,7 +364,383 @@ Repair/resume:       sudo bash install.sh
 Add-on backup:       sudo bash install.sh --backup
 Disable add-ons:     sudo bash install.sh --rollback
 Back up the original Nova data separately using Nova's own backup facilities.
-ALIREZA_454F3842BCF5990BD02ECE4F
+ALIREZA_E65C0E31435C064147B5C663
+
+cat > "$APP/alirezadns-brand.js" <<'ALIREZA_D5CEE738708E5E1BE1FBE55C'
+// Display branding only; upstream protocol identifiers, user values and notices remain intact.
+(()=>{'use strict';const rename=s=>s.replace(/Hyper\s*DNS|Hyper\s*RAIN/gi,'alirezadns');let queued=false;
+ const observer=new MutationObserver(()=>{if(!queued){queued=true;requestAnimationFrame(()=>{queued=false;apply();});}});
+ function apply(){observer.disconnect();document.title=rename(document.title);const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentElement?.closest('script,style,textarea,pre,code,[contenteditable],.license,.copyright')?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});let n;while((n=walker.nextNode())){const next=rename(n.nodeValue);if(next!==n.nodeValue)n.nodeValue=next;}for(const el of document.querySelectorAll('[title],[aria-label],img[alt]'))for(const a of ['title','aria-label','alt'])if(el.hasAttribute(a))el.setAttribute(a,rename(el.getAttribute(a)));observer.observe(document.body,{childList:true,subtree:true,characterData:true});}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();
+})();
+ALIREZA_D5CEE738708E5E1BE1FBE55C
+
+cat > "$APP/alirezadns-remote.py" <<'ALIREZA_F9782982AE20B90622C441B8'
+#!/usr/bin/python3
+"""Remote-node installer/updater. Original HyperDNS binary and data stay separate."""
+import base64, contextlib, fcntl, hashlib, http.client, ipaddress, json, os, pathlib, platform, re, secrets, shutil, socket, struct, subprocess, sys, tempfile, time, urllib.request
+APP=pathlib.Path('/opt/hyperdns')
+AGENT=pathlib.Path('/opt/alirezadns-agent')
+BACKUPS=pathlib.Path('/var/backups/alirezadns')
+META=AGENT/'node.json'
+PENDING=AGENT/'pending.json'
+VERSION='v2.2.0-beta.1'
+PIN={'amd64':'17d9015200115878a375f74c56cff2c6b9e22e682a7ceab61104f55d54c7f6bf','arm64':'ca19bfb5b144838ef3d28b5d29074534084ee54713594d297a076e23cc551e98'}
+PORTS=[53,80,443,8080,853,8443,5222,5223,2099,8393]
+def run(args,timeout=180):
+    return subprocess.run(args,check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,timeout=timeout).stdout
+def save(path,data):
+    path.parent.mkdir(parents=True,exist_ok=True,mode=0o700)
+    temp=path.with_suffix('.new')
+    with open(temp,'w') as stream:
+        os.chmod(temp,0o600);json.dump(data,stream);stream.flush();os.fsync(stream.fileno())
+    os.replace(temp,path)
+    if os.name=='posix':
+        fd=os.open(path.parent,os.O_RDONLY)
+        try:os.fsync(fd)
+        finally:os.close(fd)
+def read(path):return json.loads(path.read_text())
+class HTTPSOnly(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self,req,fp,code,msg,headers,url):
+        if not url.startswith('https://'):raise RuntimeError('Unencrypted release redirect refused')
+        return super().redirect_request(req,fp,code,msg,headers,url)
+def fetch(url,limit=96*1024*1024):
+    if not url.startswith('https://'):raise RuntimeError('HTTPS required')
+    with urllib.request.build_opener(HTTPSOnly).open(urllib.request.Request(url,headers={'User-Agent':'alirezadns/0.5'}),timeout=45) as r:
+        data=r.read(limit+1)
+        if len(data)>limit:raise RuntimeError('Download too large')
+        return data
+def binary(version,arch,expected=None):
+    if not re.fullmatch(r'v\d+\.\d+\.\d+(?:-[A-Za-z0-9.]+)?',version):raise RuntimeError('Invalid version')
+    base='https://github.com/IzumiRain/HyperDNS/releases/download/'+version+'/'
+    name='hyperdns-linux-'+arch
+    if expected is None:
+        lines=fetch(base+'checksums.txt',65536).decode().splitlines()
+        hashes=[x.split()[0] for x in lines if len(x.split())==2 and x.split()[1].lstrip('*')==name]
+        if len(hashes)!=1:raise RuntimeError('Missing unique release checksum')
+        expected=hashes[0]
+    data=fetch(base+name)
+    if hashlib.sha256(data).hexdigest()!=expected:raise RuntimeError('Binary checksum mismatch')
+    # Stop incompatible releases before replacing the daemon: these are the UI
+    # contracts used by the integration, not a claim about future compatibility.
+    for marker in [b'const ADMIN_BASE = (function () {',b'hyperdns_token',b'/api/auth/login',b'/api/config']:
+        if marker not in data:raise RuntimeError('Upstream UI changed; current version retained')
+    return data
+def dns_probe(host):
+    ident=secrets.token_bytes(2);question=ident+b'\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00'+b'\x07invalid\x00\x00\x01\x00\x01'
+    with socket.socket(socket.AF_INET,socket.SOCK_DGRAM) as s:
+        s.settimeout(8);s.sendto(question,(host,53));reply=s.recv(4096)
+        if reply[:2]!=ident or len(reply)<12 or not(reply[2]&128):raise RuntimeError('UDP DNS check failed')
+    with socket.create_connection((host,53),8) as s:
+        s.sendall(struct.pack('!H',len(question))+question);f=s.makefile('rb');size=f.read(2)
+        if len(size)!=2:raise RuntimeError('TCP DNS header missing')
+        reply=f.read(struct.unpack('!H',size)[0])
+        if reply[:2]!=ident or len(reply)<12 or not(reply[2]&128):raise RuntimeError('TCP DNS check failed')
+def health(meta):
+    run(['systemctl','is-active','--quiet','hyperdns.service'])
+    # Read the daemon's root-only control socket; path/port rotation must not
+    # turn an otherwise healthy update into a false failure.
+    conn=http.client.HTTPConnection('localhost',timeout=10)
+    conn.sock=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM);conn.sock.settimeout(10);conn.sock.connect('/run/hyperdns/control.sock')
+    try:
+        conn.request('GET','/v1/settings',headers={'X-HyperDNS-Control-Version':'v1'});response=conn.getresponse()
+        if response.status!=200:raise RuntimeError('Control settings unavailable')
+        settings=json.loads(response.read(131072))
+    finally:conn.close()
+    meta['adminPath']=settings['admin_path'];meta['port']=settings['web_port']
+    base='https://'+meta['domain']+':'+str(meta['port'])+'/'+meta['adminPath']
+    for path,marker in [('/dash/login',b'/api/auth/login'),('/js/app.js',b'const ADMIN_BASE = (function () {')]:
+        if marker not in fetch(base+path,8*1024*1024):raise RuntimeError('Remote panel contract check failed')
+    dns_probe(meta['bindIP'])
+def wait_health(meta,attempts=20):
+    for _ in range(attempts):
+        try:health(meta);return
+        except Exception:time.sleep(3)
+    raise RuntimeError('Panel HTTPS or DNS health check failed; inspect journalctl -u hyperdns')
+def recover():
+    if not PENDING.exists():return
+    journal=read(PENDING);backup=pathlib.Path(journal['backup']).resolve()
+    if backup.parent!=BACKUPS.resolve() or not (backup/'hyperdns').is_file():raise RuntimeError('Invalid recovery snapshot')
+    stage=APP.with_name('alirezadns-restored')
+    if stage.exists():shutil.rmtree(stage)
+    shutil.copytree(backup,stage,symlinks=True)
+    if APP.exists():shutil.rmtree(APP)
+    os.replace(stage,APP);save(META,journal['previous']);PENDING.unlink()
+def update():
+    if PENDING.exists():
+        run(['systemctl','stop','hyperdns.service']);recover();run(['systemctl','start','hyperdns.service']);wait_health(read(META))
+    meta=read(META)
+    release=json.loads(fetch('https://api.github.com/repos/IzumiRain/HyperDNS/releases/latest',2*1024*1024));version=release['tag_name']
+    if version==meta['version']:return
+    if not re.fullmatch(r'v2\.\d+\.\d+(?:-[A-Za-z0-9.]+)?',version):raise RuntimeError('New major version requires integration review')
+    if tuple(map(int,re.findall(r'\d+',version)[:3]))<tuple(map(int,re.findall(r'\d+',meta['version'])[:3])):raise RuntimeError('Downgrade refused')
+    status=AGENT/'update-status.json'
+    if status.exists() and read(status).get('rejected')==version:return
+    data=binary(version,meta['arch']);health(meta)
+    if APP.is_symlink():raise RuntimeError('Custom installation path refused')
+    size=sum(p.stat().st_size for p in APP.rglob('*') if p.is_file())
+    if shutil.disk_usage(APP).free<size*3+len(data)+64*1024*1024:raise RuntimeError('Not enough space for backup')
+    BACKUPS.mkdir(parents=True,exist_ok=True,mode=0o700)
+    backup=BACKUPS/str(time.time_ns());stopped=False
+    try:
+        run(['systemctl','stop','hyperdns.service']);stopped=True
+        shutil.copytree(APP,backup,symlinks=True)
+        save(PENDING,{'backup':str(backup),'previous':meta})
+        target=APP/'hyperdns.new';target.write_bytes(data);os.chmod(target,0o755);os.replace(target,APP/'hyperdns')
+        run(['systemctl','start','hyperdns.service']);stopped=False
+        wait_health(meta);meta['version']=version;save(META,meta);PENDING.unlink()
+        save(status,{'ok':True,'version':version,'at':int(time.time())})
+        for old in sorted(BACKUPS.iterdir())[:-2]:
+            if old.is_dir():shutil.rmtree(old)
+    except Exception:
+        if PENDING.exists():
+            run(['systemctl','stop','hyperdns.service']);recover();run(['systemctl','start','hyperdns.service']);wait_health(read(META))
+        elif stopped:run(['systemctl','start','hyperdns.service'])
+        save(status,{'ok':False,'rejected':version,'at':int(time.time())});raise
+def install(cfg):
+    if pathlib.Path('/opt/nova-node-agent').exists() or pathlib.Path('/var/lib/alirezaserver').exists():raise RuntimeError('Refusing to install on the main panel server')
+    if META.exists():
+        meta=read(META)
+        if cfg['domain']!=meta['domain']:raise RuntimeError('Existing managed node has a different domain')
+        run(['systemctl','restart','hyperdns.service']);wait_health(meta,120);save(META,meta)
+        run(['systemctl','enable','--now','alirezadns-update.timer']);return meta
+    if APP.exists() or pathlib.Path('/etc/systemd/system/hyperdns.service').exists():raise RuntimeError('Existing independent HyperDNS installation was not overwritten')
+    if not pathlib.Path('/run/systemd/system').is_dir():raise RuntimeError('systemd required')
+    osinfo=pathlib.Path('/etc/os-release').read_text()
+    if not re.search(r'^ID=(?:"?)(?:ubuntu|debian)(?:"?)$',osinfo,re.M):raise RuntimeError('Remote installation supports Ubuntu/Debian')
+    ip=str(ipaddress.IPv4Address(cfg['host']));domain=cfg['domain']
+    if not re.fullmatch(r'(?=.{1,253}$)[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?',domain) or '.' not in domain:raise RuntimeError('Invalid domain')
+    if ip not in socket.gethostbyname_ex(domain)[2]:raise RuntimeError('Domain A record must point directly to the destination IP')
+    bind=socket.socket(socket.AF_INET,socket.SOCK_DGRAM);bind.connect(('1.1.1.1',53));bindIP=bind.getsockname()[0];bind.close()
+    for port in PORTS:
+        for kind in ([socket.SOCK_STREAM,socket.SOCK_DGRAM] if port==53 else [socket.SOCK_STREAM]):
+            with socket.socket(socket.AF_INET,kind) as s:
+                try:s.bind((bindIP,port))
+                except OSError:raise RuntimeError('Destination port '+str(port)+' is occupied; no service was stopped')
+    arch={'x86_64':'amd64','aarch64':'arm64'}.get(platform.machine())
+    if not arch:raise RuntimeError('amd64/arm64 required')
+    data=binary(VERSION,arch,PIN[arch])
+    run(['apt-get','-o','DPkg::Lock::Timeout=300','update'],600)
+    run(['apt-get','-o','DPkg::Lock::Timeout=300','install','-y','ca-certificates','iptables'],600)
+    APP.mkdir(mode=0o700);(APP/'certs').mkdir(mode=0o700)
+    (APP/'hyperdns').write_bytes(data);os.chmod(APP/'hyperdns',0o755)
+    password=secrets.token_urlsafe(24)
+    save(APP/'config.json',{'server':{'public_ip':ip,'bind_host':bindIP,'web_port':8080,'admin_username':'admin','admin_password':password,'api_key':'hdns_live_'+secrets.token_hex(24)},'dns':{'enabled':True,'port':53,'dot_port':853,'doh_port':8443},'tls':{'domain':domain,'email':cfg.get('email',''),'auto_cert':True,'cert_file':str(APP/'certs/cert.pem'),'key_file':str(APP/'certs/key.pem')},'access':{'allow_all':False}})
+    AGENT.mkdir(parents=True,exist_ok=True,mode=0o700)
+    shutil.copy2(__file__,AGENT/'agent.py')
+    unit='''[Unit]
+Description=alirezadns remote DNS engine
+After=network-online.target alirezadns-firewall.service
+Wants=network-online.target
+Requires=alirezadns-firewall.service
+[Service]
+Type=simple
+WorkingDirectory=/opt/hyperdns
+RuntimeDirectory=hyperdns
+RuntimeDirectoryMode=0700
+ExecStartPre=/usr/bin/python3 /opt/alirezadns-agent/agent.py --recover
+ExecStart=/opt/hyperdns/hyperdns -daemon -db /opt/hyperdns/data.db -key /opt/hyperdns/master.key -config /opt/hyperdns/config.json
+Restart=on-failure
+RestartSec=5
+UMask=0077
+[Install]
+WantedBy=multi-user.target
+'''
+    pathlib.Path('/etc/systemd/system/hyperdns.service').write_text(unit)
+    firewall='''#!/bin/sh
+set -eu
+iptables -N ALIREZADNS 2>/dev/null || true
+iptables -F ALIREZADNS
+iptables -A ALIREZADNS -p tcp -m multiport --dports 53,80,443,8080,853,8443,5222,5223,2099,8393 -j ACCEPT
+iptables -A ALIREZADNS -p udp --dport 53 -j ACCEPT
+iptables -C INPUT -j ALIREZADNS 2>/dev/null || iptables -I INPUT 1 -j ALIREZADNS
+'''
+    (AGENT/'firewall.sh').write_text(firewall);os.chmod(AGENT/'firewall.sh',0o700)
+    pathlib.Path('/etc/systemd/system/alirezadns-firewall.service').write_text('[Unit]\nDescription=alirezadns remote ports\nAfter=network-online.target ufw.service\n[Service]\nType=oneshot\nRemainAfterExit=yes\nExecStart=/bin/sh /opt/alirezadns-agent/firewall.sh\n')
+    pathlib.Path('/etc/systemd/system/alirezadns-update.service').write_text('[Unit]\nDescription=alirezadns verified update\nAfter=network-online.target\n[Service]\nType=oneshot\nExecStart=/usr/bin/python3 /opt/alirezadns-agent/agent.py --update\nExecStopPost=/usr/bin/python3 /opt/alirezadns-agent/agent.py --recover-start\nTimeoutStartSec=20min\nUMask=0077\n')
+    pathlib.Path('/etc/systemd/system/alirezadns-update.timer').write_text('[Unit]\nDescription=Check alirezadns engine releases\n[Timer]\nOnCalendar=*-*-* 01,07,13,19:00:00\nRandomizedDelaySec=20min\nPersistent=true\n[Install]\nWantedBy=timers.target\n')
+    meta={'host':ip,'bindIP':bindIP,'domain':domain,'adminPath':'','arch':arch,'version':VERSION,'username':'admin','password':password,'port':8080}
+    save(META,meta)
+    run(['systemctl','daemon-reload']);run(['systemctl','enable','--now','hyperdns.service'])
+    wait_health(meta,120);save(META,meta)
+    run(['systemctl','enable','--now','alirezadns-update.timer']);return meta
+def main():
+    if os.geteuid()!=0:raise RuntimeError('Root required')
+    with open('/run/alirezadns.lock','w') as lock:
+        try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        except BlockingIOError:
+            if '--recover' in sys.argv:return
+            raise RuntimeError('Another remote operation is running')
+        if '--recover-start' in sys.argv:
+            if PENDING.exists():run(['systemctl','stop','hyperdns.service']);recover();run(['systemctl','start','hyperdns.service']);wait_health(read(META))
+        elif '--recover' in sys.argv:recover()
+        elif '--update' in sys.argv:update()
+        elif '--install' in sys.argv:print(json.dumps({'ok':True,'node':install(json.load(sys.stdin))}))
+        else:raise RuntimeError('Unknown operation')
+if __name__=='__main__':
+    try:main()
+    except Exception as e:print(json.dumps({'ok':False,'error':str(e)[:400]}));sys.exit(1)
+ALIREZA_F9782982AE20B90622C441B8
+
+cat > "$APP/alirezadns-ssh.py" <<'ALIREZA_581C38736BD3F6AFDB61E1AB'
+#!/usr/bin/python3
+"""One-shot SSH installer. Secrets arrive over stdin and are never persisted."""
+import base64, hashlib, io, ipaddress, json, pathlib, re, secrets, socket, sys, time
+import paramiko
+def main():
+    cfg=json.loads(sys.stdin.read(131073));host=str(ipaddress.IPv4Address(cfg['host']))
+    if not ipaddress.ip_address(host).is_global:raise RuntimeError('A public destination IPv4 is required')
+    port=int(cfg.get('sshPort',22))
+    if not 1<=port<=65535:raise RuntimeError('Invalid SSH port')
+    sock=socket.create_connection((host,port),20);transport=paramiko.Transport(sock)
+    try:
+        transport.start_client(timeout=20)
+        key=transport.get_remote_server_key();fingerprint='SHA256:'+base64.b64encode(hashlib.sha256(key.asbytes()).digest()).decode().rstrip('=')
+        if cfg['action']=='probe':print(json.dumps({'ok':True,'fingerprint':fingerprint,'type':key.get_name()}));return
+        if not secrets.compare_digest(fingerprint,cfg.get('fingerprint','')):raise RuntimeError('SSH host fingerprint changed; installation refused')
+        if cfg.get('privateKey'):
+            parsed=None
+            for kind in [paramiko.Ed25519Key,paramiko.ECDSAKey,paramiko.RSAKey]:
+                try:parsed=kind.from_private_key(io.StringIO(cfg['privateKey']),password=cfg.get('passphrase') or None);break
+                except (paramiko.SSHException,ValueError):pass
+            if parsed is None:raise RuntimeError('Private key could not be read')
+            transport.auth_publickey('root',parsed)
+        else:transport.auth_password('root',cfg['password'])
+        session=transport.open_session(timeout=20);session.settimeout(20);session.exec_command('id -u');uid=session.makefile('rb').read(32).strip()
+        if uid!=b'0':raise RuntimeError('Root SSH access is required')
+        session.close()
+        sftp=paramiko.SFTPClient.from_transport(transport);temp='/tmp/alirezadns-'+secrets.token_hex(16);sftp.mkdir(temp,0o700)
+        try:
+            script=pathlib.Path(__file__).with_name('alirezadns-remote.py').read_bytes()
+            with sftp.file(temp+'/agent.py','wb') as out:out.write(script)
+            sftp.chmod(temp+'/agent.py',0o600)
+            session=transport.open_session(timeout=20);session.exec_command('python3 '+temp+'/agent.py --install')
+            session.sendall(json.dumps({k:cfg.get(k,'') for k in ['host','domain','email']}).encode());session.shutdown_write()
+            output=bytearray();deadline=time.monotonic()+1800
+            while not session.exit_status_ready() or session.recv_ready() or session.recv_stderr_ready():
+                if time.monotonic()>deadline:raise RuntimeError('Remote installation timed out; reconnect to resume')
+                if session.recv_ready():output.extend(session.recv(65536))
+                if session.recv_stderr_ready():session.recv_stderr(65536) # never expose credentials from upstream logs
+                if len(output)>1048576:raise RuntimeError('Unexpected installation output')
+                time.sleep(.05)
+            code=session.recv_exit_status();result=json.loads(output.decode().strip().splitlines()[-1])
+            if code or not result.get('ok'):raise RuntimeError(result.get('error','Remote installation failed'))
+            print(json.dumps(result))
+        finally:
+            with __import__('contextlib').suppress(Exception):sftp.remove(temp+'/agent.py');sftp.rmdir(temp)
+            sftp.close()
+    finally:transport.close();sock.close()
+if __name__=='__main__':
+    try:main()
+    except paramiko.AuthenticationException:print(json.dumps({'ok':False,'error':'SSH authentication failed'}));sys.exit(1)
+    except Exception as e:print(json.dumps({'ok':False,'error':str(e)[:400]}));sys.exit(1)
+ALIREZA_581C38736BD3F6AFDB61E1AB
+
+cat > "$APP/alirezadns-ui.js" <<'ALIREZA_F52EC60BE55BD0EF999AB9B4'
+(()=>{'use strict';const $=s=>document.querySelector(s),form=$('#install'),base=new URL('../api/alirezadns',location.href).pathname;let proof=null,busy=false,lastState="";
+ const el=(tag,text)=>{const x=document.createElement(tag);if(text!==undefined)x.textContent=text;return x;};
+ const say=s=>$('#message').textContent=s;
+ async function api(path='',method='GET',data){const r=await fetch(base+path,{method,cache:'no-store',headers:data?{'content-type':'application/json'}:{},body:data?JSON.stringify(data):undefined});const j=await r.json();if(!r.ok)throw Error(j.error||'عملیات ناموفق بود');return j;}
+ const values=()=>Object.fromEntries(new FormData(form));
+ form.addEventListener('input',e=>{if(['host','sshPort'].includes(e.target.name)){proof=null;$('#confirm').checked=false;$('#confirmRow').hidden=true;$('#fingerprint').hidden=true;}$('#deploy').disabled=!proof||!$('#confirm').checked||busy;});
+ $('#probe').onclick=async()=>{try{say('در حال بررسی کلید SSH…');$('#probe').disabled=true;proof=await api('/probe','POST',values());$('#fingerprint').textContent=proof.type+' · '+proof.fingerprint;$('#fingerprint').hidden=false;$('#confirmRow').hidden=false;$('#confirm').checked=false;$('#deploy').disabled=true;say('اثر انگشت نمایش داده شد؛ پس از تطبیق، نصب را آغاز کنید.');}catch(e){proof=null;say(e.message);}finally{$('#probe').disabled=false;}};
+ form.onsubmit=async e=>{e.preventDefault();if(!proof||!$('#confirm').checked)return;busy=true;$('#deploy').disabled=true;try{await api('/install','POST',{...values(),probeToken:proof.token});for(const name of ['password','privateKey','passphrase'])form.elements[name].value='';proof=null;$('#confirmRow').hidden=true;$('#fingerprint').hidden=true;say('نصب آغاز شد؛ نتیجه در فهرست عملیات نمایش داده می‌شود.');await refresh();}catch(e){say(e.message);}finally{busy=false;$('#deploy').disabled=true;}};
+ $('#close').onclick=()=>{$('#viewer').hidden=true;$('#panel').src='about:blank';};$('#dismiss').onclick=()=>$('#details').close();
+ async function credentials(n){try{const c=await api('/'+n.id+'/credentials');$('#detailBody').replaceChildren(el('p','اطلاعات اولیه ورود — اگر بعداً رمز را تغییر داده‌اید، از رمز جدید استفاده کنید.'),el('pre',c.username+'\n'+c.password));$('#details').showModal();}catch(e){say(e.message);}}
+ function connection(n){const f=el('form');for(const [key,label,value]of[['domain','دامنه',n.domain],['port','پورت پنل',n.port],['adminPath','مسیر مدیریت (۱۶ حرف)',n.adminPath]]){const l=el('label',label),i=el('input');i.name=key;i.value=value;i.required=true;l.append(i);f.append(l);}const b=el('button','ذخیره اتصال');b.type='submit';f.append(b);f.onsubmit=async e=>{e.preventDefault();try{await api('/'+n.id+'/connection','PUT',Object.fromEntries(new FormData(f)));$('#details').close();refresh();}catch(e){say(e.message);}};$('#detailBody').replaceChildren(el('p','اگر دامنه، پورت یا مسیر مدیریت را در پنل مقصد تغییر داده‌اید، اتصال را اینجا هماهنگ کنید.'),f);$('#details').showModal();}
+ async function refresh(){try{const state=await api(),signature=JSON.stringify(state);if(signature===lastState)return;lastState=signature;$('#nodes').replaceChildren();if(!state.nodes.length)$('#nodes').append(el('p','هنوز سروری متصل نشده است.'));for(const n of state.nodes){const row=el('div');row.className='card';row.append(el('strong',n.domain+' · '+n.host));const open=el('button','ورود به پنل کامل'),login=el('button','اطلاعات ورود'),edit=el('button','تنظیم اتصال');open.onclick=()=>{$('#panel').src='node/'+n.id+'/';$('#viewer').hidden=false;};login.onclick=()=>credentials(n);edit.onclick=()=>connection(n);row.append(el('p','نسخه هنگام اتصال: '+n.version+' — نسخه فعلی در پنل مقصد دیده می‌شود.'),open,login,edit);$('#nodes').append(row);}$('#jobs').replaceChildren(...state.jobs.map(j=>el('p',j.host+' — '+({installing:'در حال نصب و بررسی HTTPS و DNS…',ready:'نصب و اتصال تکمیل شد',failed:'ناموفق: '+j.error}[j.status]||j.status))));}catch(e){say(e.message);}}
+ refresh();setInterval(()=>{if(!document.hidden&&$('#viewer').hidden)refresh();},5000);
+})();
+ALIREZA_F52EC60BE55BD0EF999AB9B4
+
+cat > "$APP/alirezadns.html" <<'ALIREZA_360A9273AB92F46C0002A797'
+<!doctype html><html lang="fa" dir="rtl" data-alireza-surface="dns"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>alirezadns</title><link rel="stylesheet" href="../assets/font.css"><link rel="stylesheet" href="../assets/theme.css"><script src="../assets/theme.js" data-surface="dns"></script><style>
+*{box-sizing:border-box}body{margin:0;padding:24px;line-height:1.9}main{max-width:1100px;margin:auto}.card{padding:22px;margin:16px 0;border:1px solid var(--az-bd);border-radius:16px}h1,h2{margin:0 0 10px}label{display:block}input,textarea,button{font:inherit;padding:10px;border:1px solid var(--az-bd2);border-radius:10px}input,textarea{width:100%;direction:ltr}button{cursor:pointer;margin:5px}textarea{min-height:90px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}p{margin:8px 0}.muted{color:var(--az-mu)}#message{white-space:pre-wrap;padding:12px}#fingerprint{direction:ltr;overflow-wrap:anywhere}#viewer{position:fixed;inset:0;z-index:20;background:var(--az-bg)}#viewer:not([hidden]){display:flex;flex-direction:column}iframe{border:0;width:100%;flex:1;background:var(--az-bg)}dialog{width:min(620px,95vw);border:1px solid var(--az-bd);border-radius:16px;color:var(--az-tx);background:var(--az-card)}pre{white-space:pre-wrap;overflow-wrap:anywhere;direction:ltr;text-align:left}button:disabled{opacity:.5}a{color:var(--az-ac)}[hidden]{display:none!important}
+</style></head><body><main><h1>alirezadns</h1><p>پنل کامل DNS روی سرور مقصد؛ مدیریت از همین alirezaserver.</p><p class="muted">نوا، AdGuard و OpenVPN روی سرور اصلی باقی می‌مانند. هر سرور مقصد باید IP مستقل و دامنه‌ای با رکورد A مستقیم به آن داشته باشد.</p><section class="card"><h2>سرورهای متصل</h2><div id="nodes"></div><div id="jobs" role="status"></div></section><section class="card"><h2>نصب خودکار روی سرور مقصد</h2><p>سرور Ubuntu یا Debian با دسترسی root و Python 3. سرویس‌های موجود پاک نمی‌شوند؛ اگر پورت لازم اشغال باشد نصب متوقف می‌شود.</p><form id="install"><div class="grid"><label>IP عمومی مقصد<input name="host" required placeholder="IP server" autocomplete="off"></label><label>پورت SSH<input name="sshPort" type="number" min="1" max="65535" value="22" required></label><label>دامنه مقصد<input name="domain" required placeholder="dns.example.com"></label><label>ایمیل گواهی (اختیاری)<input name="email" type="email"></label><label>رمز root<input name="password" type="password" autocomplete="new-password"></label><label>عبارت عبور کلید (در صورت نیاز)<input name="passphrase" type="password" autocomplete="new-password"></label></div><details><summary>ورود با کلید خصوصی به‌جای رمز SSH</summary><textarea name="privateKey" autocomplete="off" aria-label="کلید خصوصی SSH"></textarea></details><p class="muted">رمز و کلید SSH ذخیره نمی‌شوند. نصب ممکن است چند دقیقه طول بکشد؛ صفحه را می‌توانید ببندید. فایروال سرویس‌دهنده باید پورت‌های موردنیاز را باز بگذارد.</p><button type="button" id="probe">۱. بررسی هویت SSH</button><div id="fingerprint" hidden></div><label id="confirmRow" hidden><input style="width:auto" type="checkbox" id="confirm"> اثرانگشت را با اطلاعات معتبر سرور مقصد تطبیق داده‌ام.</label><button class="primary" id="deploy" disabled>۲. نصب و اتصال خودکار</button></form></section><div id="message" role="status"></div><p class="muted">آپدیت مستقل موتور هر ۶ ساعت بررسی می‌شود؛ نسخه ناسازگار اعمال نمی‌شود. <a href="https://github.com/IzumiRain/HyperDNS" target="_blank" rel="noopener noreferrer">کد اصلی و مجوز AGPL-3.0</a></p></main><section id="viewer" hidden><div><button id="close">بازگشت به سرورها</button><strong>alirezadns</strong></div><iframe id="panel" title="alirezadns"></iframe></section><dialog id="details"><button id="dismiss">بستن</button><div id="detailBody"></div></dialog><script src="ui.js"></script></body></html>
+ALIREZA_360A9273AB92F46C0002A797
+
+cat > "$APP/alirezadns.mjs" <<'ALIREZA_04C1B77A25467BF0966208A3'
+// SPDX-License-Identifier: GPL-3.0-or-later
+import{readFileSync,writeFileSync,mkdirSync,renameSync}from'node:fs';
+import{randomBytes}from'node:crypto';import{spawn}from'node:child_process';import{isIP}from'node:net';import https from'node:https';import{fileURLToPath}from'node:url';
+import{seal,unseal}from'./vault.mjs';
+const root=process.env.ALIREZA_ROOT||'/var/lib/alirezaserver',file=root+'/alirezadns.json',jobs=new Map();
+const fail=(s,status=400)=>{throw Object.assign(Error(s),{status});};
+function records(){try{return JSON.parse(readFileSync(file,'utf8'));}catch(e){if(e.code==='ENOENT')return [];throw e;}}
+function save(rows){mkdirSync(root,{recursive:true,mode:0o700});writeFileSync(file+'.new',JSON.stringify(rows),{mode:0o600});renameSync(file+'.new',file);}
+export function validate(input){
+ const host=String(input.host||'').trim(),domain=String(input.domain||'').trim().toLowerCase(),sshPort=Number(input.sshPort||22);
+ if(isIP(host)!==4||/^(127\.|0\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host))fail('IP عمومی سرور مقصد را وارد کنید.');
+ if(!Number.isInteger(sshPort)||sshPort<1||sshPort>65535)fail('پورت SSH نامعتبر است.');
+ if(input.action!=='probe'&&(!/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,63}$/.test(domain)))fail('دامنه معتبر متصل به سرور مقصد لازم است.');
+ if(String(input.password||'').length>4096||String(input.privateKey||'').length>32768||String(input.email||'').length>254)fail('اطلاعات بیش از حد طولانی است.');
+ return {...input,host,domain,sshPort};
+}
+export function worker(cfg){return new Promise((resolve,reject)=>{
+ const p=spawn(process.env.ALIREZA_PYTHON||'python3',[fileURLToPath(new URL('alirezadns-ssh.py',import.meta.url))],{stdio:['pipe','pipe','pipe'],windowsHide:true});let out='';
+ const timer=setTimeout(()=>{p.kill();reject(Error('زمان عملیات تمام شد؛ دوباره برای ادامه نصب متصل شوید.'));},1900000);timer.unref();
+ p.stdout.on('data',b=>{out+=b;if(out.length>1048576)p.kill();});p.stderr.on('data',()=>{});
+ p.on('error',e=>{clearTimeout(timer);reject(e);});p.on('close',code=>{clearTimeout(timer);try{const r=JSON.parse(out.trim());if(code||!r.ok)reject(Error(r.error||'نصب مقصد ناموفق بود.'));else resolve(r);}catch{reject(Error('پاسخ معتبر از نصب‌کننده SSH دریافت نشد؛ پیش‌نیاز python3-paramiko را بررسی کنید.'));}});
+ p.stdin.on('error',()=>{});p.stdin.end(JSON.stringify(cfg));
+});}
+const probes=new Map();
+export async function probe(input){if([...jobs.values()].filter(j=>j.status==='installing').length>=3)fail('ابتدا عملیات جاری را تمام کنید.',429);const cfg=validate({...input,action:'probe'});const r=await worker(cfg);const token=randomBytes(24).toString('hex');if(probes.size>32)probes.delete(probes.keys().next().value);probes.set(token,{host:cfg.host,sshPort:cfg.sshPort,fingerprint:r.fingerprint,at:Date.now()});return{...r,token};}
+export function install(input){
+ const cfg=validate({...input,action:'install'}),proof=probes.get(cfg.probeToken);
+ if(!proof||Date.now()-proof.at>300000||proof.host!==cfg.host||proof.sshPort!==cfg.sshPort)fail('ابتدا کلید SSH را بررسی و تأیید کنید.');
+ if(!cfg.password&&!cfg.privateKey)fail('رمز root یا کلید خصوصی SSH لازم است.');
+ if([...jobs.values()].filter(j=>j.status==='installing').length>=3||[...jobs.values()].some(j=>j.host===cfg.host&&j.status==='installing'))fail('نصب دیگری در حال اجراست.',409);
+ probes.delete(cfg.probeToken);cfg.fingerprint=proof.fingerprint;
+ const existing=records().find(r=>r.host===cfg.host),id=existing?.id||randomBytes(6).toString('hex');
+ const job={id,host:cfg.host,domain:cfg.domain,status:'installing',started:Date.now()};jobs.set(id,job);
+ worker(cfg).then(result=>{const data=result.node;if(data.host!==cfg.host||data.domain!==cfg.domain||!/^[a-f0-9]{16}$/.test(data.adminPath)||!Number.isInteger(data.port)||data.port<1||data.port>65535)throw Error('اطلاعات مقصد معتبر نیست.');const rows=records().filter(r=>r.id!==id);rows.push({id,host:cfg.host,domain:cfg.domain,adminPath:data.adminPath,port:data.port,version:data.version,sealed:seal({username:data.username,password:data.password},'alirezadns:'+id)});save(rows);job.status='ready';}).catch(e=>{job.status='failed';job.error=e.message;}).finally(()=>{job.finished=Date.now();setTimeout(()=>jobs.delete(id),3600000).unref();});return job;
+}
+export function list(){return {nodes:records().map(({sealed,...r})=>r),jobs:[...jobs.values()]};}
+export function node(id){if(!/^[a-f0-9]{12}$/.test(id))fail('Invalid node');const n=records().find(r=>r.id===id);if(!n)fail('Node not found',404);return n;}
+export function credentials(id){const n=node(id);return unseal(n.sealed,'alirezadns:'+id);}
+export function reconnect(id,input){const n=node(id),v=validate({...input,host:n.host});if(!/^[a-f0-9]{16}$/.test(input.adminPath))fail('مسیر مدیریت باید ۱۶ حرف hexadecimal باشد.');const port=Number(input.port||8080);if(!Number.isInteger(port)||port<1||port>65535)fail('پورت نامعتبر');save(records().map(r=>r.id===id?{...r,domain:v.domain,port,adminPath:input.adminPath}:r));return {ok:true};}
+export function rewrite(text,type,mount,n){
+ const admin='/'+n.adminPath,origin='https://'+n.domain+':'+n.port;
+ if(type.includes('text/html')){
+  text=text.replace(/\b(src|href|action)=(['"])\/(?!\/)([^'"]*)\2/g,(_,a,q,p)=>a+'='+q+mount+'/'+p+q);
+  text=text.replace(new RegExp('([\'\"])'+admin+'(?=[/\'\"])','g'),(_,q)=>q+mount+admin);
+  text=text.replace('</head>',`<script src="${mount}/__brand.js"></script></head>`);
+ }
+ if(type.includes('javascript')||type.includes('text/html')){
+  text=text.replaceAll('hyperdns_token','alirezadns_token_'+n.id);
+  text=text.replace(/const ADMIN_BASE = \(function \(\) \{[\s\S]*?\}\)\(\);/,`const ADMIN_BASE = ${JSON.stringify(mount)} + '/' + window.location.pathname.slice(${mount.length+1}).split('/')[0];`);
+  text=text.replace("var BASE = m ? '/' + m[1] : ADMIN_BASE;",'var BASE = ADMIN_BASE;');
+  text=text.replace('`${window.location.origin}/${newPath}/dash/login`','`${window.location.origin}'+mount+'/${newPath}/dash/login`');
+  text=text.replaceAll('currentConfig?.subscription_origin || window.location.origin','currentConfig?.subscription_origin || '+JSON.stringify(origin));
+ }
+ return text;
+}
+export function proxy(req,res,n,path,mount){
+ if(path==='__brand.js'){res.writeHead(200,{'content-type':'text/javascript; charset=utf-8','cache-control':'no-store'});res.end(readFileSync(new URL('alirezadns-brand.js',import.meta.url)));return;}
+ if(!path){res.writeHead(302,{location:mount+'/'+n.adminPath+'/dash/login','cache-control':'no-store'});res.end();return;}
+ const headers={host:n.domain+':'+n.port,'accept-encoding':'identity'};
+ for(const key of ['content-type','content-length','accept','authorization','x-api-key','user-agent','last-event-id'])if(req.headers[key])headers[key]=req.headers[key];
+ if(req.headers.origin)headers.origin='https://'+headers.host;
+ const remote=https.request({hostname:n.domain,servername:n.domain,port:n.port,lookup:(_host,options,cb)=>cb(null,options?.all?[{address:n.host,family:4}]:n.host,4),path:'/'+path,method:req.method,headers,timeout:120000},response=>{
+  const out={...response.headers,'cache-control':'no-store','x-frame-options':'SAMEORIGIN','referrer-policy':'no-referrer'};
+  delete out['set-cookie'];delete out['strict-transport-security'];delete out.etag;delete out['content-length'];
+  if(out['content-security-policy'])out['content-security-policy']=out['content-security-policy'].replace(/frame-ancestors[^;]*/g,"frame-ancestors 'self'");
+  if(out.location){try{const u=new URL(out.location,'https://'+n.domain+':'+n.port);if(u.hostname===n.domain)out.location=mount+u.pathname+u.search+u.hash;else throw Error();}catch{res.writeHead(502);res.end('Unexpected redirect');response.resume();return;}}
+  const type=String(out['content-type']||'');
+  if(req.method==='POST'&&path.split('?')[0]===n.adminPath+'/api/settings/regenerate-admin-path'&&response.statusCode===200){
+   let chunks=[],size=0;response.on('data',b=>{size+=b.length;if(size>131072)remote.destroy(Error('Unexpected settings response'));else chunks.push(b);});
+   response.on('end',()=>{if(res.writableEnded||res.destroyed)return;try{const data=Buffer.concat(chunks);const value=JSON.parse(data);if(!/^[a-f0-9]{16}$/.test(value.admin_path))throw Error('Invalid admin path');save(records().map(r=>r.id===n.id?{...r,adminPath:value.admin_path}:r));res.writeHead(200,out);res.end(data);}catch{res.writeHead(502);res.end('Reconnect using the new admin path');}});
+  }else
+  if(/text\/html|javascript/.test(type)){
+   let chunks=[],size=0;response.on('data',b=>{size+=b.length;if(size>10*1024*1024)remote.destroy(Error('Page too large'));else chunks.push(b);});
+   response.on('end',()=>{if(res.writableEnded||res.destroyed)return;try{const result=rewrite(Buffer.concat(chunks).toString('utf8'),type,mount,n);res.writeHead(response.statusCode||502,out);res.end(result);}catch{res.writeHead(502);res.end('Incompatible remote panel');}});
+  }else{res.writeHead(response.statusCode||502,out);response.pipe(res);}
+  response.on('error',()=>res.destroy());
+ });
+ remote.on('timeout',()=>remote.destroy(Error('Remote timeout')));remote.on('error',()=>{if(!res.headersSent){res.writeHead(502,{'content-type':'text/plain; charset=utf-8'});res.end('اتصال امن به alirezadns برقرار نشد؛ دامنه، گواهی و پورت مقصد را بررسی کنید.');}else res.destroy();});
+ req.on('aborted',()=>remote.destroy());res.on('close',()=>remote.destroy());req.pipe(remote);
+}
+ALIREZA_04C1B77A25467BF0966208A3
 
 cat > "$APP/auth.py" <<'ALIREZA_8FD1D5E2FD0138ACA837582B'
 #!/usr/bin/python3
@@ -667,7 +1070,7 @@ os.chmod(target,0o600)
 print(target)
 ALIREZA_88B0DFEB38DB40AC66F1761D
 
-cat > "$APP/brand.js" <<'ALIREZA_653D90EB5A1694CB0C391F68'
+cat > "$APP/brand.js" <<'ALIREZA_05CDFF4F5544DD154CA09909'
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 (()=>{'use strict';
   const base=window.__NOVA_BASE__||'', prefix=base+'/alireza/';
@@ -677,7 +1080,7 @@ cat > "$APP/brand.js" <<'ALIREZA_653D90EB5A1694CB0C391F68'
   let overlay;
   function open(kind){
     if(!overlay){overlay=document.createElement('section');overlay.className='az-overlay';overlay.innerHTML='<div class="az-toolbar"><button type="button"></button><strong></strong><span>alirezaserver</span></div><iframe title="Service"></iframe>';document.body.append(overlay);overlay.querySelector('button').onclick=()=>{overlay.hidden=true;overlay.querySelector('iframe').src='about:blank';};}
-    overlay.querySelector('button').textContent=fa()?'← بازگشت به پنل':'← Back to panel';overlay.querySelector('strong').textContent=kind==='dns'?'AdGuard Home · DNS':'OpenVPN';
+    overlay.querySelector('button').textContent=fa()?'← بازگشت به پنل':'← Back to panel';overlay.querySelector('strong').textContent=kind==='dns'?'AdGuard Home · DNS':kind==='alirezadns'?'alirezadns':'OpenVPN';
     overlay.querySelector('iframe').src=prefix+kind+'/';overlay.hidden=false;overlay.querySelector('button').focus();
   }
   let owner=false,authPending=false;
@@ -692,7 +1095,7 @@ cat > "$APP/brand.js" <<'ALIREZA_653D90EB5A1694CB0C391F68'
     const icon=document.querySelector('link[rel="icon"]');if(icon&&!icon.dataset.azMark){icon.href='data:image/svg+xml,'+encodeURIComponent(logo);icon.dataset.azMark='1';}
     document.querySelectorAll('.social a').forEach(a=>{a.removeAttribute('href');a.removeAttribute('target');a.removeAttribute('onclick');a.setAttribute('aria-disabled','true');a.tabIndex=-1;});
     const nav=document.querySelector('.side-nav');
-    if(nav&&!nav.querySelector('.az-nav')&&owner){for(const [kind,label]of[['dns','DNS · AdGuard Home'],['openvpn','OpenVPN']]){const b=document.createElement('button');b.type='button';b.className='nav-item az-nav';b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6h.01M7 17h.01"/></svg><span></span>';b.querySelector('span').textContent=label;b.onclick=()=>open(kind);nav.append(b);}}
+    if(nav&&!nav.querySelector('.az-nav')&&owner){for(const [kind,label]of[['dns','DNS · AdGuard Home'],['openvpn','OpenVPN'],['alirezadns','alirezadns']]){const b=document.createElement('button');b.type='button';b.className='nav-item az-nav';b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6h.01M7 17h.01"/></svg><span></span>';b.querySelector('span').textContent=label;b.onclick=()=>open(kind);nav.append(b);}}
     if(!nav){document.querySelectorAll('.az-nav').forEach(el=>el.remove());if(overlay&&!overlay.hidden){overlay.hidden=true;overlay.querySelector('iframe').src='about:blank';}}
     observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['href']});
   }
@@ -705,7 +1108,7 @@ cat > "$APP/brand.js" <<'ALIREZA_653D90EB5A1694CB0C391F68'
   document.addEventListener('click',event=>{if(event.target.closest('button[type="submit"],#gate-submit,#logout,[data-action="logout"]'))setTimeout(checkOwner,1000);},true);
   let hadNav=!!document.querySelector('.side-nav');new MutationObserver(()=>{const has=!!document.querySelector('.side-nav');if(has!==hadNav){hadNav=has;checkOwner();}}).observe(document.body,{childList:true,subtree:true});
 })();
-ALIREZA_653D90EB5A1694CB0C391F68
+ALIREZA_05CDFF4F5544DD154CA09909
 
 cat > "$APP/check-dns.mjs" <<'ALIREZA_937B0EB65E80D2549D02F37C'
 // SPDX-License-Identifier: GPL-3.0-or-later
@@ -1014,7 +1417,7 @@ render();refresh();setInterval(()=>{if(!document.hidden&&!busy&&!$('#editor').op
 </script></body></html>
 ALIREZA_766ADC50D917E11CBE4D9DDF
 
-cat > "$APP/preload.mjs" <<'ALIREZA_2CEC2E77E74D9FA9971562EC'
+cat > "$APP/preload.mjs" <<'ALIREZA_E0F1B674D02C443922863BCF'
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Loaded only into Nova's existing Node process. Original Nova files are unmodified.
 import http from 'node:http';
@@ -1026,6 +1429,7 @@ import * as backend from './backend.mjs';
 import {fontCSS,themeCSS,dnsStatusForPanel} from './theme.mjs';
 import {shareHTTP} from './share-http.mjs';
 import './update-hook.mjs';
+import * as alirezadns from './alirezadns.mjs';
 const HERE=dirname(fileURLToPath(import.meta.url));
 const previous=http.Server.prototype.emit;
 let readonly;
@@ -1134,6 +1538,15 @@ async function handle(req,res,base,tail) {
   if(!auth){json(res,401,{error:'Sign in to the main panel first.'});return;}
   if(auth.role!=='owner'){json(res,403,{error:'These services are available to the panel owner.'});return;}
   if(!['GET','HEAD'].includes(req.method)&&!sameOrigin(req)){json(res,403,{error:'Same-origin request required'});return;}
+  if(tail==='alirezadns/'&&req.method==='GET'){file(res,'alirezadns.html','text/html; charset=utf-8');return;}
+  if(tail==='alirezadns/ui.js'&&req.method==='GET'){file(res,'alirezadns-ui.js','text/javascript; charset=utf-8');return;}
+  if(tail==='api/alirezadns'&&req.method==='GET'){json(res,200,alirezadns.list());return;}
+  if(tail==='api/alirezadns/probe'&&req.method==='POST'){json(res,200,await alirezadns.probe(await body(req)));return;}
+  if(tail==='api/alirezadns/install'&&req.method==='POST'){json(res,202,alirezadns.install(await body(req)));return;}
+  const dnsNode=tail.match(/^api\/alirezadns\/([a-f0-9]{12})\/(credentials|connection)$/);
+  if(dnsNode){if(dnsNode[2]==='credentials'&&req.method==='GET'){json(res,200,alirezadns.credentials(dnsNode[1]));return;}if(dnsNode[2]==='connection'&&req.method==='PUT'){json(res,200,alirezadns.reconnect(dnsNode[1],await body(req)));return;}}
+  const dnsProxy=tail.match(/^alirezadns\/node\/([a-f0-9]{12})\/(.*)$/);
+  if(dnsProxy){alirezadns.proxy(req,res,alirezadns.node(dnsProxy[1]),dnsProxy[2],base+'/alireza/alirezadns/node/'+dnsProxy[1]);return;}
   if(tail==='assets/font.css'&&req.method==='GET'){res.writeHead(200,{'content-type':'text/css; charset=utf-8','cache-control':'private, max-age=86400'});res.end(fontCSS());return;}
   if(tail==='assets/theme.css'&&req.method==='GET'){res.writeHead(200,{'content-type':'text/css; charset=utf-8','cache-control':'no-store'});res.end(themeCSS());return;}
   if(tail==='assets/theme.js'&&req.method==='GET'){file(res,'theme.js','text/javascript; charset=utf-8');return;}
@@ -1178,7 +1591,7 @@ if(process.env.ALIREZA_NO_HOOK!=='1') {
   };
   backend.startCollector();
 }
-ALIREZA_2CEC2E77E74D9FA9971562EC
+ALIREZA_E0F1B674D02C443922863BCF
 
 cat > "$APP/reset-sessions.py" <<'ALIREZA_9D3D2A690AE74AB0156A9F9F'
 #!/usr/bin/python3
@@ -1605,7 +2018,7 @@ export const newToken=()=>randomBytes(32).toString('base64url');
 export const tokenHash=token=>createHash('sha256').update(token).digest('hex');
 ALIREZA_D534FDAC2E9B938FD3087634
 
-cat > "$APP/verify-install.mjs" <<'ALIREZA_E4DA42252F2D4D036D0DF0C2'
+cat > "$APP/verify-install.mjs" <<'ALIREZA_A34ECF00DB1DACE62ADC7BB9'
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Runs locally as root; creates a short-lived owner cookie in memory, never logs it.
 // The native signing key is initialized only if this is the very first session.
@@ -1667,6 +2080,8 @@ async function verify(transport,port){
   requireThat(brand.code===200&&brand.body.includes('DNS · AdGuard Home')&&brand.body.includes('OpenVPN'),'New sidebar menu code is missing');
   const vpn=await get('/alireza/openvpn/');
   requireThat(vpn.code===200&&vpn.body.includes('OpenVPN')&&vpn.body.includes('alirezaserver'),'Owner cannot open OpenVPN management');
+  const remoteDNS=await get('/alireza/alirezadns/'),remoteList=await get('/alireza/api/alirezadns');
+  requireThat(remoteDNS.code===200&&remoteDNS.body.includes('alirezadns')&&remoteList.code===200&&Array.isArray(JSON.parse(remoteList.body).nodes),'Remote DNS management is missing');
   const theme=await get('/alireza/assets/theme.css'),font=await get('/alireza/assets/font.css');
   requireThat(theme.code===200&&theme.body.includes('--az-shadow-card')&&font.code===200&&font.body.includes('data:font/woff2;base64,'),'Nova theme or Vazirmatn font is missing');
   const status=await get('/alireza/api/status');
@@ -1698,7 +2113,7 @@ try {
     console.log('Panel: https://'+(isIP(host)===6?'['+host+']':host)+(port===443?'':':'+port)+base+'/');
   }
 }catch(e){console.error('Integration verification FAILED: '+e.message);process.exitCode=1;}
-ALIREZA_E4DA42252F2D4D036D0DF0C2
+ALIREZA_A34ECF00DB1DACE62ADC7BB9
 
 cat > "$APP/COPYING.vpn-ui" <<'ALIREZA_3972DC9744F6499F0F9B2DBF'
                     GNU GENERAL PUBLIC LICENSE
@@ -2377,6 +2792,338 @@ Public License instead of this License.  But first, please read
 <https://www.gnu.org/licenses/why-not-lgpl.html>.
 ALIREZA_3972DC9744F6499F0F9B2DBF
 
+cat > "$APP/COPYING.HyperDNS" <<'ALIREZA_A1174849404E21D09683D540'
+﻿                    GNU AFFERO GENERAL PUBLIC LICENSE
+                       Version 3, 19 November 2007
+
+ Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+
+                            Preamble
+
+  The GNU Affero General Public License is a free, copyleft license for
+software and other kinds of works, specifically designed to ensure
+cooperation with the community in the case of network server software.
+
+  The licenses for most software and other practical works are designed
+to take away your freedom to share and change the works.  By contrast,
+our General Public Licenses are intended to guarantee your freedom to
+share and change all versions of a program--to make sure it remains free
+software for all its users.
+
+  When we speak of free software, we are referring to freedom, not
+price.  Our General Public Licenses are designed to make sure that you
+have the freedom to distribute copies of free software (and charge for
+them if you wish), that you receive source code or can get it if you
+want it, that you can change the software or use pieces of it in new
+free programs, and that you know you can do these things.
+
+  Developers that use our General Public Licenses protect your rights
+with two steps: (1) assert copyright on the software, and (2) offer
+you this License which gives you legal permission to copy, distribute
+and/or modify the software.
+
+  A secondary benefit of defending all users' freedom is that
+improvements made in alternate versions of the program, if they
+become widely used, become available for other developers to
+incorporate.  Many developers of free software are heartened and
+encouraged by the resulting cooperation.  However, in the case of
+software used on network servers, this result may fail to come about.
+The GNU General Public License permits making a modified version and
+letting the public access it on a server without ever releasing its
+source code to the public.
+
+  The GNU Affero General Public License is designed specifically to
+ensure that, in such cases, the modified source code becomes available
+to the community.  It requires the operator of a network server to
+provide the source code of the modified version running there to the
+users of that server.  Therefore, public use of a modified version, on
+a publicly accessible server, gives the public access to the source
+code of the modified version.
+
+  An older license, called the Affero General Public License and
+published by Affero, was designed to accomplish similar goals.  This is
+a different license, computed to be different from the Affero General
+Public License, but Affero has released a new version of the Affero
+General Public License which permits relicensing under this license.
+
+  The precise terms and conditions for copying, distribution and
+modification follow.
+
+                       TERMS AND CONDITIONS
+
+  0. Definitions.
+
+  "This License" refers to version 3 of the GNU Affero General Public License.
+
+  "Copyright" also means copyright-like laws that apply to other kinds of
+works, such as semiconductor masks.
+
+  "The Program" refers to any copyrightable work licensed under this
+License.  Each licensee is addressed as "you".  "Licensees" and
+"recipients" may be individuals or organizations.
+
+  To "modify" a work means to copy from or adapt all or part of the work
+in a fashion requiring copyright permission, other than the making of an
+exact copy.  The resulting work is called a "modified version" of the
+earlier work or a work "based on" the earlier work.
+
+  A "covered work" means either the unmodified Program or a work based
+on the Program.
+
+  To "propagate" a work means to do anything with it that, without
+permission, would make you directly or secondarily liable for
+infringement under applicable copyright law, except executing it on a
+computer or modifying a private copy.  Propagation includes copying,
+distribution (with or without modification), making available to the
+public, and in some countries other activities as well.
+
+  To "convey" a work means any kind of propagation that enables other
+parties to make or receive copies.  Mere interaction with a user through
+a computer network, with no transfer of a copy, is not conveying.
+
+  An interactive user interface displays "Appropriate Legal Notices"
+to the extent that it includes a convenient and prominently visible
+feature that (1) displays an appropriate copyright notice, and (2)
+tells the user that there is no warranty for the work (except to the
+extent that warranties are provided), that licensees may convey the
+work under this License, and how to view a copy of this License.  If
+the interface presents a list of user commands or options, such as a
+menu, a prominent item in the list meets this criterion.
+
+  1. Source Code.
+
+  The "source code" for a work means the preferred form of the work
+for making modifications to it.  "Object code" means any non-source
+form of a work.
+
+  A "Standard Interface" means an interface that either is an official
+standard defined by a recognized standards body, or, in the case of
+interfaces specified for a particular programming language, one that
+is widely used among developers working in that language.
+
+  The "System Libraries" of an executable work include anything, other
+than the work as a whole, that (a) is included in the normal form of
+packaging a Major Component, but which is not part of that Major
+Component, and (b) serves only to enable use of the work with that
+Major Component, or to implement a Standard Interface for which an
+implementation is available to the public in source code form.  A
+"Major Component", in this context, means a major essential component
+(kernel, window system, and so on) of the specific operating system
+(if any) on which the executable work runs, or a compiler used to
+produce the work, or an object code interpreter used to run it.
+
+  The "Corresponding Source" for a work in object code form means all
+the source code needed to generate, install, and (for an executable
+work) run the object code and to modify the work, including scripts to
+control those activities.  However, it does not include the work's
+System Libraries, or general-purpose tools or generally available free
+programs which are used unmodified in performing those activities but
+which are not part of the work.  For example, Corresponding Source
+includes interface definition files associated with source files for
+the work, and the source code for shared libraries and dynamically
+linked subprograms that the work is specifically designed to require,
+such as by intimate data communication or control flow between those
+subprograms and other parts of the work.
+
+  The Corresponding Source need not include anything that users
+can regenerate automatically from other parts of the Corresponding
+Source.
+
+  The Corresponding Source for a work in source code form is that
+same work.
+
+  2. Basic Permissions.
+
+  All rights granted under this License are granted for the term of
+copyright on the Program, and are irrevocable provided the stated
+conditions are met.  This License explicitly affirms your unlimited
+permission to run the unmodified Program.  The output from running a
+covered work is covered by this License only if the output, given its
+content, constitutes a covered work.  This License acknowledges your
+rights of fair use or other equivalent, as provided by copyright law.
+
+  You may make, run and propagate covered works that you do not
+convey, without conditions so long as your license otherwise remains
+in force.  You may convey covered works to others for the sole purpose
+of having them make modifications exclusively for you, or provide you
+with facilities for running those works, provided that you comply with
+the terms of this License in conveying all material for which you do
+not control copyright.  Those who make or run the covered works for
+you must do so exclusively on your behalf, under your direction and
+control, on terms that prohibit them from making any copies of your
+copyrighted material outside their relationship with you.
+
+  Conveying under any other circumstances is permitted solely under
+the conditions stated below.  Sublicensing is not allowed; section 10
+makes it unnecessary.
+
+  3. Protecting Users' Legal Rights From Anti-Circumvention Law.
+
+  No covered work shall be deemed part of an effective technological
+measure under any applicable law fulfilling obligations under article
+11 of the WIPO copyright treaty adopted on 20 December 1996, or
+similar laws prohibiting or restricting circumvention of such
+measures.
+
+  When you convey a covered work, you waive any legal power to forbid
+circumvention of technological measures to the extent such circumvention
+is effected by exercising rights under this License with respect to
+the covered work, and you disclaim any intention to limit operation or
+modification of the work as a means of enforcing, against the work's
+users, your or third parties' legal rights to forbid circumvention of
+technological measures.
+
+  4. Conveying Verbatim Copies.
+
+  You may convey verbatim copies of the Program's source code as you
+receive it, in any medium, provided that you conspicuously and
+appropriately publish on each copy an appropriate copyright notice;
+keep intact all notices stating that this License and any
+non-permissive terms added in accord with section 7 apply to the code;
+keep intact all notices of the absence of any warranty; and give all
+recipients a copy of this License along with the Program.
+
+  You may charge any price or no price for each copy that you convey,
+and you may offer support or warranty protection for a fee.
+
+  5. Conveying Modified Source Versions.
+
+  You may convey a work based on the Program, or the modifications to
+produce it from the Program, in the form of source code under the
+terms of section 4, provided that you also meet all of these conditions:
+
+    a) The work must carry prominent notices stating that you modified
+    it, and giving a relevant date.
+
+    b) The work must carry prominent notices stating that it is
+    released under this License and any conditions added under section
+    7.  This requirement modifies the requirement in section 4 to
+    "keep intact all notices".
+
+    c) You must license the entire work, as a whole, under this
+    License to anyone who comes into possession of a copy.  This
+    License will therefore apply, along with any applicable section 7
+    additional terms, to the whole of the work, and all its parts,
+    regardless of how they are packaged.  This License gives no
+    permission to license the work in any other way, but it does not
+    invalidate such permission if you have separately received it.
+
+    d) If the work has interactive user interfaces, each must display
+    Appropriate Legal Notices; however, if the Program has interactive
+    interfaces that do not display Appropriate Legal Notices, your
+    work need not make them do so.
+
+  A compilation of a covered work with other separate and independent
+works, which are not by their nature extensions of the covered work,
+and which are not combined with it such as to form a larger program,
+in or on a volume of a storage or distribution medium, is called an
+"aggregate" if the compilation and its resulting copyright are not
+used to limit the access or legal rights of the compilation's users
+beyond what the individual works permit.  Inclusion of a covered work
+in an aggregate does not cause this License to apply to the other
+parts of the aggregate.
+
+  6. Conveying Non-Source Forms.
+
+  You may convey a covered work in object code form under the terms
+of sections 4 and 5, provided that you also convey the
+machine-readable Corresponding Source under the terms of this License,
+in one of these ways:
+
+    a) Convey the object code in, or embodied in, a physical product
+    (including a physical distribution medium), accompanied by the
+    Corresponding Source fixed on a durable physical medium
+    customarily used for software interchange.
+
+    b) Convey the object code in, or embodied in, a physical product
+    (including a physical distribution medium), accompanied by a
+    written offer, valid for at least three years and valid for as
+    long as you offer spare parts or customer support for that product
+    model, to give anyone who possesses the object code either (1) a
+    copy of the Corresponding Source for all the software in the
+    product that is covered by this License, on a durable physical
+    medium customarily used for software interchange, for a price no
+    more than your reasonable cost of physically performing this
+    conveying of source, or (2) access to copy the
+    Corresponding Source from a network server at no charge.
+
+    c) Convey individual copies of the object code with a copy of the
+    written offer to provide the Corresponding Source.  This
+    alternative is allowed only occasionally and noncommercially, and
+    only if you received the object code with such an offer, in accord
+    with subsection 6b.
+
+    d) Convey the object code by offering access from a designated
+    place (gratis or for a charge), and offer equivalent access to the
+    Corresponding Source in the same way through the same place at no
+    further charge.  You need not require recipients to copy the
+    Corresponding Source along with the object code.  If the place to
+    copy the object code is a network server, the Corresponding Source
+    may be on a different server (operated by you or a third party)
+    that supports equivalent copying facilities, provided you maintain
+    clear directions next to the object code saying where to find the
+    Corresponding Source.  Regardless of what server hosts the
+    Corresponding Source, you remain obligated to ensure that it is
+    available for as long as needed to satisfy these requirements.
+
+  7. Additional Terms.
+
+  "Additional permissions" are terms that supplement the terms of this
+License by making exceptions from one or more of its conditions.
+Additional permissions that are applicable to the entire Program shall
+be treated as though they were included in this License, to the extent
+that they are valid under applicable law.
+
+  8. Termination.
+
+  You may not propagate or modify a covered work except as expressly
+provided under this License.
+
+  9. Acceptance Not Required for Having Copies.
+
+  You are not required to accept this License in order to receive or
+run a copy of the Program.
+
+  10. Automatic Licensing of Downstream Recipients.
+
+  Each time you convey a covered work, the recipient automatically
+receives a license from the original licensors, to run, modify and
+propagate that work, subject to this License.
+
+  11. Patents.
+
+  Each contributor grants you a non-exclusive, worldwide, royalty-free
+patent license under the contributor's essential patent claims.
+
+  12. No Surrender of Others' Freedom.
+
+  13. Remote Network Interaction; Use with the GNU General Public License.
+
+  Notwithstanding any other provision of this License, if you modify the
+Program, your modified version must prominently offer all users
+interacting with it remotely through a computer network (if your version
+supports such interaction) an opportunity to receive the Corresponding
+Source of your version by providing access to the Corresponding Source
+from a network server at no charge, through some standard or customary
+means of facilitating copying of software.
+
+  14. Revised Versions of this License.
+
+  15. Disclaimer of Warranty.
+
+  THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
+APPLICABLE LAW.
+
+  16. Limitation of Liability.
+
+  IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER BE LIABLE TO YOU FOR DAMAGES.
+
+                     END OF TERMS AND CONDITIONS
+ALIREZA_A1174849404E21D09683D540
+
 chmod 700 "$APP"/*.py "$APP"/*.sh
 mkdir -p "$APP/adguard" "$ROOT/adguard" "$ROOT/openvpn"
 if [[ ! -x "$APP/adguard/AdGuardHome" ]]; then install -m 755 "$WORK/AdGuardHome/AdGuardHome" "$APP/adguard/AdGuardHome"; fi
@@ -2404,7 +3151,7 @@ if not os.path.exists(root+'/adguard/AdGuardHome.yaml'):
     # JSON is valid YAML; AdGuard reads it and rewrites its native YAML on save.
     with open(root+'/adguard/AdGuardHome.yaml','w') as f:json.dump(config,f,indent=2)
 if not os.path.exists(root+'/install.json'):
-    with open(root+'/install.json','w') as f:json.dump({'dns_address':address,'dns_allowed_clients':allowed,'version':'0.4.0'},f)
+    with open(root+'/install.json','w') as f:json.dump({'dns_address':address,'dns_allowed_clients':allowed,'version':'0.5.0'},f)
 if not os.path.exists(root+'/firewall.json'):
     with open(root+'/firewall.json','w') as f:json.dump([],f)
 PY
@@ -2556,7 +3303,7 @@ cat "$WORK/verify.log"
 [[ $VERIFIED == 1 ]] || die 'The integrated panel did not pass verification. Existing add-on data is retained; rerun this file to repair.'
 bash "$APP/check.sh"
 NOVA_VERSION=$(node -p 'require("/opt/nova-node-agent/package.json").version')
-printf '{"version":"0.4.0","nova":"%s","adguard":"%s"}\n' "$NOVA_VERSION" "$AG_VERSION" > "$ROOT/installed.json"
+printf '{"version":"0.5.0","nova":"%s","adguard":"%s"}\n' "$NOVA_VERSION" "$AG_VERSION" > "$ROOT/installed.json"
 systemctl enable --now alireza-update.timer
 rm -f "$ROOT/failed-stage"
 HOOK_CHANGED=0
