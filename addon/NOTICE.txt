@@ -1,0 +1,95 @@
+alirezaserver add-on 0.6.0
+
+The new integration modules in this directory are licensed under GPL-3.0-or-later.
+OpenVPN configuration/profile conventions were adapted from Sir-MmD/vpn-ui,
+web/service/openvpn.go at commit 8044e0ad45c60149439546ea0fd99371a4d3c03d.
+Original contributors retain their copyrights. See COPYING.vpn-ui.
+
+Nova Server is separately downloaded from IRNova/Nova-Server, release 1.85.4,
+commit 17e9373ec17ceede95369fcd26d6fabfda83b504. Its original code is not included
+in this installer and is not relicensed. Its proprietary license continues to
+apply. UI integration and private customization do not transfer ownership.
+
+AdGuard Home is separately downloaded from AdguardTeam/AdGuardHome, v0.107.79,
+and remains GPL-3.0 licensed. The complete original UI is proxied; shared colors,
+effects and Nova's embedded Vazirmatn font are applied without rearranging controls.
+Its original source and notices remain upstream.
+OpenVPN and OS packages retain their own upstream licenses.
+
+Scope and verification:
+- A separate systemd timer checks official Nova releases every six hours.
+  Metadata, archive and checksum come from one immutable upstream commit.
+  Code/template/auth contracts and post-start UI/API checks gate activation.
+  The default Nova data/config layout is snapshotted while Nova is stopped;
+  code/data rollback and boot-time recovery retain the previous release on failure.
+  Two snapshots are retained. A rejected commit is not retried automatically.
+  Custom symlink/database layouts fail closed for explicit compatibility review.
+  The current native updater is redirected to the guarded service; read-only
+  service mounts prevent unguarded native code replacement. These mounts/timers
+  have not been exercised on a Linux VPS in this Windows development environment.
+  No mechanism can guarantee compatibility with every unknown future release.
+- OpenVPN personal links grant their holder access to that account's username,
+  password, usage and permitted profiles. Links are random, revocable and separate
+  from the admin path. Password copies/tokens are AES-256-GCM encrypted with a
+  root-only local key; VPN authentication still uses scrypt. Protect backups and
+  use HTTPS. Existing password hashes cannot be recovered: set a new password
+  once to enable sharing for an old account. This is a web/download link, not a
+  universal automatic-import protocol for every OpenVPN client.
+- Branding does not rename original Nova files, protocol identifiers or node
+  enrollment command URLs. The guarded updater installs official Nova code;
+  branding itself changes only the displayed panel.
+- An HTTP request hook runs inside the original Nova process through a systemd
+  drop-in. Original requests go to the original handler; addon routes require an
+  owner session validated by Nova's own /admin/whoami endpoint on each request.
+- Additional accounts and statistics live in a separate SQLite database.
+- OpenVPN here is an adapted implementation, not vpn-ui's full Go/RADIUS stack.
+  It supports TCP/UDP servers, username/password accounts, per-account expiry,
+  quotas, concurrent device caps, profile export, selected ciphers and TLS-Crypt.
+  It does not add OpenVPN to Nova's native subscriptions, fleet accounting,
+  resellers, bridge generation or Telegram bot. Original Nova features remain.
+- DNS and OpenVPN addons are local to the main panel. Existing Nova fleet nodes
+  keep their original behavior. OpenVPN traffic exits via the host's IPv4 route;
+  it is not automatically sent through Nova's custom Xray/WARP outbounds.
+- The original Nova backup/reset tools do not manage the separate addon data.
+  Run install.sh --backup alongside Nova's own backup. The resulting root-only
+  archive in /var/backups/alirezaserver includes a consistent addon SQLite copy,
+  certificates, configuration and integration files. Restore is manual.
+- DNS serves TCP/UDP port 53 on loopback and the default IPv4 interface address.
+  Its admin HTTP port 18085 is loopback-only. Direct IPv6 DNS listening and
+  standalone encrypted DNS listeners are not preconfigured; all original AdGuard
+  settings are available. Fresh installations accept public DNS clients with
+  AdGuard's 20 queries/second rate limit. Custom access lists remain enforced.
+  Repair replaces only the exact private-only ACL and DoH upstream pair shipped
+  as 0.2 defaults. Access restrictions can be set in AdGuard Access settings.
+- Firewall changes affect dedicated ALIREZA_* chains, never flush system chains.
+  Provider firewalls cannot be modified without provider access.
+- Base packages require internet access; install.sh is a one-file online installer.
+- Re-running install.sh repairs/resumes this integration and preserves its stored
+  custom DNS settings, accounts and certificates. Recognized existing data is backed
+  up before repair. Root-only logs are written to /var/log/alirezaserver.
+- Existing OpenVPN configurations are regenerated with the IPv4-only tunnel
+  recipe and client IPv6 blocking. Accounts, CA and TLS-Crypt keys are retained;
+  the previous server.conf is saved as server.conf.before-0.3.
+- Installation success requires owner-authenticated UI/API checks through both
+  the internal listener and the local HTTPS front. Temporary DNS verification
+  rewrites are removed after checking TCP/UDP resolution. External upstream
+  failure is reported separately and does not silently remove working UI additions.
+- No live Linux VPN-client, multi-node, reboot, kernel-firewall, or 1 GiB load test
+  was possible in the Windows development environment. Treat this as a test build.
+  The code does not guarantee bug-free operation or unlimited load on a 1 GiB VPS.
+
+Local tests cover input validation, Python authentication/device limits, expiry,
+traffic calculations, owner authorization and CSRF checks, HTTP proxying, branding,
+and installer/script syntax. See the verification record embedded in install.sh.
+
+HyperDNS is separately downloaded from IzumiRain/HyperDNS, initial release
+v2.2.0-beta.1. It remains AGPL-3.0 licensed; see COPYING.HyperDNS.
+Source: https://github.com/IzumiRain/HyperDNS
+UI compatibility was inspected at commit 4a899a90c682d14aa8fdc4506dd6efd84316956c.
+Its binary is not included or patched. HTTP integration rewrites mount paths and
+isolates browser sessions, and applies display branding inside alirezaserver.
+Original notices and technical protocol identifiers remain intact.
+
+0.6.0 adds an official Gemini API advisor and independent extension UI.
+No new theme is injected into the original Nova or AdGuard document.
+See the release docs/VALIDATION.md for the current tests and limitations.

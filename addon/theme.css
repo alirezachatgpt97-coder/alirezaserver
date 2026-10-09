@@ -1,0 +1,56 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later
+   Shared appearance only. No positioning, ordering or control removal in AdGuard. */
+:root{--az-bg:#070809;--az-panel:#0c0e12;--az-card:#101319;--az-card2:#0b0d11;--az-bd:#1c2027;--az-bd2:#262b34;--az-tx:#e9edf4;--az-tx2:#aeb6c4;--az-mu:#7c8698;--az-ac:#22d3ee;--az-ac2:#7c5cff;--az-ac-ink:#04121a;--az-grad:linear-gradient(120deg,#22d3ee,#7c5cff);--az-ok:#34d399;--az-dg:#f87171}
+html[data-alireza-surface]{--bg:var(--az-bg);--panel:var(--az-panel);--line:var(--az-bd);--text:var(--az-tx);--muted:var(--az-mu);--accent:var(--az-ac);--input:var(--az-card2);--primary:var(--az-ac);--primary-bg:var(--az-ac);--primary-color:var(--az-ac);font-family:Vazirmatn,Tahoma,sans-serif!important}
+html[data-alireza-surface] body{font-family:Vazirmatn,Tahoma,sans-serif!important;background:radial-gradient(ellipse at 10% 0%,color-mix(in srgb,var(--az-ac) 9%,transparent),transparent 48%),radial-gradient(ellipse at 95% 10%,color-mix(in srgb,var(--az-ac2) 9%,transparent),transparent 40%),var(--az-bg)!important;color:var(--az-tx)!important}
+html[data-alireza-surface] :is(button,input,select,textarea,.btn,.form-control){font-family:Vazirmatn,Tahoma,sans-serif!important}
+html[data-alireza-surface] :is(.card,.stat,.modal-content,dialog,.dropdown-menu,.popover){background:var(--az-card)!important;color:var(--az-tx)!important;border-color:var(--az-bd)!important;border-radius:16px;box-shadow:0 12px 36px #0002,inset 0 1px 0 color-mix(in srgb,var(--az-tx) 4%,transparent)}
+html[data-alireza-surface] :is(.card-header,.card-head,.card-footer,.modal-header,.modal-footer,.dialog-foot,.header,.footer,.navbar){background:var(--az-panel)!important;color:var(--az-tx)!important;border-color:var(--az-bd)!important}
+html[data-alireza-surface] :is(h1,h2,h3,h4,h5,h6,.card-title,.form-label,.nav-link,.dropdown-item){color:var(--az-tx)!important}
+html[data-alireza-surface] :is(.text-muted,.hint,.card-subtitle,.form-text,.form-description){color:var(--az-mu)!important}
+html[data-alireza-surface] :is(a,.nav-link.active,.eyebrow){color:var(--az-ac)!important}
+html[data-alireza-surface] :is(input:not([type=checkbox]):not([type=radio]),select,textarea,.form-control,.input-group-text){background:var(--az-card2)!important;color:var(--az-tx)!important;border-color:var(--az-bd2)!important;border-radius:10px}
+html[data-alireza-surface] :is(button,.btn,input,select,textarea,.card,.stat){transition:background-color .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+html[data-alireza-surface] :is(input,select,textarea):focus{outline:none!important;border-color:var(--az-ac)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--az-ac) 18%,transparent)!important}
+html[data-alireza-surface] :is(button,.btn){border-radius:10px}
+html[data-alireza-surface] :is(button,.btn):not(:disabled):hover{border-color:var(--az-ac)!important;box-shadow:0 0 18px color-mix(in srgb,var(--az-ac) 12%,transparent)}
+html[data-alireza-surface] :is(.btn-primary,.primary){background:var(--az-grad)!important;border-color:transparent!important;color:#fff!important;box-shadow:0 5px 22px color-mix(in srgb,var(--az-ac2) 20%,transparent)}
+html[data-alireza-surface] :is(.btn-secondary,.btn-outline-secondary){background:var(--az-card2)!important;color:var(--az-tx)!important;border-color:var(--az-bd2)!important}
+html[data-alireza-surface] :is(table,.table,.ReactTable,.rt-table,.rt-thead,.rt-tbody,.rt-tr,.rt-td,.rt-th){background:transparent!important;color:var(--az-tx)!important;border-color:var(--az-bd)!important}
+html[data-alireza-surface] :is(th,td,.rt-tr-group){border-color:var(--az-bd)!important}
+html[data-alireza-surface] :is(tbody tr,.rt-tr-group):hover{background:color-mix(in srgb,var(--az-ac) 5%,transparent)!important}
+html[data-alireza-surface] .custom-switch-input:checked~.custom-switch-indicator{background:var(--az-ac)!important}
+html[data-alireza-surface] :is(.progress i,.progress-bar){background:var(--az-grad)!important}
+html[data-alireza-surface] :is(input[type=checkbox],input[type=radio]){accent-color:var(--az-ac)}
+html[data-alireza-surface] dialog::backdrop{background:#0009;backdrop-filter:blur(8px)}
+html[data-alireza-surface] :is(.alert-danger,#message){background:color-mix(in srgb,var(--az-dg) 12%,var(--az-card))!important;color:var(--az-tx)!important;border-color:color-mix(in srgb,var(--az-dg) 45%,var(--az-bd))!important}
+html[data-alireza-surface] .az-connection{padding:12px 18px;margin:12px 0;border:1px solid var(--az-bd2);border-radius:12px;background:var(--az-panel);line-height:1.9}
+@media(prefers-reduced-motion:reduce){html[data-alireza-surface] *{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+/* Read the current Nova tokens at runtime: surface geometry stays AdGuard's. */
+html[data-alireza-surface] :is(.card,.stat){box-shadow:var(--az-shadow-card)!important}
+html[data-alireza-surface] :is(.card,.stat):hover{box-shadow:var(--az-shadow-card-hover)!important}
+html[data-alireza-surface] :is(.modal-content,dialog,.dropdown-menu,.popover){box-shadow:var(--az-shadow-pop)!important}
+html[data-alireza-surface] :is(input,select,textarea):focus{box-shadow:var(--az-ring)!important}
+html[data-alireza-surface] :is(.btn-success,.btn-info,.btn-outline-primary){color:var(--az-ac)!important;background:var(--az-card2)!important;border-color:var(--az-ac)!important}
+html[data-alireza-surface] :is(.btn-danger,.text-danger,.badge-danger){color:var(--az-dg)!important}
+html[data-alireza-surface] :is(.badge-success,.text-success){color:var(--az-ok)!important}
+html[data-alireza-surface] :is(.alert,.list-group-item,.pagination .page-link,.custom-select,.custom-file-label,.ReactTable .-pagination,.rt-noData){background:var(--az-panel)!important;color:var(--az-tx)!important;border-color:var(--az-bd)!important}
+html[data-alireza-surface] :is(.dropdown-item,.nav-link):hover{background:color-mix(in srgb,var(--az-ac) 10%,var(--az-card))!important}
+html[data-alireza-surface] :is(.text-muted,.form-text,.rt-resizable-header-content,.pagination-info){color:var(--az-mu)!important}
+html[data-alireza-surface] :is(.tooltip-inner,.toast,.ReactTable .rt-noData){background:var(--az-surface-3)!important;color:var(--az-tx)!important}
+html[data-alireza-surface] :is(.btn-primary,.primary):hover{filter:brightness(1.08)}
+html[data-alireza-surface] :is(button,.btn):focus-visible{outline:none;box-shadow:var(--az-ring)!important}
+html[data-alireza-surface="dns"] body{
+ --bgcolor:var(--az-bg)!important;--header-bgcolor:var(--az-panel)!important;--card-bgcolor:var(--az-card)!important;--card-border-color:var(--az-bd)!important;--border-color:var(--az-bd)!important;
+ --mcolor:var(--az-tx)!important;--scolor:var(--az-tx2)!important;--black:var(--az-tx)!important;--detailed-info-color:var(--az-tx)!important;--logs__text-color:var(--az-tx)!important;
+ --ctrl-bgcolor:var(--az-card2)!important;--ctrl-select-bgcolor:var(--az-card2)!important;--ctrl-dropdown-color:var(--az-tx)!important;--ctrl-dropdown-color-focus:var(--az-tx)!important;--ctrl-dropdown-bgcolor-focus:var(--az-surface-3)!important;
+ --logs__table-bgcolor:var(--az-card)!important;--logs__row--white-bgcolor:var(--az-card)!important;--logs__row--blue-bgcolor:var(--az-ac-soft)!important;
+ --loading-bg:var(--az-panel)!important;--rt-nodata-bgcolor:var(--az-card)!important;--rt-nodata-color:var(--az-mu)!important;
+ --form-disabled-color:var(--az-mu)!important;--form-disabled-bgcolor:var(--az-surface-3)!important;--alert-message-bg:var(--az-surface-2)!important;--alert-message-border:var(--az-bd2)!important;--alert-message-color:var(--az-tx)!important;
+ --checkbox-bg:var(--az-bd2)!important;--radio-bg:var(--az-bd2)!important;--btn-success-bgcolor:var(--az-ac)!important;--green:var(--az-ok)!important;--success:var(--az-ok)!important;--danger:var(--az-dg)!important;--warning:var(--az-wn)!important;
+}
+html[data-alireza-surface="dns"] :is(.header-brand-img,.header-brand-img path){fill:var(--az-tx)!important}
+html[data-alireza-surface="dns"] .stats-card__value{color:var(--az-tx)!important}
+html[data-alireza-surface="dns"] :is(.header__column,.header__row,.header__container){background-color:var(--az-panel)!important}
+html[data-alireza-surface="dns"] .header-brand-img{filter:none!important} html[data-alireza-surface="dns"] body .card a,html[data-alireza-surface="dns"] body .card a span{color:var(--az-ac)!important}
+html[data-alireza-surface="dns"] body .logs__text{color:var(--az-tx)!important} html[data-alireza-surface="dns"] body .logs__text--link{color:var(--az-ac)!important}

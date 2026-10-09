@@ -1,0 +1,114 @@
+alirezaserver 0.6.0 verification, 2026-10-09
+
+Current verification is documented in docs/VALIDATION.md of the release.
+Native HTTP/auth and isolated test fixtures passed; real VPS install, live VPN
+traffic, real Gemini key/SSH destination, browser visual QA and 1 GiB capacity
+are NOT certified. Current RSS was unavailable; only V8 heap/getrusage peaks
+were measured for the loopback HTTP controller. See docs/RESOURCES.md.
+
+The record below is inherited from the 0.5 baseline, NOT rerun evidence for 0.6.
+
+--- ARCHIVED BASELINE RECORD ---
+alirezaserver 0.5.0 verification record, 2026-09-26
+
+Development platform: Windows, Node.js 24.19.0.
+
+0.5 additions:
+PASS: 29 Node regression tests, including owner-only alirezadns routes, CSRF,
+SSH input validation, per-node UI paths/tokens, native admin-path rotation
+persistence and real upstream bundle syntax.
+PASS: 8 remote updater tests using real temporary files and mocked systemd/health:
+success, migration failure restores binary/database/key, rejected-version skip,
+major/downgrade refusal, checksum failure before service changes, snapshot failure,
+interrupted-update recovery and invalid snapshot refusal.
+PASS: SSH probe/auth boundaries tested with fake transport: no authentication on
+probe, changed host key rejected before secrets, private destinations rejected.
+PASS: Official checksum-verified HyperDNS Windows binary served through local TLS
+bridge and integration proxy; actual login, live dashboard and Clients page were
+exercised inside management iframe. alirezadns branding visible, no console errors.
+PASS: Actual Nova/AdGuard front verification and TCP/UDP DNS regression checks
+were rerun with the 0.5 integration, including the alirezadns owner-only routes.
+NOT TESTED: live root SSH installation, public ACME issuance, Linux control socket,
+remote systemd/firewall/reboot, production TLS routing or load on a 1 GiB VPS.
+Future upstream releases can require an integration update.
+
+0.4 additions:
+PASS: Personal subscription encryption, password edits, link rotation/revocation,
+inactive/expired/exhausted account denial, assigned-profile scoping, HTTP response
+privacy headers and legacy-account migration (6 tests). Original owner-session
+integration tests also verify subscription administration and CSRF gating.
+PASS: Update transaction against real temporary files with mocked systemctl:
+success, failed-health rollback of code/database, interrupted-update recovery,
+snapshot failure recovery, archive traversal/symlink rejection, extraction of
+the actual official Nova archive (6 tests). Native update spawn routing tested
+without altering unrelated process commands.
+PASS: Compatibility checker against actual Nova 1.85.4 exports, templates,
+embedded font/theme and JavaScript syntax. This does not certify future releases.
+PASS: Subscription page and owner link dialog in the browser. Light/dark shared
+theme and AdGuard light-theme contrast inspected. Real Nova/AdGuard HTTPS proxy
+verification and actual local TCP/UDP DNS tests passed again.
+NOT TESTED: Linux mount restrictions, systemd update timer, live Linux update,
+power-loss recovery on a real VPS, or future Nova versions. Filesystem transaction
+tests mock service lifecycle; they do not establish production reliability.
+
+0.3 repair regression checks:
+PASS: 7 additional automated tests: fragmented OpenVPN management replies,
+explicit error replies with CRLF, premature EOF, subnet allocation, persisted
+configuration migration/key retention, public DNS address presentation and exact
+reuse of Nova's embedded Vazirmatn font. The management endpoint is a real local
+TCP test double, not a live OpenVPN daemon.
+PASS: Official AdGuard binary accepted the old-default ACL/upstream migration;
+blocked clients/hosts remained intact, custom ACL/upstreams were preserved, and
+repeated repair was idempotent. Test settings were restored afterwards.
+PASS: Original AdGuard dashboard and OpenVPN creation form visually inspected
+inside the original Nova panel with the new dark colors/effects; AdGuard computed
+body font was Vazirmatn. No original Nova application files were edited.
+
+OpenVPN configuration references:
+https://openvpn.net/community-docs/community-articles/openvpn-2-6-manual.html
+https://openvpn.net/community-docs/management-interface.html
+
+PASS: 10 automated tests covering validation, generated OpenVPN configuration,
+password hashing shared by Node/Python, concurrent device limits, expiry/disabled
+accounts, traffic settlement, owner authorization, origin checks, proxy headers,
+HTML branding and unchanged native routes.
+
+PASS: Mocked rollback regression confirms that template service entries and a
+firewall cleanup failure do not prevent restoring the original Nova launch.
+PASS: Generated shell, JavaScript and Python syntax; embedded file integrity.
+
+PASS: The real Nova 1.85.4 HTTP application was launched on loopback without its
+Linux service installer. Its own login/session mechanism, full original dashboard,
+new sidebar buttons and OpenVPN creation dialog were exercised in a browser.
+The original application files were not edited.
+
+PASS: Official AdGuard Home v0.107.79 Windows binary (SHA-256 verified) was run
+on loopback with a disposable configuration. Its original dashboard loaded through
+the owner-authenticated Nova proxy, including relative scripts and API requests.
+A temporary DNS rewrite was created through that proxy, resolved correctly over
+both actual UDP and TCP DNS, and removed. Test DNS port was 15353 to avoid changing
+the development machine; the Linux installer explicitly configures port 53 and
+checks that configured port plus UDP/TCP queries after installation.
+
+PASS: Current verification code reached real Nova/AdGuard through a loopback HTTPS
+proxy, including owner-only OpenVPN and DNS APIs. Deliberately removing the
+branding marker from the HTTPS response caused verification to fail. Temporary
+DNS verification records were cleaned up. This used a test TLS proxy, not Xray.
+PASS: First-session signing-key initialization on a disposable fresh Nova database;
+existing keys are preserved by INSERT OR IGNORE.
+PASS: Installer error handling with mocked service commands retains healthy
+integration after a failure, restores an unhealthy launch, and returns failure.
+PASS: Actual embedded Python configuration code creates DNS port 53 configuration
+on first install and preserves existing DNS/install/firewall settings on repair.
+
+NOT TESTED: Linux systemd service lifecycle, kernel firewall behavior, OpenVPN
+client handshake/traffic, server reboot, original fleet enrollment against remote
+nodes, public reachability, or performance on a 1 CPU / 1 GiB VPS. Browser/UI tests
+and syntax checks cannot establish these properties. This is a test build, not a
+guarantee of bug-free deployment. AdGuard and Nova updates require revalidation.
+
+Runtime diagnostics: sudo bash install.sh --check
+Repair/resume:       sudo bash install.sh
+Add-on backup:       sudo bash install.sh --backup
+Disable add-ons:     sudo bash install.sh --rollback
+Back up the original Nova data separately using Nova's own backup facilities.
