@@ -23,7 +23,7 @@ Ubuntu 24.04 یا Debian 12/13، systemd، amd64 یا arm64، دسترسی root�
 **ابتدا تمام فایل‌های نسخهٔ جدید را روی مخزن خودتان قرار دهید.** تا پیش از آپلود، این دستور نسخهٔ موجود در GitHub را می‌گیرد، نه فایل اصلاح‌شدهٔ محلی:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/alirezachatgpt97-coder/alirezaserver/main/setup.sh -o alirezaserver-setup.sh && sudo bash alirezaserver-setup.sh
+curl -fSL --connect-timeout 20 --max-time 120 https://raw.githubusercontent.com/alirezachatgpt97-coder/alirezaserver/main/install.sh -o alirezaserver-install.sh && sudo bash alirezaserver-install.sh --repair
 ```
 
 `setup.sh` فایل مستقل **install.sh** را دریافت می‌کند، SHA-256 آن را با مقدار ثبت‌شده در راه‌انداز کنترل می‌کند و سپس نصب را آغاز می‌کند. فایل `install.sh` خودش نیز تمام منابع runtime افزونه‌ها را درون خود دارد؛ نصب دستی چندمرحله‌ای لازم نیست. نصب آنلاین است و بستهٔ آفلاین باینری نیست.
