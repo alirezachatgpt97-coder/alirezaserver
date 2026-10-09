@@ -12,6 +12,8 @@ for file in sorted((root/'addon').iterdir()):
     marker='ALIREZA_'+hashlib.sha256(file.name.encode()).hexdigest()[:24].upper()
     extra+=f'cat > "$APP/{file.name}" <<\'{marker}\'\n'+file.read_text().rstrip('\n')+'\n'+marker+'\n\n'
 s=s.replace('export ALIREZA_ROOT="$ROOT"',extra+'export ALIREZA_ROOT="$ROOT"')
+start=s.index('# BEGIN Xray installer safety patch\n');end=s.index('# END Xray installer safety patch\n',start)
+s=s[:start]+'# BEGIN Xray installer safety patch\npatch_nova_xray(){\npython3 - \"$1\" <<\'NOVA_XRAY_PATCH\'\n'+(root/'tools/nova-xray-patch.py').read_text()+'NOVA_XRAY_PATCH\n}\n'+s[end:]
 p.write_text(s)
 bootstrap=root/'setup.sh';b=bootstrap.read_text();b=re.sub(r'^SHA256=.*$', 'SHA256='+hashlib.sha256(p.read_bytes()).hexdigest(),b,flags=re.M);bootstrap.write_text(b)
 print('Installer synchronized; bootstrap hash updated.')

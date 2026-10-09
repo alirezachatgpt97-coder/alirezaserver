@@ -1,3 +1,11 @@
+# 0.6.1 — رفع توقف نصب Xray
+
+- سقف زمانی برای کل گروه فرایند نصب Xray، خروجی زنده و fallback واقعی پس از timeout.
+- محدودیت اتصال، کم‌سرعتی و HTTPS برای دریافت mirror؛ حفظ نسخه و checksumهای قبلی هر دو معماری.
+- بررسی قابلیت اجرای binary پیش از نصب mirror و پیش از گزارش OK.
+- تشخیص نصب پایهٔ ناقص برای ادامه؛ نصب پایهٔ سالم مجدداً اجرا نمی‌شود.
+- ۱۱ آزمون اختصاصی جدید؛ هیچ تغییر UI، پروتکل، دادهٔ کاربران یا AdGuard در این hotfix نیست.
+
 # 0.6.0 — 2026-10-09
 
 - Maintained the original Nova panel CSS, scripts, effects, layout and branding; added an AI menu entry and separate extension documents.

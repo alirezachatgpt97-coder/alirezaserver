@@ -12,7 +12,7 @@ Baseline: `alirezachatgpt97-coder/alirezaserver`, commit `5c6af8114764bee28a5ed3
 | OpenVPN, OpenSSL, Python 3, python3-paramiko, curl, ca-certificates, iptables, iproute2, dnsutils, logrotate | Ubuntu/Debian distribution packages | Exact installed versions recorded in `/var/lib/alirezaserver/package-versions.txt`; OS repositories are not frozen by this package |
 | Font | Original embedded Vazirmatn from installed Nova | Extracted and served by existing font module; no network font/CDN added |
 
-Nova, AdGuard and HyperDNS binaries are downloaded, not included in this ZIP. No upstream Nova file is patched or relicensed. Prepared binaries avoid building Nova on a small VPS. Nova/HyperDNS automatic updates may select a newer compatible release under their existing checksum, contract and rollback checks; pinned initial versions above are not a promise that every future release works.
+Nova, AdGuard and HyperDNS binaries are downloaded, not included in this ZIP. The initial downloaded, hash-verified Nova installer receives the narrowly scoped, contract-checked Xray safety patch in tools/nova-xray-patch.py before execution; installed Nova agent/UI/protocol sources remain untouched and no upstream component is relicensed. Prepared binaries avoid building Nova on a small VPS. Nova/HyperDNS automatic updates may select a newer compatible release under their existing checksum, contract and rollback checks; pinned initial versions above are not a promise that every future release works.
 
 ## Official Gemini API references checked 2026-10-09
 
@@ -27,3 +27,7 @@ Runtime endpoint is fixed to `https://generativelanguage.googleapis.com/v1beta/`
 Node.js 24.19.0, Python 3, jsdom **26.1.0** (DOM interaction tests), optional Playwright Chromium (browser tests). These are not installed by the VPS runtime installer. Browser execution failed in the current environment; no screenshots are claimed. Development dependencies and downloaded binaries are not bundled in the release ZIP.
 
 Custom integration code retains the previous GPL-3.0-or-later notice. Nova has its independent upstream terms. AdGuard remains GPL-3.0; HyperDNS remains AGPL-3.0. Existing attribution and OpenVPN adaptation notices are retained in `addon/NOTICE.txt`, `addon/COPYING.vpn-ui` and `addon/COPYING.HyperDNS`.
+
+## Xray installation hotfix 0.6.1
+
+Official XTLS installer checked: https://raw.githubusercontent.com/XTLS/Xray-install/main/install-release.sh . It defines its own curl wrapper; retry-max-time is not a connection/transfer timeout. We bound the complete child process group to 240 seconds (+10-second kill grace) instead of trying to override that wrapper. Existing pinned Nova fallback version 26.3.27 and both original architecture checksums remain unchanged. The fallback transfer has HTTPS-only redirects, connection/total/low-speed deadlines. Existing working Xray binaries are not downgraded.

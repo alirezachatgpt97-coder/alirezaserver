@@ -11,7 +11,7 @@ for p in files:
 files.sort(key=lambda p:p.relative_to(root).as_posix())
 (root/'SHA256SUMS').write_text(''.join(hashlib.sha256(p.read_bytes()).hexdigest()+'  '+p.relative_to(root).as_posix()+'\n' for p in files))
 files.append(root/'SHA256SUMS')
-target=pathlib.Path(sys.argv[1] if len(sys.argv)>1 else root.parent/'alirezaserver-0.6.0-release.zip')
+target=pathlib.Path(sys.argv[1] if len(sys.argv)>1 else root.parent/'alirezaserver-0.6.1-release.zip')
 with zipfile.ZipFile(target,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as z:
     for p in sorted(files,key=lambda p:p.relative_to(root).as_posix()):
         info=zipfile.ZipInfo(p.relative_to(root).as_posix(),(2026,10,9,12,0,0));info.compress_type=zipfile.ZIP_DEFLATED;info.external_attr=(0o100755 if p.name in ['install.sh','setup.sh'] else 0o100644)<<16;z.writestr(info,p.read_bytes())

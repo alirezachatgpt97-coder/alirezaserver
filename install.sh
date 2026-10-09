@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# alirezaserver 0.6.0 — single-file ONLINE installer; rerun to repair/resume.
+# alirezaserver 0.6.1 — single-file ONLINE installer; rerun to repair/resume.
 # Supported target: Ubuntu 24.04 or Debian 12/13, systemd, amd64/arm64.
 # Add-on source and notices are embedded below; original upstream programs are
 # downloaded from pinned official URLs. This is not an offline bundle.
@@ -31,6 +31,33 @@ log(){ printf '\n[alirezaserver] %s\n' "$*"; }
 die(){ printf '\nERROR: %s\n' "$*" >&2; exit 1; }
 download(){ curl --fail --location --proto '=https' --tlsv1.2 --connect-timeout 20 --max-time 600 --retry 3 --retry-delay 3 --output "$2" "$1"; }
 verify(){ printf '%s  %s\n' "$2" "$1" | sha256sum --check --status || die "Checksum mismatch: $1"; }
+# BEGIN Xray installer safety patch
+patch_nova_xray(){
+python3 - "$1" <<'NOVA_XRAY_PATCH'
+#!/usr/bin/env python3
+"""Patch only the hash-verified initial Nova installer's Xray download stage."""
+import pathlib,sys
+OLD='if bash "$XRAY_SH" "${XRAY_ARGS[@]}" >"$XRAY_LOG" 2>&1; then'
+NEW='''# Bound the entire child process group, including the installer's own curl.
+  # XTLS defines its own curl function, so exporting a wrapper is insufficient.
+  say "Xray upstream installation: live output; maximum 240 seconds, then verified mirror fallback."
+  if timeout --signal=TERM --kill-after=10s 240s bash "$XRAY_SH" "${XRAY_ARGS[@]}" 2>&1 | tee "$XRAY_LOG"; then'''
+def patch(source):
+    replacements=[(OLD,NEW),
+      ('curl -fsSL --max-time 60 -o "$out" "$u" 2>/dev/null','curl -fSL --connect-timeout 15 --max-time 60 --speed-time 30 --speed-limit 1024 --proto "=https" --proto-redir "=https" -o "$out" "$u"'),
+      ('curl -fsSL --max-time 30 -H "Accept: application/vnd.github.v3+json"','curl -fsSL --connect-timeout 15 --max-time 30 -H "Accept: application/vnd.github.v3+json"'),
+      ('curl -fsSL --max-time 300 --proto-redir \'=https\' "$XRAY_MIRROR_BASE/$_asset"','curl -fSL --connect-timeout 20 --max-time 300 --speed-time 30 --speed-limit 1024 --proto \'=https\' --proto-redir \'=https\' "$XRAY_MIRROR_BASE/$_asset"'),
+      ('install -m 0755 "$_d/xray" /usr/local/bin/xray', 'timeout --kill-after=2s 10s "$_d/xray" version >/dev/null 2>&1 || { rm -rf "$_d"; return 1; }\n  install -m 0755 "$_d/xray" /usr/local/bin/xray'),
+      ('XRAY_BIN="$(command -v xray || echo /usr/local/bin/xray)"\nok "xray', 'XRAY_BIN="$(command -v xray || echo /usr/local/bin/xray)"\ntimeout --kill-after=2s 10s "$XRAY_BIN" version >/dev/null 2>&1 || die "xray binary is missing or unusable; installation is incomplete."\nok "xray')]
+    for old,new in replacements:
+        if source.count(old)!=1:raise ValueError('Unsupported Nova installer contract: '+old[:65])
+        source=source.replace(old,new)
+    return source
+if __name__=='__main__':
+    p=pathlib.Path(sys.argv[1]);s=patch(p.read_text());p.write_text(s)
+NOVA_XRAY_PATCH
+}
+# END Xray installer safety patch
 # Safe developer check; no system paths, downloads or service changes.
 if [[ "${1:-}" == --self-test ]]; then
   bash -n "$0"
@@ -77,6 +104,7 @@ if [[ -n "${NOVA_JOIN_URL:-}" || -n "${NOVA_JOIN_TOKEN:-}" ]]; then
   JOIN_TEMP=$(mktemp -d); trap 'rm -rf -- "$JOIN_TEMP"' EXIT
   download "$NOVA_BASE/nova-node.sh" "$JOIN_TEMP/nova-node.sh"
   verify "$JOIN_TEMP/nova-node.sh" "$NOVA_SCRIPT_SHA"
+  patch_nova_xray "$JOIN_TEMP/nova-node.sh"
   (umask 022; NOVA_TARBALL_URL="$NOVA_BASE/nova-node-agent.tar.gz" NOVA_TARBALL_SHA256="$NOVA_AGENT_SHA" bash "$JOIN_TEMP/nova-node.sh")
   exit
 fi
@@ -160,14 +188,16 @@ if [[ ! -x "$APP/adguard/AdGuardHome" ]]; then
 fi
 STAGE=nova-base
 log '[2/5] Installing/checking the Nova base. Wait for ALIREZASERVER READY at the end.'
-if [[ -f /opt/nova-node-agent/package.json ]]; then
+if [[ -f /opt/nova-node-agent/package.json ]] && command -v xray >/dev/null && timeout --kill-after=2s 10s xray version >/dev/null 2>&1 && systemctl cat xray.service >/dev/null 2>&1; then
   log 'Using the existing Nova installation; its installer will not be rerun.'
   [[ -f /etc/systemd/system/nova-agent.service ]] || die 'Unsupported Nova service layout.'
   node -e 'const p=require("/opt/nova-node-agent/package.json");if(p.name!=="nova-node-agent")throw Error("Unrecognized Nova installation")'
 else
-  log 'Installing the pinned, original Nova release. Its own setup questions follow.'
+  command -v timeout >/dev/null || die 'GNU timeout (coreutils) is required.'
+  log 'Installing/resuming the pinned Nova release. Its own setup questions follow.'
   download "$NOVA_BASE/nova-node.sh" "$WORK/nova-node.sh"
   verify "$WORK/nova-node.sh" "$NOVA_SCRIPT_SHA"
+  patch_nova_xray "$WORK/nova-node.sh"
   (umask 022; NOVA_TARBALL_URL="$NOVA_BASE/nova-node-agent.tar.gz" NOVA_TARBALL_SHA256="$NOVA_AGENT_SHA" bash "$WORK/nova-node.sh")
 fi
 systemctl is-active --quiet nova-agent.service || die 'The original Nova service is not healthy; add-on installation stopped.'
@@ -192,7 +222,7 @@ MANAGED=1
 # ALIREZA_EMBEDDED_FILES
 
 cat > "$APP/NOTICE.txt" <<'ALIREZA_120C9E5B95207BAC6A6B1C54'
-alirezaserver add-on 0.6.0
+alirezaserver add-on 0.6.1
 
 The new integration modules in this directory are licensed under GPL-3.0-or-later.
 OpenVPN configuration/profile conventions were adapted from Sir-MmD/vpn-ui,
@@ -287,6 +317,8 @@ Original notices and technical protocol identifiers remain intact.
 0.6.0 adds an official Gemini API advisor and independent extension UI.
 No new theme is injected into the original Nova or AdGuard document.
 See the release docs/VALIDATION.md for the current tests and limitations.
+
+0.6.1 applies a contract-checked patch only to the downloaded initial Nova installer: bounded Xray child process, visible logs and verified fallback. Native agent/UI/protocol source remains untouched.
 ALIREZA_120C9E5B95207BAC6A6B1C54
 
 cat > "$APP/VERIFICATION.txt" <<'ALIREZA_E65C0E31435C064147B5C663'
@@ -3432,7 +3464,7 @@ if not os.path.exists(root+'/adguard/AdGuardHome.yaml'):
     # JSON is valid YAML; AdGuard reads it and rewrites its native YAML on save.
     with open(root+'/adguard/AdGuardHome.yaml','w') as f:json.dump(config,f,indent=2)
 if not os.path.exists(root+'/install.json'):
-    with open(root+'/install.json','w') as f:json.dump({'dns_address':address,'dns_allowed_clients':allowed,'version':'0.6.0'},f)
+    with open(root+'/install.json','w') as f:json.dump({'dns_address':address,'dns_allowed_clients':allowed,'version':'0.6.1'},f)
 if not os.path.exists(root+'/firewall.json'):
     with open(root+'/firewall.json','w') as f:json.dump([],f)
 PY
@@ -3596,7 +3628,7 @@ cat "$WORK/verify.log"
 [[ $VERIFIED == 1 ]] || die 'The integrated panel did not pass verification. Existing add-on data is retained; rerun this file to repair.'
 bash "$APP/check.sh"
 NOVA_VERSION=$(node -p 'require("/opt/nova-node-agent/package.json").version')
-printf '{"version":"0.6.0","nova":"%s","adguard":"%s"}\n' "$NOVA_VERSION" "$AG_VERSION" > "$ROOT/installed.json"
+printf '{"version":"0.6.1","nova":"%s","adguard":"%s"}\n' "$NOVA_VERSION" "$AG_VERSION" > "$ROOT/installed.json"
 install -d /etc/logrotate.d
 cat > /etc/logrotate.d/alirezaserver <<'ROTATE'
 /var/log/alirezaserver/*.log {
