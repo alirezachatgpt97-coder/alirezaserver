@@ -35,3 +35,7 @@ Official XTLS installer checked: https://raw.githubusercontent.com/XTLS/Xray-ins
 ## Inbounds 0.7.0
 
 Current alirezaserver/main installer read via GitHub on 2026-10-14, blob e7fc43b571ee33b23ae198a3032ec225c0f00624 (0.6.1), identical to previous local release except final newline. Native Inbounds integration targets the pinned Nova source above. Runtime HTML gains an external form bridge; original inline style/script blocks and installed agent sources remain unchanged. New source in addon/inbounds-ui.js, compatibility contracts in addon/compat-check.mjs. Unsupported protocol engines are explicitly listed in docs/INBOUNDS.md.
+
+## Graphical manual form 0.7.1
+
+addon/manual-core.js builds Xray raw configuration plus matching native metadata. addon/manual-editor.js supplies native-class form controls; original Nova account injection remains authoritative. Native SOCKS/HTTP editor is retained because raw accounts do not use the clients replacement contract. X25519 uses Node crypto DER key encoding with 32-byte raw base64url keys. Model/UI and owner/same-origin key-generation tests cover this route, not live VPN protocol traffic.

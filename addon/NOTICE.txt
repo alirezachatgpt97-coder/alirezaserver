@@ -1,4 +1,4 @@
-alirezaserver add-on 0.7.0
+alirezaserver add-on 0.7.1
 
 The new integration modules in this directory are licensed under GPL-3.0-or-later.
 OpenVPN configuration/profile conventions were adapted from Sir-MmD/vpn-ui,
@@ -97,3 +97,5 @@ See the release docs/VALIDATION.md for the current tests and limitations.
 0.6.1 applies a contract-checked patch only to the downloaded initial Nova installer: bounded Xray child process, visible logs and verified fallback. Native agent/UI/protocol source remains untouched.
 
 0.7.0 adds an owner-only native inbound-form bridge and lazy OpenVPN management inside Inbounds. Existing Nova sources and OpenVPN data remain separate and unchanged. It does not add all protocol engines present in alirezapanel.
+
+0.7.1 adds a graphical, owner-only manual Xray form for VLESS, VMess, Trojan, SS2022 and forwarding. It preserves complete transport/security metadata with raw configuration and uses native account injection. SOCKS/HTTP and non-Xray protocols retain native account-aware editors.

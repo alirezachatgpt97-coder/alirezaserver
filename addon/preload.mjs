@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Loaded only into Nova's existing Node process. Original Nova files are unmodified.
 import http from 'node:http';
+import {generateKeyPairSync,randomBytes,createPrivateKey,createPublicKey} from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -26,7 +27,7 @@ export function injectHTML(html,base) {
   if(!html.includes('id="app"')&&!html.includes('id="root"')&&!html.includes('const IC=')) return html;
   if(html.includes('data-alireza-addon'))return html;
   return html.replace(/<title>Nova Server<\/title>/,'<title>alirezaserver</title>').replace('</body>',
-    `<script data-alireza-addon src="${base}/alireza/brand.js"></script><script src="${base}/alireza/inbounds/ui.js"></script></body>`);
+    `<script data-alireza-addon src="${base}/alireza/brand.js"></script><script src="${base}/alireza/manual/core.js"></script><script src="${base}/alireza/manual/editor.js"></script><script src="${base}/alireza/inbounds/ui.js"></script></body>`);
 }
 let panelCache;
 function panelBuffer(text,base){
@@ -121,6 +122,7 @@ function serialized(action) {
   pending++;const result=queue.then(action);queue=result.catch(()=>{}).finally(()=>pending--);return result;
 }
 async function handle(req,res,base,tail) {
+  if(['manual/core.js','manual/editor.js'].includes(tail)&&req.method==='GET'){file(res,tail==='manual/core.js'?'manual-core.js':'manual-editor.js','text/javascript; charset=utf-8');return;}
   // Public static UI code only; all account/service APIs still require native owner auth.
   if(tail==='inbounds/ui.js'&&req.method==='GET'){file(res,'inbounds-ui.js','text/javascript; charset=utf-8');return;}
   if(tail==='brand.js'&&req.method==='GET'){file(res,'brand.js','text/javascript; charset=utf-8');return;}
@@ -153,6 +155,7 @@ async function handle(req,res,base,tail) {
   }
   if(auth.role!=='owner'){json(res,403,{error:'These services are available to the panel owner.'});return;}
   if(!['GET','HEAD'].includes(req.method)&&!sameOrigin(req)){json(res,403,{error:'Same-origin request required'});return;}
+  if(tail==='api/manual/keys'&&req.method==='POST'){const input=await body(req);let pair;if(input.privateKey!==undefined){if(typeof input.privateKey!=='string'||!/^[A-Za-z0-9_-]{43}$/.test(input.privateKey)){json(res,400,{error:'Invalid X25519 private key'});return;}const bytes=Buffer.from(input.privateKey,'base64url');if(bytes.length!==32||bytes.toString('base64url')!==input.privateKey){json(res,400,{error:'Invalid X25519 private key'});return;}const key=createPrivateKey({key:Buffer.concat([Buffer.from('302e020100300506032b656e04220420','hex'),bytes]),type:'pkcs8',format:'der'});pair={privateKey:key,publicKey:createPublicKey(key)};}else pair=generateKeyPairSync('x25519');json(res,200,{privateKey:pair.privateKey.export({type:'pkcs8',format:'der'}).subarray(-32).toString('base64url'),publicKey:pair.publicKey.export({type:'spki',format:'der'}).subarray(-32).toString('base64url'),shortId:randomBytes(8).toString('hex')});return;}
   if(tail==='alirezadns/'&&req.method==='GET'){file(res,'alirezadns.html','text/html; charset=utf-8');return;}
   if(tail==='alirezadns/ui.js'&&req.method==='GET'){file(res,'alirezadns-ui.js','text/javascript; charset=utf-8');return;}
   if(tail==='api/alirezadns'&&req.method==='GET'){json(res,200,alirezadns.list());return;}

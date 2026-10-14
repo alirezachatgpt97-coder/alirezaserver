@@ -1,3 +1,11 @@
+# ارتقای ۰٫۷٫۱
+
+پیش از اجرا snapshot/backup نوا و backup افزونه را بگیرید. تمام محتویات بسته را در ریشهٔ مخزن alirezaserver قرار دهید؛ setup.sh و install.sh باید همزمان به‌روز شوند چون launcher هش installer را بررسی می‌کند. اجرای محلی ZIP: `sudo bash install.sh --repair` سپس `sudo bash install.sh --check`.
+
+در این نسخه دادهٔ نوا یا OpenVPN migrate نمی‌شود؛ ساخت دستی تازه در storage اصلی اینباندهای نوا انجام می‌شود. certificate path واردشده باید روی نود واقعی وجود داشته باشد. برای برگشت کد قبلی، روش restore نسخهٔ قبلی/سnapshot را استفاده کنید؛ --rollback به معنی downgrade کد نیست و افزونه‌ها را غیرفعال می‌کند. نصب/ارتقا روی VPS واقعی هنوز تست نشده است.
+
+## دستورهای قبلی
+
 # تغییرات ارتقای ۰٫۷٫۰
 
 از snapshot/backup نوا و backup افزونه استفاده کنید، سپس `sudo bash install.sh --repair` و `sudo bash install.sh --check` را اجرا کنید. ورودی مستقل OpenVPN به منو برنمی‌گردد؛ از اینباندها → OpenVPN استفاده کنید. دادهٔ سرورها، حساب‌ها و certificateها همان است و URLهای subscription تغییر نکرده‌اند. UI سادهٔ نوا اکنون از ساخت دستی به تنظیمات AmneziaWG هم دسترسی دارد؛ خود سرویس بدون اقدام شما فعال نمی‌شود.

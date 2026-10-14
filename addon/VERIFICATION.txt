@@ -1,3 +1,5 @@
+0.7.1: graphical manual creation; 82 model/DOM/mock/native HTTP tests in current suite. No live VPN/VPS/browser visual certification; not all extra protocol engines implemented. See docs/VALIDATION.md.
+
 alirezaserver 0.7.0, 2026-10-14: 70 regression/DOM/mock/native-HTTP tests PASS.
 No real browser screenshots, VPS upgrade, live protocol traffic or 1GiB capacity certification.
 This version integrates native Inbounds/OpenVPN UI; it does not add all missing protocol engines.

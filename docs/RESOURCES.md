@@ -1,3 +1,11 @@
+# اندازه‌گیری controller در ۰٫۷٫۱
+
+Node 24.19.0 با max-old-space-size=192: heap بیکار 29.69MiB، peakRSS تا زمان بیکار 102.14MiB، peakRSS کل نمونهٔ ۵۰ درخواست 160.98MiB، CPU بیکار 3.872ms در 1201ms و CPU ۵۰ درخواست 585.302ms. JSON واقعی در resources-manual-0.7.1.json است. این اندازه‌گیری فقط HTTP/controller نوا و افزونه‌ها روی loopback است؛ مصرف جاری RSS، مصرف جداگانهٔ سرویس‌ها، ترافیک VPN و نصب روی ماشین محدودشدهٔ یک گیگابایتی بررسی نشده‌اند. نتایج تضمین ظرفیت نیستند.
+
+فرم گرافیکی فقط هنگام کلیک ساخته می‌شود. تولید X25519 در همان Node process و بدون subprocess انجام می‌شود؛ سرویس دائمی یا مدل محلی اضافه نشده است. frontend با کلاس‌ها و افکت‌های اصلی نوا کار می‌کند و assetها سبک‌اند؛ backend OpenVPN/AdGuard یا protocol lifecycle تغییر نکرده است.
+
+## سابقهٔ اندازه‌گیری
+
 # اندازه‌گیری ۰٫۷٫۰
 
 controller HTTP نوا + افزونه‌ها، Node 24.19.0 با max-old-space-size=192: heap بیکار 29.69MiB، peakRSS تا زمان بیکار 103.95MiB، peakRSS کل نمونهٔ ۵۰ درخواست 167.32MiB؛ CPU بیکار 4.06ms در 1201ms و CPU ۵۰ درخواست 631.72ms. این اندازه‌گیری یک نمونهٔ واقعی loopback است؛ RSS جاری در این محیط در دسترس نیست. JSON: resources-inbounds.json.

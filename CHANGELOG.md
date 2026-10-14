@@ -1,3 +1,11 @@
+# 0.7.1 — configurable manual form
+
+- Visible protocol catalog cards; graphical controls replace JSON for common Xray manual creation.
+- Transport/security/TLS/Reality/account controls; consistent native metadata plus raw configuration.
+- Owner-only X25519 key generation with same-origin protection, without a subprocess or local AI.
+- SOCKS/HTTP remain on native account-aware editor to avoid empty-account raw configs.
+- Added model/UI/native authorization regressions; unsupported extra protocol engines still not claimed.
+
 # 0.7.0 — Inbounds integration
 
 - Owner-only manual protocol/transport/security picker reuses the complete native Nova editor and validation.

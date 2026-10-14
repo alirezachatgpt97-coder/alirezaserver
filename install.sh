@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# alirezaserver 0.7.0 — single-file ONLINE installer; rerun to repair/resume.
+# alirezaserver 0.7.1 — single-file ONLINE installer; rerun to repair/resume.
 # Supported target: Ubuntu 24.04 or Debian 12/13, systemd, amd64/arm64.
 # Add-on source and notices are embedded below; original upstream programs are
 # downloaded from pinned official URLs. This is not an offline bundle.
@@ -222,7 +222,7 @@ MANAGED=1
 # ALIREZA_EMBEDDED_FILES
 
 cat > "$APP/NOTICE.txt" <<'ALIREZA_120C9E5B95207BAC6A6B1C54'
-alirezaserver add-on 0.7.0
+alirezaserver add-on 0.7.1
 
 The new integration modules in this directory are licensed under GPL-3.0-or-later.
 OpenVPN configuration/profile conventions were adapted from Sir-MmD/vpn-ui,
@@ -321,9 +321,13 @@ See the release docs/VALIDATION.md for the current tests and limitations.
 0.6.1 applies a contract-checked patch only to the downloaded initial Nova installer: bounded Xray child process, visible logs and verified fallback. Native agent/UI/protocol source remains untouched.
 
 0.7.0 adds an owner-only native inbound-form bridge and lazy OpenVPN management inside Inbounds. Existing Nova sources and OpenVPN data remain separate and unchanged. It does not add all protocol engines present in alirezapanel.
+
+0.7.1 adds a graphical, owner-only manual Xray form for VLESS, VMess, Trojan, SS2022 and forwarding. It preserves complete transport/security metadata with raw configuration and uses native account injection. SOCKS/HTTP and non-Xray protocols retain native account-aware editors.
 ALIREZA_120C9E5B95207BAC6A6B1C54
 
 cat > "$APP/VERIFICATION.txt" <<'ALIREZA_E65C0E31435C064147B5C663'
+0.7.1: graphical manual creation; 82 model/DOM/mock/native HTTP tests in current suite. No live VPN/VPS/browser visual certification; not all extra protocol engines implemented. See docs/VALIDATION.md.
+
 alirezaserver 0.7.0, 2026-10-14: 70 regression/DOM/mock/native-HTTP tests PASS.
 No real browser screenshots, VPS upgrade, live protocol traffic or 1GiB capacity certification.
 This version integrates native Inbounds/OpenVPN UI; it does not add all missing protocol engines.
@@ -1305,7 +1309,7 @@ const firstDifference=required?.findIndex((v,i)=>v!==current[i]);
 if(!minimum||(firstDifference>=0&&required[firstDifference]>current[firstDifference]))throw Error('This release needs a different Node runtime; current panel retained');
 for(const file of ['bin/nova-agent.mjs','src/server.mjs','src/auth.mjs','src/kv/sqlite.mjs','src/web/panel.html'])if(!existsSync(join(dir,file)))throw Error('Missing integration file: '+file);
 const panel=readFileSync(join(dir,'src/web/panel.html'),'utf8');
-for(const token of ['side-nav','social','__NOVA_BASE__','Vazirmatn','data-theme="light"','--bg:','--shadow-card:','function viewInbounds(','function openInboundModal(','function openModal(','INB_PRESETS=[','INB_PRESET_NAME=','#inb-add','function awgSection('])if(!panel.includes(token))throw Error('Panel contract changed: '+token);
+for(const token of ['side-nav','social','__NOVA_BASE__','Vazirmatn','data-theme="light"','--bg:','--shadow-card:','function viewInbounds(','function openInboundModal(','function openModal(','INB_PRESETS=[','INB_PRESET_NAME=','#inb-add','function awgSection(','function nodeSelectField(','function applyInbResult('])if(!panel.includes(token))throw Error('Panel contract changed: '+token);
 const auth=await import(pathToFileURL(join(dir,'src/auth.mjs'))),server=await import(pathToFileURL(join(dir,'src/server.mjs')));
 for(const name of ['makeSession','resolveSession','readAuthCookie'])if(typeof auth[name]!=='function')throw Error('Authentication contract changed: '+name);
 if(typeof server.createServer!=='function')throw Error('HTTP server contract changed');
@@ -1542,6 +1546,7 @@ cat > "$APP/preload.mjs" <<'ALIREZA_E0F1B674D02C443922863BCF'
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Loaded only into Nova's existing Node process. Original Nova files are unmodified.
 import http from 'node:http';
+import {generateKeyPairSync,randomBytes,createPrivateKey,createPublicKey} from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -1567,7 +1572,7 @@ export function injectHTML(html,base) {
   if(!html.includes('id="app"')&&!html.includes('id="root"')&&!html.includes('const IC=')) return html;
   if(html.includes('data-alireza-addon'))return html;
   return html.replace(/<title>Nova Server<\/title>/,'<title>alirezaserver</title>').replace('</body>',
-    `<script data-alireza-addon src="${base}/alireza/brand.js"></script><script src="${base}/alireza/inbounds/ui.js"></script></body>`);
+    `<script data-alireza-addon src="${base}/alireza/brand.js"></script><script src="${base}/alireza/manual/core.js"></script><script src="${base}/alireza/manual/editor.js"></script><script src="${base}/alireza/inbounds/ui.js"></script></body>`);
 }
 let panelCache;
 function panelBuffer(text,base){
@@ -1662,6 +1667,7 @@ function serialized(action) {
   pending++;const result=queue.then(action);queue=result.catch(()=>{}).finally(()=>pending--);return result;
 }
 async function handle(req,res,base,tail) {
+  if(['manual/core.js','manual/editor.js'].includes(tail)&&req.method==='GET'){file(res,tail==='manual/core.js'?'manual-core.js':'manual-editor.js','text/javascript; charset=utf-8');return;}
   // Public static UI code only; all account/service APIs still require native owner auth.
   if(tail==='inbounds/ui.js'&&req.method==='GET'){file(res,'inbounds-ui.js','text/javascript; charset=utf-8');return;}
   if(tail==='brand.js'&&req.method==='GET'){file(res,'brand.js','text/javascript; charset=utf-8');return;}
@@ -1694,6 +1700,7 @@ async function handle(req,res,base,tail) {
   }
   if(auth.role!=='owner'){json(res,403,{error:'These services are available to the panel owner.'});return;}
   if(!['GET','HEAD'].includes(req.method)&&!sameOrigin(req)){json(res,403,{error:'Same-origin request required'});return;}
+  if(tail==='api/manual/keys'&&req.method==='POST'){const input=await body(req);let pair;if(input.privateKey!==undefined){if(typeof input.privateKey!=='string'||!/^[A-Za-z0-9_-]{43}$/.test(input.privateKey)){json(res,400,{error:'Invalid X25519 private key'});return;}const bytes=Buffer.from(input.privateKey,'base64url');if(bytes.length!==32||bytes.toString('base64url')!==input.privateKey){json(res,400,{error:'Invalid X25519 private key'});return;}const key=createPrivateKey({key:Buffer.concat([Buffer.from('302e020100300506032b656e04220420','hex'),bytes]),type:'pkcs8',format:'der'});pair={privateKey:key,publicKey:createPublicKey(key)};}else pair=generateKeyPairSync('x25519');json(res,200,{privateKey:pair.privateKey.export({type:'pkcs8',format:'der'}).subarray(-32).toString('base64url'),publicKey:pair.publicKey.export({type:'spki',format:'der'}).subarray(-32).toString('base64url'),shortId:randomBytes(8).toString('hex')});return;}
   if(tail==='alirezadns/'&&req.method==='GET'){file(res,'alirezadns.html','text/html; charset=utf-8');return;}
   if(tail==='alirezadns/ui.js'&&req.method==='GET'){file(res,'alirezadns-ui.js','text/javascript; charset=utf-8');return;}
   if(tail==='api/alirezadns'&&req.method==='GET'){json(res,200,alirezadns.list());return;}
@@ -3487,6 +3494,7 @@ cat > "$APP/inbounds-ui.js" <<'ALIREZA_4D16B7BB34C2C143D76495F3'
    if(!allowed())return;close();
    if(selected==='openvpn'){frameFor(section,true);return;}
    if(['awg','mieru','mtproto'].includes(selected)){singleton(section,selected);return;}
+   if(!cloud&&window.AlirezaManualCore?.protocols.includes(selected)&&typeof window.alirezaManualEditor==='function'){const p=presets.find(p=>p.id===preset);window.alirezaManualEditor(selected,{...p?.base,port:p?.defPort});return;}
    openInboundModal(null);
    const button=document.querySelector('.scrim:last-child [data-p="'+preset+'"]');button?.click();
   }});
@@ -3494,9 +3502,10 @@ cat > "$APP/inbounds-ui.js" <<'ALIREZA_4D16B7BB34C2C143D76495F3'
   const label=document.createElement('label');label.className='field';label.textContent=text('پروتکل','Protocol');const select=document.createElement('select');select.className='input';select.dir='ltr';
   const names={vless:'VLESS',vmess:'VMess',trojan:'Trojan',shadowsocks:'Shadowsocks',wireguard:'WireGuard',hysteria2:'Hysteria2',tuic:'TUIC',naive:'Naive',socks:'SOCKS',http:'HTTP', 'dokodemo-door':'Port forward',openvpn:'OpenVPN',awg:'AmneziaWG',mieru:'Mieru',mtproto:'MTProto'};
   for(const p of protocols){const option=document.createElement('option');option.value=p;option.textContent=names[p]||p;select.append(option);}select.value=selected;label.append(select);root.append(label);
+  const catalog=document.createElement('div');catalog.className='az-manual-grid';catalog.setAttribute('role','radiogroup');catalog.setAttribute('aria-label',text('پروتکل‌های موجود','Available protocols'));for(const p of protocols){const b=document.createElement('button');b.type='button';b.className='inb-preset';b.dataset.azProtocol=p;b.setAttribute('role','radio');const title=document.createElement('span');title.className='pn';title.textContent=names[p]||p;const engine=document.createElement('span');engine.className='pd mono';engine.textContent=['hysteria2','tuic','naive'].includes(p)?'sing-box':p==='openvpn'?'OpenVPN':['awg','mieru','mtproto'].includes(p)?text('سرویس نوا','Nova service'):'Xray';b.append(title,engine);b.onclick=()=>{select.value=p;variants();};catalog.append(b);}root.append(catalog);
   const grid=document.createElement('div');grid.className='az-manual-grid';grid.setAttribute('role','radiogroup');grid.setAttribute('aria-label',text('نوع اتصال و امنیت','Transport and security'));root.append(grid);
   const note=document.createElement('p');note.className='az-manual-note';root.append(note);
-  function variants(){selected=select.value;grid.replaceChildren();const list=presets.filter(p=>p.base.protocol===selected);preset=list[0]?.id||'';
+  function variants(){selected=select.value;for(const card of catalog.children)card.setAttribute('aria-checked',String(card.dataset.azProtocol===selected));grid.replaceChildren();const list=presets.filter(p=>p.base.protocol===selected);preset=list[0]?.id||'';
    for(const p of list){const b=document.createElement('button');b.type='button';b.className='inb-preset';b.dataset.azPreset=p.id;b.setAttribute('role','radio');b.setAttribute('aria-checked',String(p.id===preset));const title=document.createElement('span');title.className='pn';title.textContent=typeof t==='function'&&typeof INB_PRESET_NAME!=='undefined'?t(INB_PRESET_NAME[p.id]):p.id;const sub=document.createElement('span');sub.className='pd mono';sub.dir='ltr';sub.textContent=(p.base.network||(['naive'].includes(selected)?'tcp':'udp'))+' / '+p.sec;b.append(title,sub);b.onclick=()=>{preset=p.id;for(const item of grid.children)item.setAttribute('aria-checked',String(item===b));};grid.append(b);}
    note.textContent=selected==='openvpn'?text('سرورها، حساب‌ها، رمزها، گواهی‌ها و لینک‌های موجود حفظ می‌شوند. ساخت و مدیریت همین‌جا در اینباندها انجام می‌شود. حساب‌های OpenVPN همچنان مستقل از کاربران نوا هستند.','Existing servers, accounts, certificates and links are retained. Manage OpenVPN here in Inbounds. OpenVPN accounts remain separate from Nova users.'):['awg','mieru','mtproto'].includes(selected)?text('این پروتکل سرویس مستقل نوا دارد؛ ادامه، تنظیمات واقعی همان سرویس را باز می‌کند و نمونهٔ تکراری ایجاد نمی‌کند.','This protocol uses a native standalone service. Continue opens its real settings without creating a duplicate instance.'):text('در مرحلهٔ بعد تنظیمات کامل فرم اصلی نوا، انتخاب نود، پورت، امنیت و گزینه‌های پیشرفته در دسترس است.','Next opens the complete native Nova form with node, port, security and advanced settings.');
   }
@@ -3516,6 +3525,76 @@ cat > "$APP/inbounds-ui.js" <<'ALIREZA_4D16B7BB34C2C143D76495F3'
  const existing=document.querySelector('#inb-add')?.closest('section.view');if(existing)decorate(existing);
 })();
 ALIREZA_4D16B7BB34C2C143D76495F3
+
+cat > "$APP/manual-core.js" <<'ALIREZA_ADD3C20439EB0918CB8F8976'
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+(()=>{'use strict';
+ const protocols=['vless','vmess','trojan','shadowsocks','dokodemo-door'];
+ const networks=['tcp','ws','grpc','xhttp','httpupgrade'];
+ const fail=m=>{throw Error(m);};const list=v=>String(v||'').split(',').map(v=>v.trim()).filter(Boolean);
+ function build(v){
+  if(!protocols.includes(v.protocol)||!networks.includes(v.network))fail('Unsupported protocol or transport');
+  const port=Number(v.port);if(!Number.isInteger(port)||port<1||port>65535)fail('Port must be 1–65535');
+  if(!['none','tls','reality'].includes(v.security))fail('Unsupported security');
+  if(v.security==='reality'&&!['vless','trojan'].includes(v.protocol))fail('Reality requires VLESS or Trojan');
+  if(v.flow&&!(v.protocol==='vless'&&v.network==='tcp'&&['tls','reality'].includes(v.security)))fail('Vision requires VLESS TCP with TLS or Reality');
+  const settings=['vless','vmess','trojan','shadowsocks'].includes(v.protocol)?{clients:[]}:['socks','http'].includes(v.protocol)?{auth:'password',accounts:[],udp:!!v.udp}:{};
+  if(v.protocol==='vless')settings.decryption='none';
+  if(v.protocol==='shadowsocks'){if(v.security!=='none')fail('Use native Shadowsocks security');settings.method='2022-blake3-aes-128-gcm';settings.password=v.ssPassword;if(!/^[A-Za-z0-9+/]{22}==$/.test(v.ssPassword||''))fail('SS2022 requires a 16-byte base64 key');}
+  if(v.protocol==='dokodemo-door'){if(!v.target||!Number.isInteger(Number(v.targetPort))||Number(v.targetPort)<1||Number(v.targetPort)>65535)fail('A target host and valid target port are required');Object.assign(settings,{address:v.target,port:Number(v.targetPort),network:v.udp?'tcp,udp':'tcp',followRedirect:false});}
+  const streamSettings={network:v.network,security:v.security};
+  if(v.network==='tcp')streamSettings.tcpSettings={acceptProxyProtocol:!!v.proxyProtocol,header:{type:'none'}};
+  if(v.network==='ws')streamSettings.wsSettings={path:v.path||'/',headers:v.host?{Host:v.host}:{},acceptProxyProtocol:!!v.proxyProtocol};
+  if(v.network==='grpc')streamSettings.grpcSettings={serviceName:v.serviceName||'',multiMode:!!v.multiMode};
+  if(v.network==='xhttp')streamSettings.xhttpSettings={path:v.path||'/',host:v.host||'',mode:v.xhttpMode||'auto'};
+  if(v.network==='httpupgrade')streamSettings.httpupgradeSettings={path:v.path||'/',host:v.host||''};
+  let reality=null;
+  if(v.security==='tls'){
+   if(!v.certFile?.startsWith('/')||!v.keyFile?.startsWith('/'))fail('TLS certificate and key must be absolute server paths');
+   streamSettings.tlsSettings={serverName:v.sni||'',alpn:list(v.alpn),minVersion:v.minVersion||'1.2',certificates:[{certificateFile:v.certFile,keyFile:v.keyFile}]};
+  }
+  if(v.security==='reality'){
+   const serverNames=list(v.sni),shortIds=list(v.shortIds);
+   if(!serverNames.length||!v.dest||!/^[A-Za-z0-9_-]{43}$/.test(v.privateKey||'')||!/^[A-Za-z0-9_-]{43}$/.test(v.publicKey||''))fail('Reality requires SNI, destination and a valid key pair');
+   if(!shortIds.length||shortIds.some(s=>!/^([a-fA-F0-9]{2}){1,8}$/.test(s)))fail('Short IDs must contain 2–16 hexadecimal digits in pairs');
+   reality={dest:v.dest,serverNames,privateKey:v.privateKey,publicKey:v.publicKey,shortIds};streamSettings.realitySettings={show:false,dest:v.dest,serverNames,privateKey:v.privateKey,shortIds};
+  }
+  const raw={listen:v.listen||'0.0.0.0',port,protocol:v.protocol,settings,streamSettings,sniffing:{enabled:!!v.sniffing,destOverride:['http','tls','quic'],routeOnly:!!v.routeOnly}};
+  return{protocol:v.protocol,network:v.network,security:v.security,listen:raw.listen,port,remark:v.remark||'',nodeId:v.nodeId||'local',outbound:v.outbound||'',enabled:v.enabled!==false,allUsers:v.allUsers!==false,userIds:v.userIds||[],flow:v.flow||'',path:v.path||'/',host:v.host||'',serviceName:v.serviceName||'',xhttpMode:v.xhttpMode||'auto',sni:v.sni||'',fingerprint:v.fingerprint||'chrome',reality,method:'2022-blake3-aes-128-gcm',ssPassword:v.ssPassword||'',target:v.target||'',targetPort:Number(v.targetPort)||0,sockUdp:!!v.udp,raw};
+ }
+ window.AlirezaManualCore={protocols,networks,build};
+})();
+ALIREZA_ADD3C20439EB0918CB8F8976
+
+cat > "$APP/manual-editor.js" <<'ALIREZA_902A9CE7CE5497E79DB30272'
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+(()=>{'use strict';
+ const core=window.AlirezaManualCore;if(!core)return;
+ const fa=()=>document.documentElement.lang==='fa'||document.documentElement.dir==='rtl',tr=(f,e)=>fa()?f:e;
+ const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ window.alirezaManualEditor=function(protocol='vless',initial={}){
+  if(typeof isOwner!=='function'||!isOwner()||(typeof isPaas==='function'&&isPaas()))return;
+  const names={remark:['نام اینباند','Remark'],port:['پورت','Port'],listen:['نشانی گوش‌دادن','Listen address'],outbound:['برچسب خروجی (اختیاری)','Outbound tag (optional)'],path:['مسیر','Path'],host:['Host انتقال','Transport Host'],serviceName:['نام سرویس gRPC','gRPC service name'],sni:['SNI / نام‌های سرور','SNI / server names'],alpn:['ALPN با ویرگول','ALPN, comma separated'],certFile:['مسیر گواهی روی سرور مقصد','Certificate path on destination'],keyFile:['مسیر کلید TLS روی سرور مقصد','TLS key path on destination'],dest:['مقصد Reality: host:port','Reality destination: host:port'],privateKey:['کلید خصوصی Reality','Reality private key'],publicKey:['کلید عمومی Reality','Reality public key'],shortIds:['Short IDs با ویرگول','Short IDs, comma separated'],ssPassword:['کلید Shadowsocks 2022','Shadowsocks 2022 key'],target:['مقصد انتقال پورت','Forward target'],targetPort:['پورت مقصد','Target port']};
+  const defaults={remark:'',port:8443,listen:'0.0.0.0',outbound:'',path:'/',host:'',serviceName:'',sni:'',alpn:'h2,http/1.1',certFile:'/etc/nova/origin.pem',keyFile:'/etc/nova/origin.key',dest:'',privateKey:'',publicKey:'',shortIds:'',ssPassword:'',target:'',targetPort:''};
+  const field=(k,type='text')=>`<div class="field"><label for="azm-${k}">${escape(tr(...names[k]))}</label><input class="input ${k==='remark'?'':'ltr'}" id="azm-${k}" name="${k}" type="${type}" value="${escape(defaults[k])}" autocomplete="off" ${k==='remark'?'':'dir="ltr"'}></div>`;
+  const select=(k,label,values,selected)=>`<div class="field"><label for="azm-${k}">${escape(label)}</label><select class="input ltr" dir="ltr" name="${k}" id="azm-${k}">${values.map(v=>`<option value="${escape(v)}" ${v===selected?'selected':''}>${escape(v)}</option>`).join('')}</select></div>`;
+  const check=(k,f,e,on=true)=>`<label class="inb-multi-row"><input name="${k}" type="checkbox" ${on?'checked':''}><span>${escape(tr(f,e))}</span></label>`;
+  const group=(label,html)=>`<div class="prof-sec"><div class="sec-h">${escape(label)}</div><div class="azm-grid">${html}</div></div>`;
+  const eligible=typeof state!=='undefined'&&Array.isArray(state.settings?.users)?state.settings.users:[];
+  const form=`<form id="azm-form" autocomplete="off">${group(tr('مشخصات و پروتکل','Identity and protocol'),field('remark')+select('protocol',tr('پروتکل','Protocol'),core.protocols,protocol)+field('port','number')+field('listen')+(typeof nodeSelectField==='function'?nodeSelectField('local'):'')+field('outbound'))}${group(tr('انتقال و امنیت','Transport and security'),select('network',tr('انتقال','Transport'),core.networks,'tcp')+select('security',tr('امنیت','Security'),['none','tls','reality'],'vless'===protocol?'reality':'none')+select('flow','VLESS flow',['','xtls-rprx-vision'],'')+field('path')+field('host')+field('serviceName')+select('xhttpMode','XHTTP mode',['auto','packet-up','stream-up','stream-one'],'auto'))}<section data-azm-security="tls">${group('TLS',field('sni')+field('alpn')+select('minVersion',tr('حداقل نسخه TLS','Minimum TLS version'),['1.2','1.3'],'1.2')+field('certFile')+field('keyFile'))}</section><section data-azm-security="reality">${group('Reality',field('sni')+field('dest')+field('privateKey','password')+field('publicKey')+field('shortIds')+select('fingerprint','Client fingerprint',['chrome','firefox','safari','edge','randomized'],'chrome'))}<button type="button" class="btn" data-azm-keys>${escape(tr('ساخت کلید و Short ID','Generate keys and Short ID'))}</button><button type="button" class="btn" data-azm-reveal>${escape(tr('نمایش/پنهان کلید','Show/hide key'))}</button></section><section data-azm-protocol="shadowsocks">${field('ssPassword','password')}<button type="button" class="btn" data-azm-ss>${escape(tr('ساخت کلید','Generate key'))}</button></section><section data-azm-protocol="dokodemo-door">${group(tr('انتقال پورت','Port forwarding'),field('target')+field('targetPort','number'))}</section>${group(tr('کاربران و گزینه‌های بیشتر','Users and additional options'),check('enabled','فعال','Enabled')+check('allUsers','همهٔ کاربران مجاز نوا','All eligible Nova users')+check('sniffing','تشخیص ترافیک','Sniffing',false)+check('routeOnly','Sniffing فقط برای مسیریابی','Route-only sniffing',false)+check('proxyProtocol','پذیرش PROXY protocol','Accept PROXY protocol',false)+check('multiMode','gRPC multi mode','gRPC multi mode',false)+check('udp','UDP برای SOCKS/Forward','UDP for SOCKS/Forward',false))}<div class="field"><label>${escape(tr('کاربران مجاز (برای انتخاب چند کاربر)','Allowed users (multiple selection)'))}</label><select name="userIds" multiple size="4" class="input">${eligible.map(u=>`<option value="${escape(u.id)}">${escape(u.name||u.email||u.id)}</option>`).join('')}</select></div><div class="notice plain">${escape(tr('TLS به گواهی معتبر و قابل خواندن روی همان نود نیاز دارد. هیچ کلید یا رمزی به AI فرستاده نمی‌شود. تنظیمات از API اصلی نوا ذخیره و بررسی می‌شوند.','TLS needs readable valid certificate files on the selected node. No keys or passwords are sent to AI. The native Nova API validates and saves this configuration.'))}</div><div class="field-err show" id="azm-error" role="alert"></div></form>`;
+  const modal=openModal({title:tr('ساخت دستی اینباند · تنظیمات کامل','Manual inbound · full configuration'),body:form,okLabel:tr('ساخت اینباند','Create inbound'),onOk:async(close,busy)=>{
+   const f=modal.querySelector('form'),fd=new FormData(f),v=Object.fromEntries(fd);for(const k of ['enabled','allUsers','sniffing','routeOnly','proxyProtocol','multiMode','udp'])v[k]=fd.has(k);v.userIds=v.allUsers?[]:fd.getAll('userIds');v.nodeId=f.querySelector('#inb-node')?.value||'local';v.sni=f.querySelector('[data-azm-security="'+v.security+'"] [name=sni]')?.value||'';
+   const error=modal.querySelector('#azm-error');try{if(!v.allUsers&&!v.userIds.length)throw Error(tr('حداقل یک شناسهٔ کاربر انتخاب کنید','Select at least one user ID'));const inbound=core.build(v);busy(true);const result=await api('/admin/inbounds',{method:'POST',body:{action:'add',inbound}});applyInbResult(result);close();setTab(state.tab,true);toast(tr('اینباند ساخته شد','Inbound created'),'good');}catch(e){busy(false);error.textContent=e.message;}
+  }});
+  const f=modal.querySelector('form');for(const section of f.querySelectorAll('[data-azm-security]')){const input=section.querySelector('[name=sni]');if(input){input.id='azm-sni-'+section.dataset.azmSecurity;input.closest('.field').querySelector('label').htmlFor=input.id;}}for(const k of ['network','security','flow'])if(initial[k]!==undefined)f.elements[k].value=initial[k];if(initial.port)f.elements.port.value=initial.port;const change=()=>{const security=f.elements.security.value,p=f.elements.protocol.value;f.querySelectorAll('[data-azm-security]').forEach(s=>s.hidden=s.dataset.azmSecurity!==security);f.querySelectorAll('[data-azm-protocol]').forEach(s=>s.hidden=s.dataset.azmProtocol!==p);const n=f.elements.network.value;for(const[k,visible]of Object.entries({path:['ws','xhttp','httpupgrade'].includes(n),host:['ws','xhttp','httpupgrade'].includes(n),serviceName:n==='grpc',xhttpMode:n==='xhttp',flow:p==='vless'&&n==='tcp'&&['tls','reality'].includes(security)})){f.elements[k].closest('.field').hidden=!visible;if(k==='flow'){f.elements[k].disabled=!visible;if(!visible)f.elements[k].value='';}}};f.elements.security.onchange=change;f.elements.protocol.onchange=change;f.elements.network.onchange=change;change();f.onsubmit=e=>{e.preventDefault();modal.querySelector('[data-ok]').click();};
+  f.querySelector('[data-azm-reveal]').onclick=()=>{const k=f.querySelector('[name=privateKey]');k.type=k.type==='password'?'text':'password';};
+  f.querySelector('[data-azm-ss]').onclick=()=>{const bytes=crypto.getRandomValues(new Uint8Array(16));f.elements.ssPassword.value=btoa(String.fromCharCode(...bytes));};
+  f.elements.publicKey.readOnly=true;f.elements.privateKey.onchange=async()=>{const key=f.elements.privateKey.value;f.elements.publicKey.value='';if(!key)return;try{const r=await fetch((window.__NOVA_BASE__||'')+'/alireza/api/manual/keys',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({privateKey:key})});const j=await r.json();if(!r.ok)throw Error(j.error);if(f.elements.privateKey.value===key)f.elements.publicKey.value=j.publicKey;}catch(e){f.querySelector('#azm-error').textContent=e.message;}};
+  f.querySelector('[data-azm-keys]').onclick=async e=>{const b=e.currentTarget;b.disabled=true;try{const r=await fetch((window.__NOVA_BASE__||'')+'/alireza/api/manual/keys',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:'{}'});const j=await r.json();if(!r.ok)throw Error(j.error);f.elements.privateKey.value=j.privateKey;f.elements.publicKey.value=j.publicKey;f.elements.shortIds.value=j.shortId;}catch(e){f.querySelector('#azm-error').textContent=e.message;}finally{b.disabled=false;}};
+ };
+ const style=document.createElement('style');style.textContent='.azm-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}#azm-form .prof-sec{margin-bottom:18px}#azm-form [hidden]{display:none!important}#azm-form .notice{margin-top:18px}@media(max-width:600px){.azm-grid{grid-template-columns:1fr}}';document.head.append(style);
+})();
+ALIREZA_902A9CE7CE5497E79DB30272
 
 export ALIREZA_ROOT="$ROOT"
 node "$APP/compat-check.mjs" /opt/nova-node-agent
@@ -3541,7 +3620,7 @@ if not os.path.exists(root+'/adguard/AdGuardHome.yaml'):
     # JSON is valid YAML; AdGuard reads it and rewrites its native YAML on save.
     with open(root+'/adguard/AdGuardHome.yaml','w') as f:json.dump(config,f,indent=2)
 if not os.path.exists(root+'/install.json'):
-    with open(root+'/install.json','w') as f:json.dump({'dns_address':address,'dns_allowed_clients':allowed,'version':'0.7.0'},f)
+    with open(root+'/install.json','w') as f:json.dump({'dns_address':address,'dns_allowed_clients':allowed,'version':'0.7.1'},f)
 if not os.path.exists(root+'/firewall.json'):
     with open(root+'/firewall.json','w') as f:json.dump([],f)
 PY
@@ -3705,7 +3784,7 @@ cat "$WORK/verify.log"
 [[ $VERIFIED == 1 ]] || die 'The integrated panel did not pass verification. Existing add-on data is retained; rerun this file to repair.'
 bash "$APP/check.sh"
 NOVA_VERSION=$(node -p 'require("/opt/nova-node-agent/package.json").version')
-printf '{"version":"0.7.0","nova":"%s","adguard":"%s"}\n' "$NOVA_VERSION" "$AG_VERSION" > "$ROOT/installed.json"
+printf '{"version":"0.7.1","nova":"%s","adguard":"%s"}\n' "$NOVA_VERSION" "$AG_VERSION" > "$ROOT/installed.json"
 install -d /etc/logrotate.d
 cat > /etc/logrotate.d/alirezaserver <<'ROTATE'
 /var/log/alirezaserver/*.log {

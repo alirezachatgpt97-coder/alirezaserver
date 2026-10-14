@@ -1,3 +1,11 @@
+# آزمون ۰٫۷٫۱
+
+۸۲ آزمون در مجموعهٔ فعلی: ۶ manual-core و ۴ manual-ui جدید، به‌علاوه ۹ native HTTP/auth (۲ مورد جدید)، ۱۰ regression، ۱۱ Xray installer، ۴ SSH، ۲۳ backend/AI/DNS، ۶ UI قدیمی و ۹ UI انتخاب‌گر. آزمون‌های model/UI TLS و Reality، metadata/streamSettings، رد تنظیمات ناسازگار و مجوز ساخت کلید اضافه شده‌اند. Self-test شامل syntax ۴۴ ماژول embedded است.
+
+UI با jsdom/facade و HTTP/auth با نسخهٔ واقعی pinned Nova روی loopback بررسی می‌شود. کل Xray configهای ساخته‌شده روی daemon واقعی با کلاینت VPN اجرا نشده‌اند. هیچ ادعای بدون‌باگ، ظرفیت تضمینی ۱GiB یا آزمون تصویری کامل وجود ندارد. وضعیت موتورهای اضافی و نبود ویرایش گرافیکی همهٔ rawهای موجود در INBOUNDS.md صریح است.
+
+## گزارش‌های پیشین
+
 # آزمون نسخهٔ ۰٫۷٫۰
 
 ۷۰ آزمون PASS: ۱۰ regression، ۱۱ نصب Xray، ۴ SSH، ۲۳ backend/AI/DNS، ۷ native HTTP/auth، ۶ UI قبلی، ۹ UI اینباند جدید. Self-test شامل syntax ۴۲ ماژول embedded است؛ compat-check اصلی نوا نیز PASS.
