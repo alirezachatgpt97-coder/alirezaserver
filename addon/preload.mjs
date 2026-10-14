@@ -26,7 +26,7 @@ export function injectHTML(html,base) {
   if(!html.includes('id="app"')&&!html.includes('id="root"')&&!html.includes('const IC=')) return html;
   if(html.includes('data-alireza-addon'))return html;
   return html.replace(/<title>Nova Server<\/title>/,'<title>alirezaserver</title>').replace('</body>',
-    `<script data-alireza-addon src="${base}/alireza/brand.js"></script></body>`);
+    `<script data-alireza-addon src="${base}/alireza/brand.js"></script><script src="${base}/alireza/inbounds/ui.js"></script></body>`);
 }
 let panelCache;
 function panelBuffer(text,base){
@@ -121,6 +121,8 @@ function serialized(action) {
   pending++;const result=queue.then(action);queue=result.catch(()=>{}).finally(()=>pending--);return result;
 }
 async function handle(req,res,base,tail) {
+  // Public static UI code only; all account/service APIs still require native owner auth.
+  if(tail==='inbounds/ui.js'&&req.method==='GET'){file(res,'inbounds-ui.js','text/javascript; charset=utf-8');return;}
   if(tail==='brand.js'&&req.method==='GET'){file(res,'brand.js','text/javascript; charset=utf-8');return;}
   const auth=await whoami(req,base);
   if(!auth){json(res,401,{error:'Sign in to the main panel first.'});return;}
@@ -203,7 +205,7 @@ if(process.env.ALIREZA_NO_HOOK!=='1') {
       // Reject ambiguous URL spellings instead of passing them to another handler.
       const tail=req.url.slice((base+'/alireza/').length);
       if(/[\\\x00-\x20]/.test(tail)||/%2f|%5c|%2e/i.test(tail)||tail.split('?')[0].split('/').includes('..')){json(res,400,{error:'Invalid path'});return true;}
-      handle(req,res,base,tail).catch(e=>{console.error('alirezaserver:',e.message);if(!res.headersSent)json(res,e.status||500,{error:e.code||e.message,code:e.code});else res.destroy();});return true;
+      handle(req,res,base,tail.split('?')[0]).catch(e=>{console.error('alirezaserver:',e.message);if(!res.headersSent)json(res,e.status||500,{error:e.code||e.message,code:e.code});else res.destroy();});return true;
     }
     wrapHTML(req,res);return previous.call(this,event,...args);
   };

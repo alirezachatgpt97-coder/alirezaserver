@@ -1,3 +1,9 @@
+alirezaserver 0.7.0, 2026-10-14: 70 regression/DOM/mock/native-HTTP tests PASS.
+No real browser screenshots, VPS upgrade, live protocol traffic or 1GiB capacity certification.
+This version integrates native Inbounds/OpenVPN UI; it does not add all missing protocol engines.
+Detailed report: docs/VALIDATION.md and docs/INBOUNDS.md.
+
+Archived verification records:
 alirezaserver 0.6.0 verification, 2026-10-09
 
 Current verification is documented in docs/VALIDATION.md of the release.

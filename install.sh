@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# alirezaserver 0.6.1 — single-file ONLINE installer; rerun to repair/resume.
+# alirezaserver 0.7.0 — single-file ONLINE installer; rerun to repair/resume.
 # Supported target: Ubuntu 24.04 or Debian 12/13, systemd, amd64/arm64.
 # Add-on source and notices are embedded below; original upstream programs are
 # downloaded from pinned official URLs. This is not an offline bundle.
@@ -222,7 +222,7 @@ MANAGED=1
 # ALIREZA_EMBEDDED_FILES
 
 cat > "$APP/NOTICE.txt" <<'ALIREZA_120C9E5B95207BAC6A6B1C54'
-alirezaserver add-on 0.6.1
+alirezaserver add-on 0.7.0
 
 The new integration modules in this directory are licensed under GPL-3.0-or-later.
 OpenVPN configuration/profile conventions were adapted from Sir-MmD/vpn-ui,
@@ -319,9 +319,17 @@ No new theme is injected into the original Nova or AdGuard document.
 See the release docs/VALIDATION.md for the current tests and limitations.
 
 0.6.1 applies a contract-checked patch only to the downloaded initial Nova installer: bounded Xray child process, visible logs and verified fallback. Native agent/UI/protocol source remains untouched.
+
+0.7.0 adds an owner-only native inbound-form bridge and lazy OpenVPN management inside Inbounds. Existing Nova sources and OpenVPN data remain separate and unchanged. It does not add all protocol engines present in alirezapanel.
 ALIREZA_120C9E5B95207BAC6A6B1C54
 
 cat > "$APP/VERIFICATION.txt" <<'ALIREZA_E65C0E31435C064147B5C663'
+alirezaserver 0.7.0, 2026-10-14: 70 regression/DOM/mock/native-HTTP tests PASS.
+No real browser screenshots, VPS upgrade, live protocol traffic or 1GiB capacity certification.
+This version integrates native Inbounds/OpenVPN UI; it does not add all missing protocol engines.
+Detailed report: docs/VALIDATION.md and docs/INBOUNDS.md.
+
+Archived verification records:
 alirezaserver 0.6.0 verification, 2026-10-09
 
 Current verification is documented in docs/VALIDATION.md of the release.
@@ -1241,7 +1249,7 @@ cat > "$APP/brand.js" <<'ALIREZA_05CDFF4F5544DD154CA09909'
     const icon=document.querySelector('link[rel="icon"]');if(icon&&!icon.dataset.azMark){icon.href='data:image/svg+xml,'+encodeURIComponent(logo);icon.dataset.azMark='1';}
     document.querySelectorAll('.social a').forEach(a=>{a.removeAttribute('href');a.removeAttribute('target');a.removeAttribute('onclick');a.setAttribute('aria-disabled','true');a.tabIndex=-1;});
     const nav=document.querySelector('.side-nav');
-    if(nav&&(owner||aiAllowed)){for(const [kind,label]of [...(owner?[['dns','DNS · AdGuard Home'],['openvpn','OpenVPN'],['alirezadns','alirezadns']]:[]),...(aiAllowed?[['ai','AI']]:[])]){if(nav.querySelector('[data-az-kind="'+kind+'"]'))continue;const b=document.createElement('button');b.dataset.azKind=kind;b.type='button';b.className='nav-item az-nav';b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6h.01M7 17h.01"/></svg><span></span>';b.querySelector('span').textContent=label;b.onclick=()=>open(kind);nav.append(b);}}
+    if(nav&&(owner||aiAllowed)){for(const [kind,label]of [...(owner?[['dns','DNS · AdGuard Home'],['alirezadns','alirezadns']]:[]),...(aiAllowed?[['ai','AI']]:[])]){if(nav.querySelector('[data-az-kind="'+kind+'"]'))continue;const b=document.createElement('button');b.dataset.azKind=kind;b.type='button';b.className='nav-item az-nav';b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6h.01M7 17h.01"/></svg><span></span>';b.querySelector('span').textContent=label;b.onclick=()=>open(kind);nav.append(b);}}
     document.querySelectorAll('.az-nav').forEach(b=>{if(b.dataset.azKind==='ai'?!aiAllowed:!owner)b.remove();});
     if(!nav){document.querySelectorAll('.az-nav').forEach(el=>el.remove());if(overlay&&!overlay.hidden){overlay.hidden=true;overlay.querySelector('iframe').src='about:blank';}}
     observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['href']});
@@ -1297,7 +1305,7 @@ const firstDifference=required?.findIndex((v,i)=>v!==current[i]);
 if(!minimum||(firstDifference>=0&&required[firstDifference]>current[firstDifference]))throw Error('This release needs a different Node runtime; current panel retained');
 for(const file of ['bin/nova-agent.mjs','src/server.mjs','src/auth.mjs','src/kv/sqlite.mjs','src/web/panel.html'])if(!existsSync(join(dir,file)))throw Error('Missing integration file: '+file);
 const panel=readFileSync(join(dir,'src/web/panel.html'),'utf8');
-for(const token of ['side-nav','social','__NOVA_BASE__','Vazirmatn','data-theme="light"','--bg:','--shadow-card:'])if(!panel.includes(token))throw Error('Panel contract changed: '+token);
+for(const token of ['side-nav','social','__NOVA_BASE__','Vazirmatn','data-theme="light"','--bg:','--shadow-card:','function viewInbounds(','function openInboundModal(','function openModal(','INB_PRESETS=[','INB_PRESET_NAME=','#inb-add','function awgSection('])if(!panel.includes(token))throw Error('Panel contract changed: '+token);
 const auth=await import(pathToFileURL(join(dir,'src/auth.mjs'))),server=await import(pathToFileURL(join(dir,'src/server.mjs')));
 for(const name of ['makeSession','resolveSession','readAuthCookie'])if(typeof auth[name]!=='function')throw Error('Authentication contract changed: '+name);
 if(typeof server.createServer!=='function')throw Error('HTTP server contract changed');
@@ -1559,7 +1567,7 @@ export function injectHTML(html,base) {
   if(!html.includes('id="app"')&&!html.includes('id="root"')&&!html.includes('const IC=')) return html;
   if(html.includes('data-alireza-addon'))return html;
   return html.replace(/<title>Nova Server<\/title>/,'<title>alirezaserver</title>').replace('</body>',
-    `<script data-alireza-addon src="${base}/alireza/brand.js"></script></body>`);
+    `<script data-alireza-addon src="${base}/alireza/brand.js"></script><script src="${base}/alireza/inbounds/ui.js"></script></body>`);
 }
 let panelCache;
 function panelBuffer(text,base){
@@ -1654,6 +1662,8 @@ function serialized(action) {
   pending++;const result=queue.then(action);queue=result.catch(()=>{}).finally(()=>pending--);return result;
 }
 async function handle(req,res,base,tail) {
+  // Public static UI code only; all account/service APIs still require native owner auth.
+  if(tail==='inbounds/ui.js'&&req.method==='GET'){file(res,'inbounds-ui.js','text/javascript; charset=utf-8');return;}
   if(tail==='brand.js'&&req.method==='GET'){file(res,'brand.js','text/javascript; charset=utf-8');return;}
   const auth=await whoami(req,base);
   if(!auth){json(res,401,{error:'Sign in to the main panel first.'});return;}
@@ -1736,7 +1746,7 @@ if(process.env.ALIREZA_NO_HOOK!=='1') {
       // Reject ambiguous URL spellings instead of passing them to another handler.
       const tail=req.url.slice((base+'/alireza/').length);
       if(/[\\\x00-\x20]/.test(tail)||/%2f|%5c|%2e/i.test(tail)||tail.split('?')[0].split('/').includes('..')){json(res,400,{error:'Invalid path'});return true;}
-      handle(req,res,base,tail).catch(e=>{console.error('alirezaserver:',e.message);if(!res.headersSent)json(res,e.status||500,{error:e.code||e.message,code:e.code});else res.destroy();});return true;
+      handle(req,res,base,tail.split('?')[0]).catch(e=>{console.error('alirezaserver:',e.message);if(!res.headersSent)json(res,e.status||500,{error:e.code||e.message,code:e.code});else res.destroy();});return true;
     }
     wrapHTML(req,res);return previous.call(this,event,...args);
   };
@@ -3426,6 +3436,14 @@ $('#credentials-dialog').addEventListener('close',()=>$('#account-password').val
 $('#reveal-password').onclick=()=>{$('#account-password').type=$('#account-password').type==='password'?'text':'password';};
 $('#copy-account').onclick=()=>navigator.clipboard.writeText($('#account-name').value+'\n'+$('#account-password').value).catch(()=>{$('#account-password').type='text';$('#account-password').select();});
 render();refresh();setInterval(()=>{if(!document.hidden&&!busy&&!$('#editor').open&&!$('#log-dialog').open&&!$('#share-dialog').open&&!$('#credentials-dialog').open)refresh();},15000);
+
+// Owner-only inline surface used by Nova Inbounds; old URL remains for compatibility.
+if(parent!==window&&new URLSearchParams(location.search).get('embedded')==='1'){
+ document.body.dataset.azEmbedded='1';
+ const rules=document.createElement('style');rules.textContent='body[data-az-embedded]{background:transparent;min-height:0}body[data-az-embedded] main{padding:12px;max-width:none}body[data-az-embedded] header .eyebrow,body[data-az-embedded] header h1,body[data-az-embedded] header p{display:none}';document.head.append(rules);
+ try{lang=parent.document.documentElement.lang==='fa'||parent.document.documentElement.dir==='rtl'?'fa':'en';render();}catch{}
+ addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==parent||e.data?.type!=='az-openvpn-create')return;if(!busy&&!$('#editor').open)edit('servers');});
+}
 ALIREZA_043C8D1774D89EEC5DAF0218
 
 cat > "$APP/dns-readonly.mjs" <<'ALIREZA_B23CA88B3AF3B749CAFDA958'
@@ -3439,6 +3457,65 @@ export async function dnsResponds(port=53,address='127.0.0.1'){
  return{udp:await udp(),tcp:await tcp()};
 }
 ALIREZA_B23CA88B3AF3B749CAFDA958
+
+cat > "$APP/inbounds-ui.js" <<'ALIREZA_4D16B7BB34C2C143D76495F3'
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* Native-form bridge: no cloned Nova configuration generator or credential store. */
+(()=>{'use strict';
+ const base=window.__NOVA_BASE__||'',fa=()=>document.documentElement.lang==='fa'||document.documentElement.dir==='rtl';
+ const text=(f,e)=>fa()?f:e;
+ if(typeof viewInbounds!=='function'||typeof openInboundModal!=='function'||typeof openModal!=='function'||typeof INB_PRESETS==='undefined')return;
+ const style=document.createElement('style');style.dataset.azInbounds='';style.textContent=`.az-inbounds-head{flex-wrap:wrap;align-items:center}.az-inbounds-head .htxt{flex:1 1 220px}.az-inbounds-head [data-az-manual]{white-space:normal}.az-manual-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:16px 0}.az-manual-grid .inb-preset{text-align:start;min-height:88px}.az-manual-grid .inb-preset[aria-checked=true]{border-color:var(--ac);box-shadow:0 0 0 2px var(--ring)}.az-manual-note{color:var(--mu);font-size:13px;line-height:1.8}.az-openvpn-inline{margin:18px 0}.az-openvpn-inline summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px;list-style:none}.az-openvpn-inline summary::-webkit-details-marker{display:none}.az-openvpn-inline iframe{width:100%;height:760px;border:0;display:block;background:transparent}.az-openvpn-inline .az-summary-note{color:var(--mu);font-size:12px;margin-top:6px}.az-manual-actions{display:flex;gap:8px;flex-wrap:wrap}.az-openvpn-inline[open]{box-shadow:var(--shadow-card-hover)}@media(max-width:640px){.az-manual-grid{grid-template-columns:1fr 1fr}.az-openvpn-inline iframe{height:840px}}`;document.head.append(style);
+ function allowed(){return typeof isOwner==='function'&&isOwner();}
+ function frameFor(section,create=false){
+  const details=section.querySelector('[data-az-openvpn]');if(!details)return;details.open=true;
+  let iframe=details.querySelector('iframe');if(!iframe){iframe=document.createElement('iframe');iframe.title=text('مدیریت اینباندهای OpenVPN','OpenVPN inbound management');iframe.src=base+'/alireza/openvpn/?embedded=1';iframe.addEventListener('load',()=>{iframe.dataset.ready='1';});details.append(iframe);}
+  if(create){const send=()=>iframe.contentWindow?.postMessage({type:'az-openvpn-create'},location.origin);if(iframe.dataset.ready)send();else iframe.addEventListener('load',()=>{iframe.dataset.ready='1';send();},{once:true});}
+  details.scrollIntoView?.({behavior:'smooth',block:'start'});
+ }
+ function singleton(section,kind){
+  const selectors={mtproto:'#mtg-on',mieru:'#mieru-on',awg:'#awg-body'};let target=section.querySelector(selectors[kind]);
+  if(!target&&kind==='awg'&&typeof awgSection==='function'&&!(typeof isPaas==='function'&&isPaas())){const wrap=document.createElement('section');wrap.dataset.azAwg='';wrap.append(awgSection());section.append(wrap);target=wrap;}
+  (target?.closest('.card')||target)?.scrollIntoView?.({behavior:'smooth',block:'center'});target?.focus?.();
+ }
+ function manual(section){
+  if(!allowed())return;
+  const presets=INB_PRESETS.filter(p=>!(typeof isPaas==='function'&&isPaas())||p.placement==='front');
+  const protocols=[...new Set(presets.map(p=>p.base.protocol))];const cloud=typeof isPaas==='function'&&isPaas();if(!cloud)protocols.push('openvpn','awg','mieru','mtproto');
+  let selected=protocols.includes('vless')?'vless':protocols[0];let preset='';
+  const modal=openModal({title:text('ساخت دستی اینباند','Create inbound manually'),body:'<div class="az-manual-root"></div>',okLabel:text('ادامه به تنظیمات کامل','Continue to full settings'),onOk:close=>{
+   if(!allowed())return;close();
+   if(selected==='openvpn'){frameFor(section,true);return;}
+   if(['awg','mieru','mtproto'].includes(selected)){singleton(section,selected);return;}
+   openInboundModal(null);
+   const button=document.querySelector('.scrim:last-child [data-p="'+preset+'"]');button?.click();
+  }});
+  const root=modal.querySelector('.az-manual-root');
+  const label=document.createElement('label');label.className='field';label.textContent=text('پروتکل','Protocol');const select=document.createElement('select');select.className='input';select.dir='ltr';
+  const names={vless:'VLESS',vmess:'VMess',trojan:'Trojan',shadowsocks:'Shadowsocks',wireguard:'WireGuard',hysteria2:'Hysteria2',tuic:'TUIC',naive:'Naive',socks:'SOCKS',http:'HTTP', 'dokodemo-door':'Port forward',openvpn:'OpenVPN',awg:'AmneziaWG',mieru:'Mieru',mtproto:'MTProto'};
+  for(const p of protocols){const option=document.createElement('option');option.value=p;option.textContent=names[p]||p;select.append(option);}select.value=selected;label.append(select);root.append(label);
+  const grid=document.createElement('div');grid.className='az-manual-grid';grid.setAttribute('role','radiogroup');grid.setAttribute('aria-label',text('نوع اتصال و امنیت','Transport and security'));root.append(grid);
+  const note=document.createElement('p');note.className='az-manual-note';root.append(note);
+  function variants(){selected=select.value;grid.replaceChildren();const list=presets.filter(p=>p.base.protocol===selected);preset=list[0]?.id||'';
+   for(const p of list){const b=document.createElement('button');b.type='button';b.className='inb-preset';b.dataset.azPreset=p.id;b.setAttribute('role','radio');b.setAttribute('aria-checked',String(p.id===preset));const title=document.createElement('span');title.className='pn';title.textContent=typeof t==='function'&&typeof INB_PRESET_NAME!=='undefined'?t(INB_PRESET_NAME[p.id]):p.id;const sub=document.createElement('span');sub.className='pd mono';sub.dir='ltr';sub.textContent=(p.base.network||(['naive'].includes(selected)?'tcp':'udp'))+' / '+p.sec;b.append(title,sub);b.onclick=()=>{preset=p.id;for(const item of grid.children)item.setAttribute('aria-checked',String(item===b));};grid.append(b);}
+   note.textContent=selected==='openvpn'?text('سرورها، حساب‌ها، رمزها، گواهی‌ها و لینک‌های موجود حفظ می‌شوند. ساخت و مدیریت همین‌جا در اینباندها انجام می‌شود. حساب‌های OpenVPN همچنان مستقل از کاربران نوا هستند.','Existing servers, accounts, certificates and links are retained. Manage OpenVPN here in Inbounds. OpenVPN accounts remain separate from Nova users.'):['awg','mieru','mtproto'].includes(selected)?text('این پروتکل سرویس مستقل نوا دارد؛ ادامه، تنظیمات واقعی همان سرویس را باز می‌کند و نمونهٔ تکراری ایجاد نمی‌کند.','This protocol uses a native standalone service. Continue opens its real settings without creating a duplicate instance.'):text('در مرحلهٔ بعد تنظیمات کامل فرم اصلی نوا، انتخاب نود، پورت، امنیت و گزینه‌های پیشرفته در دسترس است.','Next opens the complete native Nova form with node, port, security and advanced settings.');
+  }
+  select.onchange=variants;variants();select.focus();
+ }
+ function decorate(section){
+  if(!allowed()||section.querySelector('[data-az-manual]'))return section;
+  const header=section.querySelector('.view-head');if(!header)return section;header.classList.add('az-inbounds-head');
+  const button=document.createElement('button');button.type='button';button.className='btn primary';button.dataset.azManual='';button.textContent=text('＋ ساخت دستی اینباند','＋ Create inbound manually');button.onclick=()=>manual(section);header.append(button);
+  if(!(typeof isPaas==='function'&&isPaas())){
+   const details=document.createElement('details');details.className='card az-openvpn-inline';details.dataset.azOpenvpn='';const summary=document.createElement('summary');const title=document.createElement('div');const strong=document.createElement('strong');strong.textContent='OpenVPN';const note=document.createElement('div');note.className='az-summary-note';note.textContent=text('اینباندها، حساب‌ها، گواهی‌ها و کانفیگ اتصال','Inbounds, accounts, certificates and connection profiles');title.append(strong,note);const badge=document.createElement('span');badge.className='badge';badge.textContent=text('مدیریت','Manage');summary.append(title,badge);details.append(summary);
+   details.addEventListener('toggle',()=>{if(details.open)frameFor(section);else details.querySelector('iframe')?.remove();});section.insertBefore(details,section.querySelector('.inb-grid')||header.nextSibling);
+  }
+  return section;
+ }
+ const original=viewInbounds;viewInbounds=function(...args){return decorate(original.apply(this,args));};
+ const existing=document.querySelector('#inb-add')?.closest('section.view');if(existing)decorate(existing);
+})();
+ALIREZA_4D16B7BB34C2C143D76495F3
 
 export ALIREZA_ROOT="$ROOT"
 node "$APP/compat-check.mjs" /opt/nova-node-agent
@@ -3464,7 +3541,7 @@ if not os.path.exists(root+'/adguard/AdGuardHome.yaml'):
     # JSON is valid YAML; AdGuard reads it and rewrites its native YAML on save.
     with open(root+'/adguard/AdGuardHome.yaml','w') as f:json.dump(config,f,indent=2)
 if not os.path.exists(root+'/install.json'):
-    with open(root+'/install.json','w') as f:json.dump({'dns_address':address,'dns_allowed_clients':allowed,'version':'0.6.1'},f)
+    with open(root+'/install.json','w') as f:json.dump({'dns_address':address,'dns_allowed_clients':allowed,'version':'0.7.0'},f)
 if not os.path.exists(root+'/firewall.json'):
     with open(root+'/firewall.json','w') as f:json.dump([],f)
 PY
@@ -3628,7 +3705,7 @@ cat "$WORK/verify.log"
 [[ $VERIFIED == 1 ]] || die 'The integrated panel did not pass verification. Existing add-on data is retained; rerun this file to repair.'
 bash "$APP/check.sh"
 NOVA_VERSION=$(node -p 'require("/opt/nova-node-agent/package.json").version')
-printf '{"version":"0.6.1","nova":"%s","adguard":"%s"}\n' "$NOVA_VERSION" "$AG_VERSION" > "$ROOT/installed.json"
+printf '{"version":"0.7.0","nova":"%s","adguard":"%s"}\n' "$NOVA_VERSION" "$AG_VERSION" > "$ROOT/installed.json"
 install -d /etc/logrotate.d
 cat > /etc/logrotate.d/alirezaserver <<'ROTATE'
 /var/log/alirezaserver/*.log {
@@ -3652,7 +3729,7 @@ log 'ALIREZASERVER READY — panel branding, OpenVPN management and AdGuard inte
 printf 'نصب پنل alirezaserver و دو بخش AdGuard و OpenVPN تکمیل و بررسی شد.\n'
 printf '%s\n' \
  'DNS: AdGuard Home, TCP/UDP 53; owner-only web access through the main panel.' \
- 'OpenVPN: create servers/accounts using the new OpenVPN menu.' \
+ 'OpenVPN: create servers/accounts inside Inbounds; legacy URLs remain valid.' \
  'Existing Nova protocols, node enrollment scripts and upstream files are unchanged.' \
  'DNS accepts public clients on your server IPv4:53. Restrict access in AdGuard Access settings if desired.' \
  'A provider firewall/security group must separately allow DNS TCP/UDP 53 and your selected OpenVPN port.' \

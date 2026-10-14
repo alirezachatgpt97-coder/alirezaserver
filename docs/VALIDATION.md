@@ -1,3 +1,13 @@
+# آزمون نسخهٔ ۰٫۷٫۰
+
+۷۰ آزمون PASS: ۱۰ regression، ۱۱ نصب Xray، ۴ SSH، ۲۳ backend/AI/DNS، ۷ native HTTP/auth، ۶ UI قبلی، ۹ UI اینباند جدید. Self-test شامل syntax ۴۲ ماژول embedded است؛ compat-check اصلی نوا نیز PASS.
+
+تست اختصاصی جدید UI با jsdom و facade قراردادهای native انجام شده؛ مرورگر واقعی نیست. native HTML/auth با کد واقعی نوا بررسی شده و تمام بلوک‌های اصلی style/script حفظ شده‌اند. درخواست embedded با query، احراز هویت owner و منع دسترسی reseller نیز بررسی شده‌اند. نصب/دانلود daemonها، kernel/firewall/VPN traffic در تست backend mock هستند.
+
+Chromium جدیداً با exit139 شکست خورد؛ نمایش تصویری موبایل/دسکتاپ یا screenshot تأیید نشده است. منابع واقعی فقط controller HTTP اندازه‌گیری شده‌اند، نه تمام سرویس‌ها. افزودن همهٔ پروتکل‌های پروژهٔ دیگر انجام نشده و در INBOUNDS.md صریح است.
+
+## گزارش‌های نسخه‌های قبلی (تاریخی)
+
 # بررسی مجدد hotfix 0.6.1
 
 - ۱۱ آزمون اختصاصی Xray: PASS؛ Bash واقعی و timeout واقعی، شبکه/آرشیو/سرویس شبیه‌سازی‌شده.

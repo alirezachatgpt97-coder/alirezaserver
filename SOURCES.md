@@ -31,3 +31,7 @@ Custom integration code retains the previous GPL-3.0-or-later notice. Nova has i
 ## Xray installation hotfix 0.6.1
 
 Official XTLS installer checked: https://raw.githubusercontent.com/XTLS/Xray-install/main/install-release.sh . It defines its own curl wrapper; retry-max-time is not a connection/transfer timeout. We bound the complete child process group to 240 seconds (+10-second kill grace) instead of trying to override that wrapper. Existing pinned Nova fallback version 26.3.27 and both original architecture checksums remain unchanged. The fallback transfer has HTTPS-only redirects, connection/total/low-speed deadlines. Existing working Xray binaries are not downgraded.
+
+## Inbounds 0.7.0
+
+Current alirezaserver/main installer read via GitHub on 2026-10-14, blob e7fc43b571ee33b23ae198a3032ec225c0f00624 (0.6.1), identical to previous local release except final newline. Native Inbounds integration targets the pinned Nova source above. Runtime HTML gains an external form bridge; original inline style/script blocks and installed agent sources remain unchanged. New source in addon/inbounds-ui.js, compatibility contracts in addon/compat-check.mjs. Unsupported protocol engines are explicitly listed in docs/INBOUNDS.md.

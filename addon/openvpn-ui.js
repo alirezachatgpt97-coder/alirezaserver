@@ -42,3 +42,11 @@ $('#credentials-dialog').addEventListener('close',()=>$('#account-password').val
 $('#reveal-password').onclick=()=>{$('#account-password').type=$('#account-password').type==='password'?'text':'password';};
 $('#copy-account').onclick=()=>navigator.clipboard.writeText($('#account-name').value+'\n'+$('#account-password').value).catch(()=>{$('#account-password').type='text';$('#account-password').select();});
 render();refresh();setInterval(()=>{if(!document.hidden&&!busy&&!$('#editor').open&&!$('#log-dialog').open&&!$('#share-dialog').open&&!$('#credentials-dialog').open)refresh();},15000);
+
+// Owner-only inline surface used by Nova Inbounds; old URL remains for compatibility.
+if(parent!==window&&new URLSearchParams(location.search).get('embedded')==='1'){
+ document.body.dataset.azEmbedded='1';
+ const rules=document.createElement('style');rules.textContent='body[data-az-embedded]{background:transparent;min-height:0}body[data-az-embedded] main{padding:12px;max-width:none}body[data-az-embedded] header .eyebrow,body[data-az-embedded] header h1,body[data-az-embedded] header p{display:none}';document.head.append(rules);
+ try{lang=parent.document.documentElement.lang==='fa'||parent.document.documentElement.dir==='rtl'?'fa':'en';render();}catch{}
+ addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==parent||e.data?.type!=='az-openvpn-create')return;if(!busy&&!$('#editor').open)edit('servers');});
+}

@@ -8,7 +8,7 @@ const firstDifference=required?.findIndex((v,i)=>v!==current[i]);
 if(!minimum||(firstDifference>=0&&required[firstDifference]>current[firstDifference]))throw Error('This release needs a different Node runtime; current panel retained');
 for(const file of ['bin/nova-agent.mjs','src/server.mjs','src/auth.mjs','src/kv/sqlite.mjs','src/web/panel.html'])if(!existsSync(join(dir,file)))throw Error('Missing integration file: '+file);
 const panel=readFileSync(join(dir,'src/web/panel.html'),'utf8');
-for(const token of ['side-nav','social','__NOVA_BASE__','Vazirmatn','data-theme="light"','--bg:','--shadow-card:'])if(!panel.includes(token))throw Error('Panel contract changed: '+token);
+for(const token of ['side-nav','social','__NOVA_BASE__','Vazirmatn','data-theme="light"','--bg:','--shadow-card:','function viewInbounds(','function openInboundModal(','function openModal(','INB_PRESETS=[','INB_PRESET_NAME=','#inb-add','function awgSection('])if(!panel.includes(token))throw Error('Panel contract changed: '+token);
 const auth=await import(pathToFileURL(join(dir,'src/auth.mjs'))),server=await import(pathToFileURL(join(dir,'src/server.mjs')));
 for(const name of ['makeSession','resolveSession','readAuthCookie'])if(typeof auth[name]!=='function')throw Error('Authentication contract changed: '+name);
 if(typeof server.createServer!=='function')throw Error('HTTP server contract changed');

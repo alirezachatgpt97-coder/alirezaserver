@@ -1,3 +1,12 @@
+# 0.7.0 — Inbounds integration
+
+- Owner-only manual protocol/transport/security picker reuses the complete native Nova editor and validation.
+- OpenVPN navigation entry removed; full existing management lazily embedded in Inbounds with native theme inheritance and language selection.
+- AmneziaWG/Mieru/MTProto direct access uses existing singleton-service controls, not fake new inbound rows.
+- Installer source/hash verified against current GitHub 0.6.1; no runtime data schema migration.
+- Guarded updater checks the new native form contracts before activation.
+- Protocol inventory explicitly records engines still absent; this is not delivery of every alirezapanel protocol.
+
 # 0.6.1 — رفع توقف نصب Xray
 
 - سقف زمانی برای کل گروه فرایند نصب Xray، خروجی زنده و fallback واقعی پس از timeout.
