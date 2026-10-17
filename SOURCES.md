@@ -24,7 +24,7 @@ Runtime endpoint is fixed to `https://generativelanguage.googleapis.com/v1beta/`
 
 ## Development-only tools
 
-Node.js 24.19.0, Python 3, jsdom **26.1.0** (DOM interaction tests), optional Playwright Chromium (browser tests). These are not installed by the VPS runtime installer. Browser execution failed in the current environment; no screenshots are claimed. Development dependencies and downloaded binaries are not bundled in the release ZIP.
+Node.js 24.19.0, Python 3, jsdom **26.1.0** (DOM interaction tests), optional Playwright Chromium (browser tests). These are not installed by the VPS runtime installer. Browser execution failed in the current environment; no screenshots are claimed. Development runtimes are not bundled. Prebuilt carrier binaries are embedded; their complete preferred source and pinned WebSocket dependency are included.
 
 Custom integration code retains the previous GPL-3.0-or-later notice. Nova has its independent upstream terms. AdGuard remains GPL-3.0; HyperDNS remains AGPL-3.0. Existing attribution and OpenVPN adaptation notices are retained in `addon/NOTICE.txt`, `addon/COPYING.vpn-ui` and `addon/COPYING.HyperDNS`.
 
@@ -39,3 +39,17 @@ Current alirezaserver/main installer read via GitHub on 2026-10-14, blob e7fc43b
 ## Graphical manual form 0.7.1
 
 addon/manual-core.js builds Xray raw configuration plus matching native metadata. addon/manual-editor.js supplies native-class form controls; original Nova account injection remains authoritative. Native SOCKS/HTTP editor is retained because raw accounts do not use the clients replacement contract. X25519 uses Node crypto DER key encoding with 32-byte raw base64url keys. Model/UI and owner/same-origin key-generation tests cover this route, not live VPN protocol traffic.
+
+## Review checkpoint 2026-10-17
+
+alirezaserver base: e7d2fcac68a3dd69f1679de4414123b8bfc2f203. NOVA-X-PANEL reference: e0931b3c5834dab9d5406489033ac89bb95056c6 (GPL-3.0 root); embedded Mirza bot declares AGPL-3.0 independently. This candidate includes the AGPL bot source archive, original Hashem script and managed carrier source/binaries. New native forms/hosts code is independently written under the existing project GPL notice; sources/workflow reviewed are listed in docs/NOVA-X-REVIEW.md. Official Gemini generate-content and models API pages were rechecked on 2026-10-17; model discovery remains runtime-based.
+
+## 0.8.0-rc.1 third-party payloads
+
+- NOVA X PANEL e0931b3c5834dab9d5406489033ac89bb95056c6: root GPL-3.0; embedded Mirza archive independently AGPL-3.0-or-later. Payload modifications and archive hashes: addon/reference-versions.json. The PHP source, vendor notices and original web assets as supplied upstream are retained. The supplied miniapp is upstream's compiled asset; its separate frontend development sources were not present in either referenced archive or NOVA-BOT clone. No claim of a reproducible miniapp rebuild is made.
+- Hashem c1ea91194979aa31b65d93256601cc14dff8eba1: AGPL-3.0; addon/hashem-source.sh and core/hashem. The custom adapter namespaces paths/services, confines interface/firewall changes and replaces mutable downloads with verified artifacts. Original author notices retained.
+- Gorilla WebSocket v1.5.3, commit ce903f6d1d961af3a8602f2842c8b1c3fca58c4d: BSD; source vendored under core/hashem/deps/websocket.
+- FRP 0.71.0, Backhaul 0.7.2: official release archives, amd64/arm64 URLs, archive and binary SHA256 in addon/tunnel-downloads.json. Downloaded only when owner installs Hashem. Their independent licenses apply; binaries are not relicensed.
+- Go carrier builds: Go1.27.2, CGO disabled; per-architecture raw/compressed SHA and target in addon/hashem-core-build.json. Build toolchain archive reviewed from official go.dev: SHA256 ecbadb99091a3f46e31f5f934b068b1864eafa7995211b39eaddf76996045fe5.
+- Xray config validation: official v26.3.27 linux64 archive SHA256 23cd9af937744d97776ee35ecad4972cf4b2109d1e0fe6be9930467608f7c8ae, checked against official .dgst. Development only, not embedded.
+- Actual PHP8.2.32 and MariaDB10.11.18 tests used official Debian packages. OS apt resolves runtime packages; exact installed versions are reported by the package manager and must be considered when reproducing deployment.

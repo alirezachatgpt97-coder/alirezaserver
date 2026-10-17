@@ -1,3 +1,28 @@
+# 0.8.0-rc.2 — 2026-10-17
+
+- Transactional native Hosts management, batch editing, format-aware client overrides, exact profile matching, safe transport export and protection against legacy UI dropping metadata.
+- KCP updated to actual Xray 26.3.27 FinalMask; editable fallbacks, transport options and round-trip preservation of existing settings. Actual KCP echo and routed VLESS authentication tests.
+- Durable bot inbox/receipts, bounded handler runtime, deadlock-free subprocess output, owner-reviewed retries, real Telegram connection status and verified Telegram TLS. Independent bot web CSS/fonts preserved.
+- FRP performance controls, role-aware ports, durable endpoint adapter, proper forms, explicit matching VLESS/WS inbound provisioning with batch rollback; own-service/firewall isolation retained.
+- No VPS/WAN/Telegram/payment/1GiB or browser certification. See VALIDATION and NOVA-X-REVIEW.
+
+# 0.8.0-rc.1 — integrated review candidate
+
+- Added full upstream PHP bot/web payload with alirezabot branding, original fonts/CSS, private on-demand FPM, unprivileged polling, maintenance, encrypted credentials and native-account adapter.
+- Added managed Hashem/FRP/Backhaul/carrier section within native Tunnel, pinned downloads, prebuilt amd64/arm64 Go carrier, SSH fingerprint verification, persisted jobs, owned-service/port/route checks and snapshots/rollback.
+- Scoped inherited firewall/MSS/FoU operations to owned resources; disabled inherited UFW/global sysctl rewrites. Separate mutable core directory avoids Nova code read-only mounts.
+- Expanded graphical TLS/Reality/sniffing options; actual Xray validation found and now rejects invalid Reality+WS/HTTPUpgrade combinations. Native core apply failures are no longer toasted as success.
+- Added host ordering, real bot DB backup, status coalescing and bounded bot logs. AI key/model fixes and native theme integration retained.
+- Advanced reference Host overrides and extra protocol engines remain incomplete. This is not a Stable or 1GiB capacity certification.
+
+# 0.8.0-preview.1 — reviewed development checkpoint
+
+- Six-tab native manual Xray workflow, socket and WS/gRPC settings.
+- Centralized native subscription-host CRUD with stale-list detection.
+- AI key/model onboarding, atomic settings and credential-cache invalidation.
+- Scoped Nova-themed AI/remote-DNS console styling; AdGuard assets unchanged.
+- 90 automated tests pass. Complete reference Hashem/bot integration remains unimplemented; see docs/NOVA-X-REVIEW.md. No Stable/complete claim.
+
 # 0.7.1 — configurable manual form
 
 - Visible protocol catalog cards; graphical controls replace JSON for common Xray manual creation.
