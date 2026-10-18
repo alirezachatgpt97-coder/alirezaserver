@@ -1,3 +1,7 @@
+# 0.8.0-rc.3 — recovered from user-supplied rc.2
+
+Unified manual protocol selection with native engine forms; inline OpenVPN management without iframe; grouped native Hosts page and atomic edits; native Alirezabot management page, retained secrets and matching PHP-FPM; direct AI navigation with robust storage/language/theme handling. Existing presets, backend services, native main UI and AdGuard remain preserved. Syntax and behavioral checks are recorded in docs/VALIDATION.md. This is a review candidate, not a certified Stable build.
+
 # 0.8.0-rc.2 — 2026-10-17
 
 - Transactional native Hosts management, batch editing, format-aware client overrides, exact profile matching, safe transport export and protection against legacy UI dropping metadata.

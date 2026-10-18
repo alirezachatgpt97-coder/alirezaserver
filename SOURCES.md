@@ -53,3 +53,9 @@ alirezaserver base: e7d2fcac68a3dd69f1679de4414123b8bfc2f203. NOVA-X-PANEL refer
 - Go carrier builds: Go1.27.2, CGO disabled; per-architecture raw/compressed SHA and target in addon/hashem-core-build.json. Build toolchain archive reviewed from official go.dev: SHA256 ecbadb99091a3f46e31f5f934b068b1864eafa7995211b39eaddf76996045fe5.
 - Xray config validation: official v26.3.27 linux64 archive SHA256 23cd9af937744d97776ee35ecad4972cf4b2109d1e0fe6be9930467608f7c8ae, checked against official .dgst. Development only, not embedded.
 - Actual PHP8.2.32 and MariaDB10.11.18 tests used official Debian packages. OS apt resolves runtime packages; exact installed versions are reported by the package manager and must be considered when reproducing deployment.
+
+## Recovered rc.3 provenance
+
+Base is the exact user-attached alirezaserver-0.8.0-rc.2-review(1).zip, SHA256 `41f2b9086d257fa3eb752dec33387dac3eeb5b1a6e96fbe474804f3efbd7d144`. No earlier preview sources were merged over this base. Reference NOVA-X-PANEL commit remains e0931b3c5834dab9d5406489033ac89bb95056c6; Nova remains 1.85.4 commit 17e9373ec17ceede95369fcd26d6fabfda83b504. New workspace/manual/inline/hosts code is under the existing GPL-3.0-or-later notice. Bot display-brand changes and payload digest are in addon/reference-versions.json. Original independent bot CSS/fonts remain byte-identical to the supplied rc.2 payload.
+
+The upstream compiled customer miniapp lacks its separate preferred frontend source in the reviewed reference. PHP/admin web source and supplied dependencies are included, but a reproducible miniapp rebuild is not claimed. Resolve the Corresponding Source issue before public redistribution.
