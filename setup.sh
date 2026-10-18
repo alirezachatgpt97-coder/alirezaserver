@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# alirezaserver bootstrap — downloads the content-verified 0.8.0-rc.3 installer.
+# alirezaserver bootstrap — downloads the content-verified 0.8.0-rc.4 installer.
 # Repository: https://github.com/alirezachatgpt97-coder/alirezaserver
 # Videos: https://www.youtube.com/@Alirezacoder12
 # This launcher does not replace or modify the actual installer.
 set -Eeuo pipefail
 umask 077
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-VERSION=0.8.0-rc.3
+VERSION=0.8.0-rc.4
 REF=main
-SHA256=c935ee4ccbff46576969e1afca8fea99923dfbaa3a939c982d7b0683666d445c
+SHA256=23aaaebbe6253088d4ad9d9f68aca9b1c43a90a073e41cd88528bd62ee004a65
 URL="https://raw.githubusercontent.com/alirezachatgpt97-coder/alirezaserver/$REF/install.sh"
 CACHE=/var/cache/alirezaserver
 PARTIAL=''
@@ -21,6 +21,7 @@ alirezaserver — verified installer launcher
 Run as root on Ubuntu 24.04 or Debian 12/13 (amd64/arm64):
   bash setup.sh                  Install, or resume/repair an existing installation
   bash setup.sh --repair         Same repair flow; keeps existing add-on data
+  bash setup.sh --diagnose      Read-only installation/service failure summary
   bash setup.sh --check          Check the currently installed integration
   bash setup.sh --backup         Back up the currently installed add-on data
   bash setup.sh --update         Check/retry the guarded official Nova update
@@ -36,10 +37,16 @@ HELP
 [[ $# -le 1 ]] || die 'Use one option at a time. See --help.'
 case "${1:-}" in
   --help|-h) usage; exit 0 ;;
-  ''|--repair|--check|--backup|--rollback|--download-only|--update|--update-status) ;;
+  ''|--repair|--diagnose|--check|--backup|--rollback|--download-only|--update|--update-status) ;;
   *) die 'Unknown option. Use --help.' ;;
 esac
 [[ $EUID == 0 ]] || die 'Open a root shell (sudo -i), then run this script.'
+if [[ "${1:-}" == --diagnose ]]; then
+  if [[ -f /opt/alirezaserver/install-diagnostics.sh ]]; then exec bash /opt/alirezaserver/install-diagnostics.sh; fi
+  [[ ! -f /var/log/alirezaserver/last-failure.json ]] || cat /var/log/alirezaserver/last-failure.json
+  systemctl show nova-agent.service AdGuardHome.service alireza-firewall.service -p Id -p ActiveState -p SubState -p Result -p ExecMainStatus --no-pager || true
+  exit 0
+fi
 [[ -d /run/systemd/system ]] || die 'A Linux VPS running systemd is required.'
 case "${1:-}" in
   --update)

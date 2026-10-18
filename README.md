@@ -1,6 +1,22 @@
-# alirezaserver 0.8.0-rc.3
+# alirezaserver 0.8.0-rc.4
 
 بستهٔ کد و نصب قابل بررسی برای ادغام امکانات NOVA X PANEL در alirezaserver. **این نسخه نامزد آزمایش است، نه تأیید نهایی Production یا ادعای «بدون باگ».** رابط اصلی نوا و AdGuard در این تغییرات بازطراحی نشده‌اند. وضعیت دقیق انتقال و موارد باقی‌مانده در [گزارش انتقال](docs/NOVA-X-REVIEW.md) آمده است.
+
+## اصلاح نصب ناقص در rc.4
+
+بررسی پایانی نسخهٔ قبلی، از URL قدیمی OpenVPN صفحهٔ مستقل با HTTP 200 انتظار داشت؛ در حالی که مدیریت جدید داخل Inbounds است و آن URL با HTTP 302 به `/#inbounds` هدایت می‌شود. این ناسازگاری رفع شد. بررسی جدید علاوه بر مقصد دقیق redirect، وجود واقعی دارایی‌ها و تزریق فرم‌های دستی/OpenVPN را کنترل می‌کند؛ 302 دلخواه یا فایل گمشده موفق محسوب نمی‌شود. همین بررسی در سلامت پس از به‌روزرسانی نیز استفاده می‌شود.
+
+فایل‌های standalone افزونه با 77 فایل جاسازی‌شدهٔ نصاب rc.3 مخزن همسان شدند؛ منابع قدیمی کنار نصاب جدید توزیع نمی‌شوند. سورس ترجیحی carrier هم داخل `core/hashem` قرار دارد. قابلیت‌ها، فرم‌ها، پروتکل‌ها و AdGuard تغییر نکرده‌اند.
+
+نصب شکست‌خورده فایل‌های خصوصی `/var/log/alirezaserver/last-failure.json`، `install-*.log.verify` و `install-*.log.services` را حفظ می‌کند. کد خروج و مرحله ثبت می‌شود؛ رمز، توکن یا متن فرمان در metadata ثبت نمی‌شود. برای خلاصهٔ فقط‌خواندنی:
+
+```bash
+sudo bash install.sh --diagnose
+```
+
+از ZIP استخراج‌شده مستقیماً `sudo bash install.sh` را اجرا کنید؛ نصب‌کننده آنلاین است. برای نصب موجود ابتدا snapshot مستقل و `sudo bash install.sh --backup`، سپس `sudo bash install.sh --repair` و `sudo bash install.sh --check`. همهٔ محتویات ZIP را مستقیم در ریشهٔ GitHub قرار دهید و setup.sh/install.sh را با هم عوض کنید. فرمان آنلاین README بعد از بارگذاری این نسخه در مخزن شما معتبر است؛ چیزی خودکار منتشر نشده است.
+
+علت دقیق ناتوانی ورود روی VPS حذف‌شده قابل تعیین نیست. رفع ناسازگاری verifier قطعی است، اما تأیید نصب کامل apt/systemd و دسترسی عمومی HTTPS روی VPS واقعی انجام نشده است؛ این نسخه ادعای بدون باگ یا ظرفیت تضمینی یک گیگ ندارد.
 
 ## اصلاحات این نسخه نسبت به ZIP ارسالی rc.2
 
@@ -118,7 +134,7 @@ alirezadns برای **سرور مقصد جداگانه** است. اطلاعات 
 python3 tools/build-hashem-installer.py
 python3 tools/build.py
 bash install.sh --self-test
-python3 tools/package.py ../alirezaserver-0.8.0-rc.3-review.zip
+python3 tools/package.py ../alirezaserver-0.8.0-rc.4-review.zip
 ```
 
 سورس carrier و وابستگی WebSocket در `core/hashem/` است. ساخت carrier با `tools/build-carrier.py` و Go درج‌شده در `addon/hashem-core-build.json` و سپس `tools/package-carrier-source.py` انجام می‌شود. منابع دانلودها، نسخه‌ها و hashها در [SOURCES](SOURCES.md) و manifestهای addon هستند. این انتشار برای بررسی است؛ تا تکمیل موارد گزارش‌شده و آزمون VPS، عنوان Stable ندارد.

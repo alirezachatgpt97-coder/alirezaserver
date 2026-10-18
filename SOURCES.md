@@ -59,3 +59,7 @@ alirezaserver base: e7d2fcac68a3dd69f1679de4414123b8bfc2f203. NOVA-X-PANEL refer
 Base is the exact user-attached alirezaserver-0.8.0-rc.2-review(1).zip, SHA256 `41f2b9086d257fa3eb752dec33387dac3eeb5b1a6e96fbe474804f3efbd7d144`. No earlier preview sources were merged over this base. Reference NOVA-X-PANEL commit remains e0931b3c5834dab9d5406489033ac89bb95056c6; Nova remains 1.85.4 commit 17e9373ec17ceede95369fcd26d6fabfda83b504. New workspace/manual/inline/hosts code is under the existing GPL-3.0-or-later notice. Bot display-brand changes and payload digest are in addon/reference-versions.json. Original independent bot CSS/fonts remain byte-identical to the supplied rc.2 payload.
 
 The upstream compiled customer miniapp lacks its separate preferred frontend source in the reviewed reference. PHP/admin web source and supplied dependencies are included, but a reproducible miniapp rebuild is not claimed. Resolve the Corresponding Source issue before public redistribution.
+
+## rc.4 installation hotfix provenance
+
+Current GitHub HEAD 90b0f3554a09829e9ae38c9601ada8623ebab247 was cloned for this work. Its 77 embedded rc.3 addon files are authoritative; divergent standalone files were synchronized to those exact bytes. Source hashes and allowed changes are in docs/RC4-BASELINE.json. The carrier preferred source was restored from its existing source archive. No preview or alirezapanel source was merged. Existing independently licensed bot payload is byte-unchanged by this hotfix.

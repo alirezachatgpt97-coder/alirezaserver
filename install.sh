@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# alirezaserver 0.8.0-rc.3 — single-file ONLINE installer; rerun to repair/resume.
+# alirezaserver 0.8.0-rc.4 — single-file ONLINE installer; rerun to repair/resume.
 # Supported target: Ubuntu 24.04 or Debian 12/13, systemd, amd64/arm64.
 # Add-on source and notices are embedded below; original upstream programs are
 # downloaded from pinned official URLs. This is not an offline bundle.
@@ -68,6 +68,7 @@ with tempfile.TemporaryDirectory() as d:
  for m in re.finditer(r'cat > "\$APP/([^"\n]+)" <<\x27([^\x27]+)\x27\n(.*?)\n\2\n',s,re.S):
   name=m[1];text=m[3]+'\n';p=pathlib.Path(d)/name;p.write_text(text)
   if name.endswith('.py'):compile(text,name,'exec')
+  if name.endswith('.sh'):subprocess.run(['bash','-n',str(p)],check=True)
   if name.endswith(('.js','.mjs')):subprocess.run([sys.argv[2],'--check',str(p)],check=True)
   count+=1
 print('Bash and embedded module syntax PASS:',count)
@@ -76,6 +77,11 @@ SELFTEST
 fi
 [[ $EUID == 0 ]] || die 'Run with sudo bash install.sh'
 case "${1:-}" in
+  --diagnose)
+    if [[ -f "$APP/install-diagnostics.sh" ]]; then exec bash "$APP/install-diagnostics.sh"; fi
+    [[ ! -f /var/log/alirezaserver/last-failure.json ]] || cat /var/log/alirezaserver/last-failure.json
+    systemctl show nova-agent.service AdGuardHome.service alireza-firewall.service -p Id -p ActiveState -p SubState -p Result -p ExecMainStatus --no-pager || true
+    exit 0 ;;
   --update) [[ -f "$APP/update.py" ]] || die 'Install this version first'; exec python3 "$APP/update.py" --retry ;;
   --update-status) [[ -f "$ROOT/update-status.json" ]] || die 'No update check has run yet'; cat "$ROOT/update-status.json"; exit ;;
   --rollback) [[ -f "$APP/rollback.sh" ]] || die 'No add-on installation found'; exec bash "$APP/rollback.sh" ;;
@@ -116,9 +122,21 @@ STAGE=preflight
 WORK=''
 HOOK_CHANGED=0
 MANAGED=0
+FAIL_LINE=0
 cleanup(){
   code=$?
+  trap - EXIT ERR
+  set +e
   if [[ $code != 0 ]]; then
+    python3 - "$INSTALL_LOG" "$STAGE" "$code" "$FAIL_LINE" <<'FAILURE_METADATA'
+import json,sys,pathlib,datetime,os
+log,stage,code,line=sys.argv[1:]
+p=pathlib.Path(log).parent/'last-failure.json'
+p.write_text(json.dumps({'timestamp':datetime.datetime.now(datetime.timezone.utc).isoformat(),'stage':stage,'exitCode':int(code),'line':int(line),'log':log},indent=2)+'\n');os.chmod(p,0o600)
+FAILURE_METADATA
+    if [[ -f "$WORK/verify.log" ]]; then cp "$WORK/verify.log" "$INSTALL_LOG.verify"; chmod 600 "$INSTALL_LOG.verify"; fi
+    systemctl show nova-agent.service AdGuardHome.service alireza-firewall.service -p Id -p ActiveState -p SubState -p Result -p ExecMainStatus --no-pager > "$INSTALL_LOG.services" 2>&1
+    chmod 600 "$INSTALL_LOG.services"
     # A DNS/upstream error must never silently uninstall working UI additions.
     # Restore the prior launch only if our new launch itself is unhealthy.
     if [[ $HOOK_CHANGED == 1 ]] && ! systemctl is-active --quiet nova-agent.service; then
@@ -133,9 +151,10 @@ cleanup(){
     printf 'نصب کامل نشده است؛ همین فایل را دوباره اجرا کنید. نصب نوا به‌تنهایی پایان کار نیست.\n' >&2
   fi
   [[ -z "$WORK" ]] || rm -rf -- "$WORK"
+  exit "$code"
 }
 trap cleanup EXIT
-trap 'printf "Failure at installer line %s (stage: %s)\n" "$LINENO" "$STAGE" >&2' ERR
+trap 'FAIL_LINE=$LINENO; printf "Failure at installer line %s (stage: %s)\n" "$FAIL_LINE" "$STAGE" >&2' ERR
 if [[ -e "$APP" || -e "$ROOT" ]]; then
   if [[ -f "$ROOT/.installer-owned" ]] || { [[ -f "$APP/NOTICE.txt" ]] && grep -q '^alirezaserver add-on 0\.' "$APP/NOTICE.txt"; }; then
     MANAGED=1
@@ -222,7 +241,7 @@ MANAGED=1
 # ALIREZA_EMBEDDED_FILES
 
 cat > "$APP/NOTICE.txt" <<'ALIREZA_120C9E5B95207BAC6A6B1C54'
-alirezaserver add-on 0.8.0-rc.3
+alirezaserver add-on 0.8.0-rc.4
 
 The new integration modules in this directory are licensed under GPL-3.0-or-later.
 OpenVPN configuration/profile conventions were adapted from Sir-MmD/vpn-ui,
@@ -324,7 +343,7 @@ See the release docs/VALIDATION.md for the current tests and limitations.
 
 0.7.1 adds a graphical, owner-only manual Xray form for VLESS, VMess, Trojan, SS2022 and forwarding. It preserves complete transport/security metadata with raw configuration and uses native account injection. SOCKS/HTTP and non-Xray protocols retain native account-aware editors.
 
-0.8.0-rc.3 includes the separately licensed AGPL Mirza/alirezabot source payload and Hashem managed adapter/carrier. See COPYING.alirezabot, COPYING.Hashem, reference-versions.json and the distributed preferred carrier source in core/hashem. Gorilla WebSocket v1.5.3 retains its BSD license. Main Nova/AdGuard UI style and script blocks are retained. This is a review candidate; advanced host overrides are format-aware; additional engines such as L2TP are not implemented.
+0.8.0-rc.4 includes the separately licensed AGPL Mirza/alirezabot source payload and Hashem managed adapter/carrier. See COPYING.alirezabot, COPYING.Hashem, reference-versions.json and the distributed preferred carrier source in core/hashem. Gorilla WebSocket v1.5.3 retains its BSD license. Main Nova/AdGuard UI style and script blocks are retained. This is a review candidate; advanced host overrides are format-aware; additional engines such as L2TP are not implemented.
 ALIREZA_120C9E5B95207BAC6A6B1C54
 
 cat > "$APP/VERIFICATION.txt" <<'ALIREZA_E65C0E31435C064147B5C663'
@@ -2259,6 +2278,7 @@ import https from 'node:https';
 import {isIP} from 'node:net';
 import {randomBytes} from 'node:crypto';
 import {dnsResponds} from './dns-readonly.mjs';
+import {verifyInbounds} from './verify-inbounds.mjs';
 const envFile=process.env.ALIREZA_VERIFY_ENV||'/etc/nova/agent.env';
 const env=readFileSync(envFile,'utf8');
 const value=name=>env.split(/\r?\n/).find(l=>l.startsWith(name+'='))?.slice(name.length+1).replace(/^(['"])(.*)\1$/,'$2');
@@ -2292,7 +2312,7 @@ function request(transport,port,route,authenticated=true,body){
     if(payload)Object.assign(options.headers,{'content-type':'application/json','content-length':Buffer.byteLength(payload),origin:transport+'://'+host});
     // TLS verification is relaxed solely for loopback: Nova supports self-signed certs.
     if(transport==='https'){options.rejectUnauthorized=false;if(!isIP(host))options.servername=host;}
-    const r=client.request(options,response=>{let body='';response.on('data',b=>{body+=b;if(body.length>4194304)r.destroy(Error('Response too large'));});response.on('end',()=>resolve({code:response.statusCode,body}));response.on('error',reject);});
+    const r=client.request(options,response=>{let body='';response.on('data',b=>{body+=b;if(body.length>4194304)r.destroy(Error('Response too large'));});response.on('end',()=>resolve({code:response.statusCode,body,headers:response.headers}));response.on('error',reject);});
     r.on('timeout',()=>r.destroy(Error('Timed out checking '+route)));r.on('error',reject);r.end(payload);
   });
 }
@@ -2305,8 +2325,7 @@ async function verify(transport,port){
   requireThat(page.code===200&&page.body.includes('data-alireza-addon')&&page.body.includes('<title>alirezaserver</title>'),'Panel branding script/title is missing');
   const brand=await get('/alireza/brand.js');
   requireThat(brand.code===200&&brand.body.includes('DNS · AdGuard Home')&&brand.body.includes('OpenVPN'),'New sidebar menu code is missing');
-  const vpn=await get('/alireza/openvpn/');
-  requireThat(vpn.code===200&&vpn.body.includes('OpenVPN')&&vpn.body.includes('alirezaserver'),'Owner cannot open OpenVPN management');
+  await verifyInbounds(get,base);
   const aiPage=await get('/alireza/ai/'),aiSettings=await get('/alireza/api/ai/settings');
   requireThat(aiPage.code===200&&aiPage.body.includes('id="composer"')&&aiSettings.code===200&&typeof JSON.parse(aiSettings.body).hasKey==='boolean','AI module unavailable');
   const remoteDNS=await get('/alireza/alirezadns/'),remoteList=await get('/alireza/api/alirezadns');
@@ -2319,7 +2338,7 @@ async function verify(transport,port){
   requireThat(dns.code===200&&JSON.parse(dns.body).dns_port===expectedDNS,'Owner cannot reach AdGuard API on required DNS port');
   const dnsPage=await get('/alireza/dns/');
   requireThat(dnsPage.code===200&&dnsPage.body.includes('data-alireza-colors'),'Original AdGuard UI is not embedded');
-  console.log(transport.toUpperCase()+': alirezaserver branding + owner access + OpenVPN UI/API + AdGuard UI/API: PASS');
+  console.log(transport.toUpperCase()+': alirezaserver branding + owner access + inline OpenVPN/API + AdGuard UI/API: PASS');
 }
 try {
   const dnsInfo=await request('http',Number(value('NOVA_PORT')||8088),'/alireza/dns/control/status');
@@ -72930,6 +72949,30 @@ cat > "$APP/workspace-ui.js" <<'ALIREZA_F4AF8BC6FC4A148123820183'
 })();
 ALIREZA_F4AF8BC6FC4A148123820183
 
+cat > "$APP/install-diagnostics.sh" <<'ALIREZA_D416C6C936A58C3DF0F38412'
+#!/usr/bin/env bash
+# Read-only: no service restart, firewall change, passwords, tokens or journal contents.
+set -u
+printf 'alirezaserver installation diagnostics\n'
+if [[ -f /var/log/alirezaserver/last-failure.json ]]; then cat /var/log/alirezaserver/last-failure.json; fi
+systemctl show nova-agent.service AdGuardHome.service alireza-firewall.service alireza-update-recover.service -p Id -p ActiveState -p SubState -p Result -p ExecMainCode -p ExecMainStatus --no-pager || true
+printf '\nRecent private install logs (read locally; remove secrets before sharing):\n'
+find /var/log/alirezaserver -maxdepth 1 -type f -name 'install-*.log*' -printf '%f\n' 2>/dev/null | sort | tail -6
+exit 0
+ALIREZA_D416C6C936A58C3DF0F38412
+
+cat > "$APP/verify-inbounds.mjs" <<'ALIREZA_C3F74F1FE552B35C605E6827'
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Shared by the production installer verifier and regression tests.
+export async function verifyInbounds(get,base){
+ const old=await get('/alireza/openvpn/');
+ if(old.code!==302||old.headers?.location!==(base||'')+'/#inbounds')throw Error('OpenVPN legacy redirect does not reach native Inbounds');
+ const components=[['workspace/ui.js','AlirezaUI'],['manual/core.js','AlirezaManualCore'],['manual/editor.js','alirezaManualEditor'],['manual/native.js','alirezaInboundEditor'],['openvpn/inline.js','AlirezaOpenVPN'],['inbounds/ui.js','viewInbounds']];
+ for(const [route,marker] of components){const r=await get('/alireza/'+route);if(r.code!==200||!r.body.includes(marker))throw Error('Inbound component unavailable: '+route);}
+ const page=await get('/');if(page.code!==200||!page.body.includes('/alireza/openvpn/inline.js')||!page.body.includes('/alireza/manual/native.js'))throw Error('Native panel is missing unified inbound components');
+}
+ALIREZA_C3F74F1FE552B35C605E6827
+
 export ALIREZA_ROOT="$ROOT"
 node "$APP/compat-check.mjs" /opt/nova-node-agent
 node --input-type=module -e 'const m=await import("file:///opt/alirezaserver/backend.mjs");m.database();'
@@ -73115,6 +73158,7 @@ for attempt in {1..12}; do
   sleep 3
 done
 cat "$WORK/verify.log"
+cp "$WORK/verify.log" "$INSTALL_LOG.verify"; chmod 600 "$INSTALL_LOG.verify"
 [[ $VERIFIED == 1 ]] || die 'The integrated panel did not pass verification. Existing add-on data is retained; rerun this file to repair.'
 bash "$APP/check.sh"
 NOVA_VERSION=$(node -p 'require("/opt/nova-node-agent/package.json").version')
@@ -73136,7 +73180,7 @@ cat > /etc/logrotate.d/alirezaserver <<'ROTATE'
 ROTATE
 # OpenVPN status files are overwritten by OpenVPN; service journals use the host policy.
 systemctl enable --now alireza-update.timer
-rm -f "$ROOT/failed-stage"
+rm -f "$ROOT/failed-stage" /var/log/alirezaserver/last-failure.json
 HOOK_CHANGED=0
 log 'ALIREZASERVER READY — panel branding, OpenVPN management and AdGuard integration verified.'
 printf 'نصب پنل alirezaserver و دو بخش AdGuard و OpenVPN تکمیل و بررسی شد.\n'

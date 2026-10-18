@@ -1,3 +1,7 @@
+# 0.8.0-rc.4 — installer verification hotfix
+
+Fix the stale standalone OpenVPN HTTP-200 assertion after its move into native Inbounds. Verify the exact legacy redirect, actual unified assets and native HTML injection. Preserve failure stage/exit/line and private verifier/service-state evidence across cleanup; add read-only --diagnose. Synchronize standalone addon files with the authoritative embedded rc.3 payload and restore preferred carrier source. Existing UI, backend features and AdGuard remain unchanged. Full VPS installation and deleted-server login failure are not certified.
+
 # 0.8.0-rc.3 — recovered from user-supplied rc.2
 
 Unified manual protocol selection with native engine forms; inline OpenVPN management without iframe; grouped native Hosts page and atomic edits; native Alirezabot management page, retained secrets and matching PHP-FPM; direct AI navigation with robust storage/language/theme handling. Existing presets, backend services, native main UI and AdGuard remain preserved. Syntax and behavioral checks are recorded in docs/VALIDATION.md. This is a review candidate, not a certified Stable build.
