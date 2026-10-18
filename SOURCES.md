@@ -67,3 +67,9 @@ Current GitHub HEAD 90b0f3554a09829e9ae38c9601ada8623ebab247 was cloned for this
 ## rc.5 native writer adaptation
 
 The pinned manager src/xray/manager.mjs SHA256 deb37645d23c5a83b32582b5249a19b1d5aeb8fca5a964ff073e431540891720 is now included in the compatibility guard. Its exported writer defaults to mode 0600. The narrow in-memory decorator routes only the exact policy config path to an atomic 0640 writer for the existing non-root service group. Unrelated writes keep the original implementation. New integration code retains GPL-3.0-or-later.
+
+## rc.6 — current deliverable
+
+Continues the recovered authoritative rc.3 payload, pinned Nova and rc.4/rc.5 fixes above. Per-admin bot appearance and mounted keyboard-route changes are now explicit modifications; historical statements that bot CSS was unchanged apply only to those earlier releases. The full supplied PHP/admin app is readable in core/alirezabot. The two new appearance PHP modules and JS/CSS are maintained there. tools/package-bot.py reproducibly packages this tree; addon/reference-versions.json records rc.6 modified files and the new archive digest. Rebuilding the tar is distinct from rebuilding the upstream compiled React miniapp/keyboard assets; their separate preferred frontend development sources remain unavailable in the supplied reference. Resolve that Corresponding Source limitation before public redistribution. No licensing issue is silently claimed resolved. Existing copyright notices, vendor sources and licenses remain.
+
+The animated README banner is independently generated with tools/build-readme-art.py (Pillow development dependency only). No extra runtime package or external image service is required. New terminal management uses Python's standard library and existing native Node/PHP reset paths. The latest actual local checks are documented in docs/RC6-VALIDATION.md.
