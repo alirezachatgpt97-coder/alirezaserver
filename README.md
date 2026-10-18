@@ -1,6 +1,22 @@
-# alirezaserver 0.8.0-rc.4
+# alirezaserver 0.8.0-rc.5
 
 بستهٔ کد و نصب قابل بررسی برای ادغام امکانات NOVA X PANEL در alirezaserver. **این نسخه نامزد آزمایش است، نه تأیید نهایی Production یا ادعای «بدون باگ».** رابط اصلی نوا و AdGuard در این تغییرات بازطراحی نشده‌اند. وضعیت دقیق انتقال و موارد باقی‌مانده در [گزارش انتقال](docs/NOVA-X-REVIEW.md) آمده است.
+
+## رفع قطعی بازنویسی مجوز فایل Xray در rc.5
+
+لاگ واقعی نشان داد Xray با `permission denied` برای `/usr/local/etc/xray/config.json` می‌افتد و در نتیجه HTTPS روی 443 شنونده ندارد. نویسندهٔ اتمیک pinned Nova فایل runtime را عمداً 0600 می‌ساخت، در حالی که Xray با هویت غیر root اجرا می‌شد. تغییر دستی chmod بعد از ذخیرهٔ بعدی از بین می‌رفت.
+
+نصاب اکنون هویت فعلی systemd سرویس Xray را می‌خواند؛ محتویات config و گواهی را حفظ می‌کند، تنها مسیرهای مشخص runtime را برای همان گروه قابل خواندن می‌کند و مجوزهای قبلی را در `/var/lib/alirezaserver/xray-access-before.json` نگه می‌دارد. فایل‌ها عمومی نمی‌شوند و User سرویس به root تغییر نمی‌کند. hook با SHA فایل manager نوا قفل است؛ نویسندهٔ فقط همین config به صورت اتمیک مالکیت/مجوز را پیش از rename اعمال می‌کند. سایر JSONهای خصوصی همچنان 0600 هستند. مسیر یا مالکیت سفارشیِ ناشناخته به‌جای تغییر کورکورانه رد می‌شود.
+
+برای سروری که همین خطا را دارد، همهٔ فایل‌های همین نسخه را دریافت/استخراج کنید و از همان پوشه اجرا کنید:
+
+```bash
+sudo bash install.sh --repair
+sudo bash install.sh --check
+```
+
+برای نصب موجود snapshot و backup مستقل را قبل از repair نگه دارید. اگر فایل install.sh در پوشهٔ فعلی نیست، فرمان بالا اجرا نمی‌شود؛ از پوشهٔ استخراج‌شدهٔ ZIP استفاده کنید. تشخیص فقط‌خواندنی پس از نصب فایل‌ها: `sudo bash /opt/alirezaserver/install-diagnostics.sh`. نصب‌کننده همچنان به اینترنت نیاز دارد. این نسخه خودکار روی GitHub منتشر نشده است.
+
 
 ## اصلاح نصب ناقص در rc.4
 
@@ -134,7 +150,7 @@ alirezadns برای **سرور مقصد جداگانه** است. اطلاعات 
 python3 tools/build-hashem-installer.py
 python3 tools/build.py
 bash install.sh --self-test
-python3 tools/package.py ../alirezaserver-0.8.0-rc.4-review.zip
+python3 tools/package.py ../alirezaserver-0.8.0-rc.5-review.zip
 ```
 
 سورس carrier و وابستگی WebSocket در `core/hashem/` است. ساخت carrier با `tools/build-carrier.py` و Go درج‌شده در `addon/hashem-core-build.json` و سپس `tools/package-carrier-source.py` انجام می‌شود. منابع دانلودها، نسخه‌ها و hashها در [SOURCES](SOURCES.md) و manifestهای addon هستند. این انتشار برای بررسی است؛ تا تکمیل موارد گزارش‌شده و آزمون VPS، عنوان Stable ندارد.

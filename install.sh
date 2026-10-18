@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# alirezaserver 0.8.0-rc.4 — single-file ONLINE installer; rerun to repair/resume.
+# alirezaserver 0.8.0-rc.5 — single-file ONLINE installer; rerun to repair/resume.
 # Supported target: Ubuntu 24.04 or Debian 12/13, systemd, amd64/arm64.
 # Add-on source and notices are embedded below; original upstream programs are
 # downloaded from pinned official URLs. This is not an offline bundle.
@@ -241,7 +241,7 @@ MANAGED=1
 # ALIREZA_EMBEDDED_FILES
 
 cat > "$APP/NOTICE.txt" <<'ALIREZA_120C9E5B95207BAC6A6B1C54'
-alirezaserver add-on 0.8.0-rc.4
+alirezaserver add-on 0.8.0-rc.5
 
 The new integration modules in this directory are licensed under GPL-3.0-or-later.
 OpenVPN configuration/profile conventions were adapted from Sir-MmD/vpn-ui,
@@ -343,7 +343,7 @@ See the release docs/VALIDATION.md for the current tests and limitations.
 
 0.7.1 adds a graphical, owner-only manual Xray form for VLESS, VMess, Trojan, SS2022 and forwarding. It preserves complete transport/security metadata with raw configuration and uses native account injection. SOCKS/HTTP and non-Xray protocols retain native account-aware editors.
 
-0.8.0-rc.4 includes the separately licensed AGPL Mirza/alirezabot source payload and Hashem managed adapter/carrier. See COPYING.alirezabot, COPYING.Hashem, reference-versions.json and the distributed preferred carrier source in core/hashem. Gorilla WebSocket v1.5.3 retains its BSD license. Main Nova/AdGuard UI style and script blocks are retained. This is a review candidate; advanced host overrides are format-aware; additional engines such as L2TP are not implemented.
+0.8.0-rc.5 includes the separately licensed AGPL Mirza/alirezabot source payload and Hashem managed adapter/carrier. See COPYING.alirezabot, COPYING.Hashem, reference-versions.json and the distributed preferred carrier source in core/hashem. Gorilla WebSocket v1.5.3 retains its BSD license. Main Nova/AdGuard UI style and script blocks are retained. This is a review candidate; advanced host overrides are format-aware; additional engines such as L2TP are not implemented.
 ALIREZA_120C9E5B95207BAC6A6B1C54
 
 cat > "$APP/VERIFICATION.txt" <<'ALIREZA_E65C0E31435C064147B5C663'
@@ -72760,7 +72760,8 @@ cat > "$APP/host-contracts.json" <<'ALIREZA_02720EF4FBC55851D3F37B3B'
   "src/xray/inbounds.mjs": "4ed42227f1befedbffb3aadb98af42abf56186320aa75172c60bb84bf23e5e17",
   "src/subscription.mjs": "4a866640e7212efac5c4560b747dd90fa9e99292aa6c4d8e6556efcb4c899808",
   "src/sub-formats.mjs": "639a4abe3cacf34df44a28a847780e0a90cbf430d7197249e2052c4c8e67371a",
-  "src/xray-json.mjs": "4f14817f0d1bcd41c8cc9c674f92b85e005072cf5603fd0f430faf6579bb5d2a"
+  "src/xray-json.mjs": "4f14817f0d1bcd41c8cc9c674f92b85e005072cf5603fd0f430faf6579bb5d2a",
+  "src/xray/manager.mjs": "deb37645d23c5a83b32582b5249a19b1d5aeb8fca5a964ff073e431540891720"
 }
 ALIREZA_02720EF4FBC55851D3F37B3B
 
@@ -72800,13 +72801,15 @@ cat > "$APP/host-hooks.mjs" <<'ALIREZA_90CF5B5C35C36DBC1DB912D3'
 // Narrow, hash-guarded ESM decorators. Native files on disk remain unchanged.
 import{registerHooks}from'node:module';import{readFileSync}from'node:fs';import{createHash}from'node:crypto';import{resolve}from'node:path';import{pathToFileURL,fileURLToPath}from'node:url';
 const dir=resolve(process.env.ALIREZA_NOVA_DIR||'/opt/nova-node-agent');const expected=JSON.parse(readFileSync(new URL('./host-contracts.json',import.meta.url)));const helper=new URL('./host-core.mjs',import.meta.url).href;
+const access=new URL('./xray-access.mjs',import.meta.url).href;
 const decorators={
+ 'src/xray/manager.mjs':`const __azWriteRuntime=writeJsonAtomic;writeJsonAtomic=(p,v,o)=>__azAccess.writeRuntimeJSON(__azWriteRuntime,p,v,o);`,
  'src/xray/inbounds.mjs':`const __azNormalizeProfile=normalizeProfile,__azApplyProfile=applyProfile;normalizeProfile=v=>__az.normalizeHost(__azNormalizeProfile,v);applyProfile=(i,p)=>__azApplyProfile(i,p?.keepSniBlank?{...p,sni:''}:p);`,
  'src/subscription.mjs':`const __azLine=inboundLine;inboundLine=(u,i,o)=>__az.inboundURI(__azLine,u,i,o);const __azBuildSub=buildSub;buildSub=(u,o)=>__az.rawSubscription(__azBuildSub,u,o,normalizeInbound);`,
  'src/sub-formats.mjs':`const __azEnumerate=enumerateProxies,__azClash=toClash,__azSingbox=toSingbox;enumerateProxies=(u,o)=>__az.enumerate(__azEnumerate,u,o,normalizeInbound);toClash=(p,o)=>__az.clash(__azClash,p,o);toSingbox=(p,o)=>__az.singbox(__azSingbox,p,o);`,
  'src/xray-json.mjs':`const __azClient=xrayClientConfig;xrayClientConfig=(p,o)=>__az.xrayConfig(__azClient,p,o);`
 };
-registerHooks({load(url,context,next){const key=Object.keys(decorators).find(k=>url===pathToFileURL(resolve(dir,k)).href);const result=next(url,context);if(!key)return result;const source=typeof result.source==='string'?result.source:Buffer.from(result.source).toString();if(createHash('sha256').update(source).digest('hex')!==expected[key])throw Error('HOST_NATIVE_CONTRACT_CHANGED: '+key);return{...result,source:source+'\nimport * as __az from '+JSON.stringify(helper)+';\n'+decorators[key]+'\n'};}});
+registerHooks({load(url,context,next){const key=Object.keys(decorators).find(k=>url===pathToFileURL(resolve(dir,k)).href);const result=next(url,context);if(!key)return result;const source=typeof result.source==='string'?result.source:Buffer.from(result.source).toString();if(createHash('sha256').update(source).digest('hex')!==expected[key])throw Error('HOST_NATIVE_CONTRACT_CHANGED: '+key);return{...result,source:source+'\nimport * as __az from '+JSON.stringify(helper)+';\n'+(key==='src/xray/manager.mjs'?'import * as __azAccess from '+JSON.stringify(access)+';\n':'')+decorators[key]+'\n'};}});
 ALIREZA_90CF5B5C35C36DBC1DB912D3
 
 cat > "$APP/hosts.mjs" <<'ALIREZA_B1B8921B3A8C4828EF87A6B8'
@@ -72955,7 +72958,7 @@ cat > "$APP/install-diagnostics.sh" <<'ALIREZA_D416C6C936A58C3DF0F38412'
 set -u
 printf 'alirezaserver installation diagnostics\n'
 if [[ -f /var/log/alirezaserver/last-failure.json ]]; then cat /var/log/alirezaserver/last-failure.json; fi
-systemctl show nova-agent.service AdGuardHome.service alireza-firewall.service alireza-update-recover.service -p Id -p ActiveState -p SubState -p Result -p ExecMainCode -p ExecMainStatus --no-pager || true
+systemctl show xray.service nova-agent.service AdGuardHome.service alireza-firewall.service alireza-update-recover.service -p Id -p ActiveState -p SubState -p Result -p ExecMainCode -p ExecMainStatus --no-pager || true
 printf '\nRecent private install logs (read locally; remove secrets before sharing):\n'
 find /var/log/alirezaserver -maxdepth 1 -type f -name 'install-*.log*' -printf '%f\n' 2>/dev/null | sort | tail -6
 exit 0
@@ -72973,7 +72976,68 @@ export async function verifyInbounds(get,base){
 }
 ALIREZA_C3F74F1FE552B35C605E6827
 
+cat > "$APP/xray-access.mjs" <<'ALIREZA_90A5A57238C8DD3C31E4AD9E'
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Keep the native transaction intact; replace only the configured Xray JSON writer.
+import{readFileSync,openSync,writeFileSync,fchownSync,fchmodSync,closeSync,renameSync,rmSync,lstatSync}from'node:fs';import{dirname,resolve,join}from'node:path';import{randomBytes}from'node:crypto';
+export function writeRuntimeJSON(original,file,value,options){
+ let policy;try{policy=JSON.parse(readFileSync(join(process.env.ALIREZA_ROOT||'/var/lib/alirezaserver','xray-access.json'),'utf8'));}catch(e){if(e.code==='ENOENT')return original(file,value,options);throw e;}
+ if(resolve(file)!==policy.config)return original(file,value,options);
+ if(!Number.isSafeInteger(policy.gid)||policy.gid<0||policy.uid!==0)throw Error('XRAY_ACCESS_POLICY_INVALID');
+ for(const p of[dirname(file),file]){try{const st=lstatSync(p);if(st.isSymbolicLink())throw Error('XRAY_ACCESS_SYMLINK_REFUSED');if(st.uid!==0||(st.isDirectory()&&(st.mode&0o022)))throw Error('XRAY_ACCESS_UNSAFE_OWNER_OR_DIRECTORY');}catch(e){if(e.code!=='ENOENT')throw e;}}
+ const temp=file+'.tmp-alireza-'+randomBytes(12).toString('hex');let fd;
+ try{fd=openSync(temp,'wx',0o600);writeFileSync(fd,JSON.stringify(value,null,2)+'\n');fchownSync(fd,0,policy.gid);fchmodSync(fd,policy.serviceUid===0?0o600:0o640);closeSync(fd);fd=undefined;renameSync(temp,file);}catch(e){if(fd!==undefined)closeSync(fd);rmSync(temp,{force:true});throw e;}
+}
+ALIREZA_90A5A57238C8DD3C31E4AD9E
+
+cat > "$APP/xray-access.py" <<'ALIREZA_4983BFEFEA0103590446C576'
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Repair only fixed Xray runtime permissions; never use root for the daemon."""
+import os,pathlib,pwd,grp,subprocess,json,stat
+ROOT=pathlib.Path('/var/lib/alirezaserver')
+def identity():
+ out=subprocess.check_output(['systemctl','show','xray.service','-p','User','-p','Group'],text=True)
+ values=dict(line.split('=',1) for line in out.splitlines() if '=' in line)
+ user=values.get('User') or 'root';account=pwd.getpwuid(int(user)) if user.isdigit() else pwd.getpwnam(user)
+ group=values.get('Group');gid=(int(group) if group.isdigit() else grp.getgrnam(group).gr_gid) if group else account.pw_gid
+ return account.pw_uid,gid
+
+def repair(root=ROOT,config=pathlib.Path('/usr/local/etc/xray/config.json'),certdir=pathlib.Path('/etc/nova')):
+ uid,gid=identity();config=pathlib.Path(config);root=pathlib.Path(root)
+ # Refuse unsupported custom service config paths instead of changing unrelated files.
+ start=subprocess.check_output(['systemctl','show','xray.service','-p','ExecStart','--value'],text=True)
+ if str(config) not in start:raise RuntimeError('XRAY_CUSTOM_CONFIG_REQUIRES_REVIEW')
+ paths=[config.parent,config,certdir,certdir/'origin.pem',certdir/'origin.key']
+ before=[]
+ for p in paths:
+  if not p.exists():
+   if p==config or p==config.parent:raise RuntimeError('XRAY_CONFIG_MISSING')
+   continue
+  if p.is_symlink():raise RuntimeError('XRAY_ACCESS_SYMLINK_REFUSED')
+  s=p.stat()
+  if s.st_uid!=0:raise RuntimeError('XRAY_UNOWNED_RUNTIME_PATH')
+  if p.is_dir() and stat.S_IMODE(s.st_mode)&0o022:raise RuntimeError('XRAY_RUNTIME_DIRECTORY_WRITABLE')
+  before.append({'path':str(p),'uid':s.st_uid,'gid':s.st_gid,'mode':stat.S_IMODE(s.st_mode)})
+ root.mkdir(parents=True,exist_ok=True,mode=0o700)
+ backup=root/'xray-access-before.json'
+ if not backup.exists():backup.write_text(json.dumps(before,indent=2)+'\n');backup.chmod(0o600)
+ # Group readability is limited to the runtime identity already selected by systemd.
+ for p in paths:
+  if not p.exists():continue
+  if uid==0:continue
+  s=p.stat();os.chown(p,0,gid)
+  if p.is_dir():os.chmod(p,stat.S_IMODE(s.st_mode)|0o050)
+  else:os.chmod(p,0o640)
+ policy={'uid':0,'gid':gid if uid!=0 else 0,'config':str(config.resolve()),'serviceUid':uid}
+ tmp=root/'xray-access.json.tmp';tmp.write_text(json.dumps(policy)+'\n');tmp.chmod(0o600);os.replace(tmp,root/'xray-access.json')
+ print('Xray runtime access configured for its existing service identity; config contents unchanged.')
+if __name__=='__main__':repair()
+ALIREZA_4983BFEFEA0103590446C576
+
 export ALIREZA_ROOT="$ROOT"
+STAGE=xray-runtime-access
+python3 "$APP/xray-access.py"
 node "$APP/compat-check.mjs" /opt/nova-node-agent
 node --input-type=module -e 'const m=await import("file:///opt/alirezaserver/backend.mjs");m.database();'
 python3 - <<'PY'
@@ -73141,6 +73205,13 @@ if not p.exists():
     v=json.loads(pathlib.Path('/opt/nova-node-agent/package.json').read_text())['version']
     if v=='1.85.4':p.write_text(json.dumps({'version':v,'commit':'17e9373ec17ceede95369fcd26d6fabfda83b504','sha256':'544adcbfd54d09df4ba637a5abeb0803258076308a2abe025e41ea550fa039dc'}))
 PY
+STAGE=xray-runtime-health
+python3 "$APP/xray-access.py"
+if ! systemctl is-active --quiet xray.service; then
+  systemctl reset-failed xray.service || true
+  systemctl restart xray.service
+fi
+systemctl is-active --quiet xray.service || die 'Xray is still unhealthy; inspect journalctl -u xray.service.'
 STAGE=dns-configuration-repair
 for attempt in {1..20}; do
   if curl -fsS --max-time 2 http://127.0.0.1:18085/control/status >/dev/null; then break; fi

@@ -1,3 +1,7 @@
+# 0.8.0-rc.5 — Xray runtime permission repair
+
+Fix the confirmed permission-denied failure: native atomic runtime writes created a root-only config while Xray ran as a non-root service. Preserve native transactions and configuration contents; scope the atomic writer adapter to the exact configured runtime file, apply the existing systemd service group before rename and keep other private JSON at 0600. Record prior file permissions; refuse symlinks/custom unsupported layouts; repair existing files and restart Xray only if inactive. Keep rc.4 verifier fix and diagnostics, now including Xray service state. No blanket chmod, root daemon, protocol/UI/AdGuard changes.
+
 # 0.8.0-rc.4 — installer verification hotfix
 
 Fix the stale standalone OpenVPN HTTP-200 assertion after its move into native Inbounds. Verify the exact legacy redirect, actual unified assets and native HTML injection. Preserve failure stage/exit/line and private verifier/service-state evidence across cleanup; add read-only --diagnose. Synchronize standalone addon files with the authoritative embedded rc.3 payload and restore preferred carrier source. Existing UI, backend features and AdGuard remain unchanged. Full VPS installation and deleted-server login failure are not certified.

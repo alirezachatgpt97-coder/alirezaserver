@@ -63,3 +63,7 @@ The upstream compiled customer miniapp lacks its separate preferred frontend sou
 ## rc.4 installation hotfix provenance
 
 Current GitHub HEAD 90b0f3554a09829e9ae38c9601ada8623ebab247 was cloned for this work. Its 77 embedded rc.3 addon files are authoritative; divergent standalone files were synchronized to those exact bytes. Source hashes and allowed changes are in docs/RC4-BASELINE.json. The carrier preferred source was restored from its existing source archive. No preview or alirezapanel source was merged. Existing independently licensed bot payload is byte-unchanged by this hotfix.
+
+## rc.5 native writer adaptation
+
+The pinned manager src/xray/manager.mjs SHA256 deb37645d23c5a83b32582b5249a19b1d5aeb8fca5a964ff073e431540891720 is now included in the compatibility guard. Its exported writer defaults to mode 0600. The narrow in-memory decorator routes only the exact policy config path to an atomic 0640 writer for the existing non-root service group. Unrelated writes keep the original implementation. New integration code retains GPL-3.0-or-later.
