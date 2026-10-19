@@ -95,6 +95,7 @@
     "preload.mjs",
     "reference-versions.json",
     "rollback.sh",
-    "verify-install.mjs"
+    "verify-install.mjs",
+    "host-core.mjs"
   ]
 }

@@ -1,3 +1,12 @@
+# 0.8.0-rc.9 — 2026-10-19
+
+- Repair default origin-IP/domain-certificate SNI mismatch in native raw and structured subscriptions.
+- Align positively identified CDN WS endpoints/Host/SNI on supported HTTPS ports; preserve explicit overrides, custom certificates and remote nodes.
+- Capture first-prompt TLS identity before downloads, wait for API readiness, preflight actual local HTTP01 handler.
+- Add asynchronous bot installation HTTP response, private real-stage progress, service validation and encrypted one-time login result.
+- No new always-running process; retain original panel, protocol engines and AdGuard assets.
+- Verified local Xray transfer and certificate rejection; see RC9-VALIDATION.md for untested external paths.
+
 # 0.8.0-rc.8 — first-prompt TLS and managed local bot connection
 
 Use the initial Nova domain answer for post-integration TLS; remove the second installation TLS wizard. Defer issuance only on the owner installation, preserving fleet enrollment. Reuse saved Cloudflare token for certificate-only DNS-01 without changing A/AAAA/proxy; preserve origin directHost through native domain transactions. Check the exact public instance, trusted CA and routing, with private failure evidence. Preconfigure the bot's local panel with actual schema defaults, preserve prices/products/custom name, sync canonical URLs, avoid public self-fetch for configs, support legacy default inbounds and dynamically resolve subscriptions. Support long-token invoice subscription routing without enabling guessable short invoice identifiers. Use the loopback agent port independently of extra HTTPS panel ports. Add read-only English support diagnostics. Keep AdGuard/UI/protocol engines unchanged. Live CA, WAN client pings, ISP and total 1GiB tests remain outstanding.

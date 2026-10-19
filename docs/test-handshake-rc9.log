@@ -1,0 +1,12 @@
+✔ Actual Xray vless/tcp TLS data transfer; wrong certificate identity fails (2420.578169ms)
+✔ Actual Xray vless/ws TLS data transfer; wrong certificate identity fails (2426.787215ms)
+✔ Actual Xray vmess/ws TLS data transfer; wrong certificate identity fails (2566.994167ms)
+✔ Actual Xray trojan/tcp TLS data transfer; wrong certificate identity fails (1438.89805ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9097.197008

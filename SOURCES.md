@@ -81,3 +81,10 @@ Input alirezaserver-0.8.0-rc.6(1).zip SHA256 79391cf0d9087b2ec09e3d2b9aed955d52f
 ## rc.8 — current work baseline
 
 Based strictly on the previously delivered rc.7 source, preserving its pinned Nova contracts and readable bot payload. Changes are limited to first-prompt certificate orchestration, local origin/subscription addressing, managed bot defaults/driver/mounted subscription routes, read-only support diagnostics, tests and documentation. No new public repository revision or server was used as an unreviewed replacement. No Xray binary/CA/Cloudflare credential was available for live client/issuance tests in this environment.
+
+
+## rc.9 reference review (2026-10-19)
+
+MHSanaei/3x-ui (GPL-3.0), `frontend/src/lib/xray/inbound-link.ts`, blob `05681202fba5a2fd23ccad6c8b11d84a4ac36fdf`, was reviewed as a reference for independent dial-address / Host / TLS server-name handling. No 3x-ui implementation or UI was copied into this release. The repair is an original narrow adapter over the existing pinned Nova export paths.
+
+Primary compatibility references: https://developers.cloudflare.com/fundamentals/reference/network-ports/ and https://developers.cloudflare.com/network/websockets/ . Real Cloudflare transit is not part of the local tests.

@@ -1,0 +1,111 @@
+{
+  "input": "alirezaserver-web-upload(2).zip",
+  "inputSHA256": "9bdea9ab53485106d60f7b9a3dc8abadefeb9930935d11ba1e3c16008d698707",
+  "modifiedExisting": [
+    {
+      "file": "CHANGELOG.md",
+      "before": "7b4cb3dfb9fc91920783b5a3ebfa8571f4a7401dbe1b7283f9b97969aafbc8ac",
+      "after": "e3a62bce50c7a3803849c914131877c37f6113b4235ff5a03c2f116253ca0fba"
+    },
+    {
+      "file": "README.md",
+      "before": "c87e04f2c97c6105955f97750479149a8f593b828fceaa3584a925c7bcaba496",
+      "after": "6926a7e466f072e0cd7e1a6c67a34c80a6600f9cd1d9c5e8d20b86e24a984c4e"
+    },
+    {
+      "file": "SOURCES.md",
+      "before": "5933cc448c4d5d677ac67035f8fe47568446fe62edc99d07e62d9fa8b8a1ba53",
+      "after": "df2d3c88f46ffc4b4f1e9be7cc1cc26b6228e526d759412cfe5cea2899418322"
+    },
+    {
+      "file": "addon/bot-manager.py",
+      "before": "0d7b0d671dad05d6ad695eb9415509a9ab842d2975fdd0e88e602b20479ef9aa",
+      "after": "d19ff96bda58d0c836e71925a7464c5967286177b828cda52fb9157fb3b64e15"
+    },
+    {
+      "file": "addon/bot-ui.js",
+      "before": "a4ae728e1476081b94f42674347a4a28f2bc973e09c39e97b372c4930db642c3",
+      "after": "f475ca47621c03c65fa3e27c7781d21075c87ee65e3e3c0db3498b4af0f76c21"
+    },
+    {
+      "file": "addon/bot.mjs",
+      "before": "b8180d49e333b86f9859c555bc084669af1fea496e2ad35c9031b3a2c12e7ad1",
+      "after": "e24aba47d0e9c323649182acdcf35d22ef7c42605bcaa3a62fcdfb3ac9a6d64a"
+    },
+    {
+      "file": "addon/host-core.mjs",
+      "before": "9f1ffb7b5e56a1123c86696ef33b46131542c32591a5e66b2089902b1e06b08c",
+      "after": "9ecd600a21924dcbec1a2f50bc34bd92d944d151fc34283409e5ceb7426a0767"
+    },
+    {
+      "file": "addon/preload.mjs",
+      "before": "7ad979e28ec9eb68bc68abcd5f3ccdca565b0e7e86086ae8a10de09cbe4d5c1a",
+      "after": "10ee944db1ba08995e153933ee772770ae11f02e53f8943f972fe328671a918a"
+    },
+    {
+      "file": "addon/tls-control.mjs",
+      "before": "eefd75a076e2d018b58d626e26529f3fda635d3237af1b3b976237e19c44cf3b",
+      "after": "c83eb559be1c8152fa325ff408cb95de33e2e31484714b44dbfe3dde1e448559"
+    },
+    {
+      "file": "docs/RC4-BASELINE.json",
+      "before": "8f02920e053c3a92ffa448d62ce73a98a78ee461245b6217b20b3800d6b88a7d",
+      "after": "2242f0bd4640b8c4131d3049fd856e9d4ab225fbdb236f3bec7acd1ccf8a29ad"
+    },
+    {
+      "file": "docs/TLS.md",
+      "before": "bc08eff33b3da715a0195f74ca5f41de442a7c750e48bb228555b7df47f218a3",
+      "after": "7c0a92de8f9050a1542b6dc84c1c2540b1bd57174af0d3246c0ded65cefd3783"
+    },
+    {
+      "file": "install.sh",
+      "before": "3f9934dd9391bf937a2eff61d27c5cd9168779bfc6d11191dc142c58cc4474e0",
+      "after": "5a1c22280cedf499548602f65556e1141fa2ac865e85c6e83750218a8b5e7e88"
+    },
+    {
+      "file": "setup.sh",
+      "before": "b260fc05337d363bc2bfa5f9077e729bc77e84394643b64f5c121e4213a3dad0",
+      "after": "2645ed8002f4658c22a18a761daae7890c0178021b2d3dd45777849611c69c0c"
+    },
+    {
+      "file": "tests/native.mjs",
+      "before": "a691c00f08e0456b2dff75d4b4a5d41c1ad6bb367f1a21b0f98407d1bfe89811",
+      "after": "c80ac7055468130ee0b0151dda88d9567e78534e860b2e34885d2b03362e43e5"
+    },
+    {
+      "file": "tests/resources.mjs",
+      "before": "5edebc8c647dca47f0a91fd4dbaba9ef0017d8774e1650ced81a403d6dfb5179",
+      "after": "2c4b6a30a78403dd44eaaa1d2e4d547a894cc8be6076a25b979754a70f0a9bdf"
+    },
+    {
+      "file": "tests/xray-install.py",
+      "before": "f7f86124605b02047eb90a46743b3508e45f571f5a261b18f92f76557366832d",
+      "after": "fc85316080b831eded0faf474eabdfe703799e26581da4fe21694168f3f566b6"
+    },
+    {
+      "file": "tools/nova-xray-patch.py",
+      "before": "6dbb76728a0c7644f24fc6551d46bf985420e38695a45405cd941b39305c7a3c",
+      "after": "9e838605e9d61cb24f87bc2563218b1b88a6f06c0d6bd2ff230a866ea945cd29"
+    }
+  ],
+  "newFiles": [
+    "addon/endpoint-identity.mjs",
+    "addon/tls-readiness.mjs",
+    "addon/bot-job.mjs",
+    "tests/bot-progress-ui.mjs",
+    "tests/tls-startup.mjs",
+    "tests/endpoint-identity.mjs",
+    "tests/xray-handshake.mjs",
+    "tests/bot-job.mjs",
+    "docs/RC9-VALIDATION.md",
+    "docs/test-selftest-rc9.log",
+    "docs/test-node-rc9.log",
+    "docs/test-compat-rc9.log",
+    "docs/test-python-rc9.log",
+    "docs/resources-rc9.json",
+    "docs/test-handshake-rc9.log",
+    "docs/RC9-BASELINE.json"
+  ],
+  "unchangedFiles": 1330,
+  "allOriginalFilesRetained": true
+}
