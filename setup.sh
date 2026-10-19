@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# alirezaserver bootstrap — downloads the content-verified 0.8.0-rc.7 installer.
+# alirezaserver bootstrap — downloads the content-verified 0.8.0-rc.8 installer.
 # Repository: https://github.com/alirezachatgpt97-coder/alirezaserver
 # Videos: https://www.youtube.com/@Alirezacoder12
 # This launcher does not replace or modify the actual installer.
 set -Eeuo pipefail
 umask 077
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-VERSION=0.8.0-rc.7
+VERSION=0.8.0-rc.8
 REF=main
-SHA256=144855736ad4638fe4f8a0a3f5dc1e34e8ce58b79c988e749f220d2c38a591be
+SHA256=3f9934dd9391bf937a2eff61d27c5cd9168779bfc6d11191dc142c58cc4474e0
 URL="https://raw.githubusercontent.com/alirezachatgpt97-coder/alirezaserver/$REF/install.sh"
 CACHE=/var/cache/alirezaserver
 PARTIAL=''

@@ -1,3 +1,29 @@
+# ارتقای rc.7
+
+از snapshot و پشتیبان rc.6 شروع کنید. تمام محتوای بسته را در ریشهٔ همین مخزن جایگزین و از پوشهٔ جدید `sudo bash install.sh --repair` اجرا کنید. مرحلهٔ Trusted TLS گواهی موجود معتبر را بررسی یا برای IP/دامنه درخواست ثبت می‌کند. در خطای CA، DNS، CAA یا Cloudflare، داده و HTTPS قبلی باقی می‌ماند؛ خطا را طبق [TLS](TLS.md) رفع و با `alireza tls` روش درست را انتخاب کنید. سپس همان نصاب را دوباره اجرا کنید. `alireza` اکنون انگلیسی است؛ `alireza network` تشخیص خواندنی اتصال دارد.
+
+این نسخه سرویس تمدید شش‌ساعته برای IP کوتاه‌مدت دارد؛ در rollback timer متوقف می‌شود. برای جلوگیری از انقضا، TLS قبلی/renewal مناسب را آگاهانه بازیابی کنید. دستور rollback ادغام، restore کامل VPS نیست. بررسی عمومی HTTPS از خود سرور، آزمون دسترسی از ISP کاربر نیست.
+
+## تاریخچهٔ راهنما
+
+# ارتقای rc.6
+
+تمام فایل‌های این ZIP را جایگزین سورس همین مخزن کنید؛ setup.sh و install.sh باید جفت هم باشند. پیش از اجرا snapshot VPS، backup خود نوا و `sudo python3 /opt/alirezaserver/backup.py` را بگیرید. در پوشهٔ جدید اجرا کنید:
+
+```bash
+sudo bash install.sh --repair
+sudo bash install.sh --check
+sudo alireza
+```
+
+این ارتقا فایل‌های صریح UI ربات مدیریت‌شده را با backup در `/var/lib/alirezabot/ui-backup-*.tar.gz` به‌روز می‌کند؛ دیتابیس، پیکربندی ربات، offsets و inbox پاک نمی‌شوند. تنظیم FPM مدیریت‌شدهٔ قبلی تعمیر و سلامت سوکت کنترل می‌شود. reset رمز اختیاری و مستقل است. از storage موجود هنگام نصب دوباره محافظت می‌شود.
+
+دسترسی config، origin.pem/key و لاگ‌های Nova برای User/Group واقعی Xray آماده می‌شود و helper پیش از هر شروع سرویس دوباره اجرا می‌شود. hotfix محدود کنسول قبلی قابل مهاجرت است و قبل از تغییر backup می‌شود؛ drop-in ناشناخته رد می‌شود. restart Xray ممکن است اتصال فعال را قطع کند؛ زمان مناسب انتخاب کنید.
+
+بازگشت کامل باید با snapshot متناظر کد/دادهٔ نوا و backup افزونه انجام شود. آرشیو UI فقط همان فایل‌های UI را برمی‌گرداند و جای دیتابیس یا snapshot نیست. از `--rollback` انتظار downgrade کامل نداشته باشید. آزمون نصب/ارتقای این rc روی VPS واقعی در محیط توسعه اجرا نشده است.
+
+## راهنماهای نسخه‌های قبل
+
 # ارتقای ۰٫۷٫۱
 
 پیش از اجرا snapshot/backup نوا و backup افزونه را بگیرید. تمام محتویات بسته را در ریشهٔ مخزن alirezaserver قرار دهید؛ setup.sh و install.sh باید همزمان به‌روز شوند چون launcher هش installer را بررسی می‌کند. اجرای محلی ZIP: `sudo bash install.sh --repair` سپس `sudo bash install.sh --check`.
@@ -95,3 +121,11 @@ sudo bash install.sh --update
 ## مقصد DNS
 
 backup محلی اصلی، دیتابیس مقصد HyperDNS را از راه دور کپی نمی‌کند. روی مقصد از `/opt/hyperdns` و `/opt/alirezadns-agent` snapshot سازگار بگیرید. updater مقصد، دو backup اخیر و recovery journal خود را نگه می‌دارد. resume نصب موجود تنظیمات را پاک نمی‌کند؛ secret SSH برای اجرای خودکار پس از restart ذخیره نشده و باید دوباره توسط کاربر وارد شود.
+
+## rc.4 installation-verifier repair
+
+Use every file from the same ZIP in the repository root. On an existing VPS, take an independent snapshot and run `sudo bash install.sh --backup`, then `sudo bash install.sh --repair` and `sudo bash install.sh --check`. --rollback disables integration; it is not a full database downgrade. Retain the old source ZIP and matching data snapshot. For any failure, run `sudo bash install.sh --diagnose`; detailed private logs remain under /var/log/alirezaserver. Redact passwords/tokens and secret panel URLs before sharing full logs. A deleted VPS has no recoverable local data in this package. Live upgrade is not certified in this environment.
+
+## rc.5: existing permission-denied installation
+
+Keep the VPS. Upload/extract this complete ZIP and run install.sh --repair from its actual directory, then install.sh --check. The existing Nova base is reused; permission policy is applied before the new agent starts and reapplied before testing Xray health. Only a stopped/failed Xray is restarted by this repair stage. Existing config contents, certificates, accounts and data are retained. Metadata xray-access-before.json stores prior uid/gid/mode; it contains no config secrets. A custom ExecStart path, symlink or unexpected owner requires review instead of unsafe chmod. An independent full snapshot/backup is still recommended before repair; --rollback is not a complete data downgrade.

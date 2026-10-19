@@ -1,82 +1,47 @@
-# آزمون ۰٫۷٫۱
+# Current: rc.7
 
-۸۲ آزمون در مجموعهٔ فعلی: ۶ manual-core و ۴ manual-ui جدید، به‌علاوه ۹ native HTTP/auth (۲ مورد جدید)، ۱۰ regression، ۱۱ Xray installer، ۴ SSH، ۲۳ backend/AI/DNS، ۶ UI قدیمی و ۹ UI انتخاب‌گر. آزمون‌های model/UI TLS و Reality، metadata/streamSettings، رد تنظیمات ناسازگار و مجوز ساخت کلید اضافه شده‌اند. Self-test شامل syntax ۴۴ ماژول embedded است.
+See [current report](RC7-VALIDATION.md) and [TLS setup](TLS.md). Earlier reports below are historical.
 
-UI با jsdom/facade و HTTP/auth با نسخهٔ واقعی pinned Nova روی loopback بررسی می‌شود. کل Xray configهای ساخته‌شده روی daemon واقعی با کلاینت VPN اجرا نشده‌اند. هیچ ادعای بدون‌باگ، ظرفیت تضمینی ۱GiB یا آزمون تصویری کامل وجود ندارد. وضعیت موتورهای اضافی و نبود ویرایش گرافیکی همهٔ rawهای موجود در INBOUNDS.md صریح است.
+# Current: rc.6
 
-## گزارش‌های پیشین
+See [current report](RC6-VALIDATION.md). Older results below are historical.
 
-# آزمون نسخهٔ ۰٫۷٫۰
+# Validation — rc.5 Xray permission fix
 
-۷۰ آزمون PASS: ۱۰ regression، ۱۱ نصب Xray، ۴ SSH، ۲۳ backend/AI/DNS، ۷ native HTTP/auth، ۶ UI قبلی، ۹ UI اینباند جدید. Self-test شامل syntax ۴۲ ماژول embedded است؛ compat-check اصلی نوا نیز PASS.
+The real VPS log identified `open /usr/local/etc/xray/config.json: permission denied` with service exit 23, followed by a refused HTTPS front port. Inspection of pinned Nova's exported `writeJsonAtomic` confirmed it explicitly resets JSON files to mode 0600. The default Xray service uses a non-root identity. This is independent of the rc.4 stale-verifier fix, which is retained.
 
-تست اختصاصی جدید UI با jsdom و facade قراردادهای native انجام شده؛ مرورگر واقعی نیست. native HTML/auth با کد واقعی نوا بررسی شده و تمام بلوک‌های اصلی style/script حفظ شده‌اند. درخواست embedded با query، احراز هویت owner و منع دسترسی reseller نیز بررسی شده‌اند. نصب/دانلود daemonها، kernel/firewall/VPN traffic در تست backend mock هستند.
+Current full Node suite: **62 PASS, 1 SKIP, zero failures (63 tests)**. After final ownership/directory-safety guards, the four dedicated writer tests were rerun: 3 PASS, 1 SKIP. Python: **32 PASS** (14 regression/SSH, 11 Xray installer fixtures, 2 diagnostic-cleanup, 3 release-integrity, 2 permission-repair). Installer self-test: **81 embedded modules**, Bash/JS/Python syntax PASS. Pinned Nova compatibility including the new manager SHA contract passed.
 
-Chromium جدیداً با exit139 شکست خورد؛ نمایش تصویری موبایل/دسکتاپ یا screenshot تأیید نشده است. منابع واقعی فقط controller HTTP اندازه‌گیری شده‌اند، نه تمام سرویس‌ها. افزودن همهٔ پروتکل‌های پروژهٔ دیگر انجام نشده و در INBOUNDS.md صریح است.
+The dedicated Node test imports the actual pinned native manager through production hooks, performs repeated atomic writes under umask 077, checks 0640/ownership/content, confirms unrelated files remain 0600 and rejects symlink targets. The runtime cannot map UID/GID 65534: fchown returns EINVAL, so the actual non-root identity read/denial test is explicitly SKIPPED, not passed. Tests use the mapped current group to verify the writer mechanics. Python repair tests use temporary files and mocked systemd identity/ExecStart; content preservation, permission snapshots, repeatability and refusal of unknown config layouts pass.
 
-## گزارش‌های نسخه‌های قبلی (تاریخی)
+A real systemd/VPS installation, real nobody read test, Xray daemon startup and public HTTPS after rc.5 repair have not been run here. They must not be described as certified. No real server was modified by this work. The user should retain the current VPS for the repair and report fresh Xray output if it remains unhealthy.
 
-# بررسی مجدد hotfix 0.6.1
+## Scope and security
 
-- ۱۱ آزمون اختصاصی Xray: PASS؛ Bash واقعی و timeout واقعی، شبکه/آرشیو/سرویس شبیه‌سازی‌شده.
-- ۱۰ regression، ۴ SSH، ۲۳ backend/AI/DNS، ۶ native HTTP/auth: دوباره PASS.
-- self-test نصب‌کننده، syntax فایل‌های embedded، sync hash راه‌انداز و ZIP بررسی شدند.
-- تست واقعی VPS، دریافت واقعی Xray روی شبکهٔ کاربر، ترافیک پروتکل‌ها و ۱GiB load انجام نشده است. نتایج زیر مربوط به نسخهٔ پایهٔ ۰٫۶ هستند؛ تغییر ظاهری در hotfix وجود ندارد.
+Only the fixed runtime config and Nova origin TLS paths are repaired. No world-readable credentials, recursive chmod, root Xray user or blanket service override is introduced. Group access follows the existing systemd identity. Previous modes/owners are recorded. Atomic native config generation is adapted in memory only after an exact manager hash check, without modifying upstream files on disk. UI, protocols, OpenVPN, Hosts, bot payload and AdGuard behavior are retained. A new daemon or build step on the VPS is not added.
 
-# بررسی نسخهٔ ۰٫۶٫۰
+Miniapp preferred-source and broader deployment/1GiB/browser limitations remain in SOURCES.md and README. Historical evidence below is labelled rc.4.
 
-مبنای کار: commit `5c6af8114764bee28a5ed3c9aecb83186fbcc434` مخزن **alirezaserver**، نسخهٔ ۰٫۵٫۰. مخزن alirezapanel مبنای این کار نیست. فهرست SHA-256 منابع قبلی و فایل‌های نسخهٔ رسمی Nova 1.85.4 در `baseline.json` ثبت شده است. فایل‌های نوا در بسته توزیع نشده‌اند.
+# Validation — 0.8.0-rc.4 installer hotfix
 
-## آزمون‌های اجراشده
+Current run: **59 Node tests PASS, zero failures/skips**. Python suites: **30 PASS** (14 regression/SSH, 11 Xray installer fixtures, 2 failure-cleanup diagnostics, 3 release/source-integrity checks). Self-test: Bash and **79 embedded modules** passed syntax checks. Pinned Nova 1.85.4 integration/identity contracts passed.
 
-- ۱۰ آزمون Python: یکسان‌بودن منابع افزونه و محتوای نصب‌کننده، حفظ ماژول‌های حساس و تم موجود، hash راه‌انداز، رد tar ناامن، بررسی‌های ایمنی ترمیم، پیش‌نیاز مقصد و پشتیبان AI.
-- ۸ آزمون OpenVPN: CRUD حساب/سرور، نگهداری CA، اعتبارسنجی، لینک اشتراک/تعویض/لغو و مصرف تکرارنشدنی. **خود hook پایتون** برای رمز درست/غلط، دستگاه هم‌زمان و قطع اتصال اجرا شد. فرمان‌های systemd، ip، firewall و ساخت گواهی در این مجموعه mock هستند.
-- ۹ آزمون Gemini: کلید غایب، تنظیمات فقط مدیر اصلی، جداسازی و صفحه‌بندی تاریخچه، مهاجرت JSON به جدول پیام‌ها، مدل‌های سازگار، UTF-8 و SSE چندتکه، سهمیه، قطع شبکه، MIME/JSON نامعتبر، پاسخ مسدود و توقف واقعی جریان mock. هیچ درخواست با کلید واقعی Gemini ارسال نشد.
-- ۴ آزمون Python برای SSH جعلی: probe بدون auth، رد fingerprint تغییرکرده پیش از ارسال رمز، کاربر انتخاب‌شده/sudo و رد مقصد خصوصی.
-- ۵ آزمون نصب DNS با worker شبیه‌سازی‌شده: محدودسازی نصب به هویت تأییدشده و preflight، خطای احراز هویت، ذخیرهٔ وضعیت، بازیابی پس از restart و جداسازی mount/token. هیچ SSH یا نصب روی مقصد واقعی اجرا نشد.
-- ۶ آزمون تعامل DOM با jsdom 26.1.0: فارسی/انگلیسی، کنترل نمایش رمز، فعال/غیرفعال حساب، مراحل DNS، پاک‌شدن ورودی محرمانه، چت تدریجی، نمایش ایمن متن/کد و تلاش مجدد. jsdom مرورگر و موتور چیدمان نیست.
-- ۶ آزمون با **HTTP و احراز هویت واقعی نسخهٔ pinned نوا** روی loopback: HTML اصلی، مالک، ساخت فروشنده و نشستش، مجوز افزونه‌ها، CSRF، نبود کلید، traversal و مسیرهای root/custom. فقط ماژول‌های HTTP/auth/SQLite نوا اجرا شدند؛ agent و سرویس‌های VPN اجرا نشدند.
-- ۱ آزمون بستهٔ DNS واقعی روی UDP/TCP loopback برای probe فقط‌خواندنی، بدون rewrite و بدون نیاز به موفقیت resolver خارجی.
-- کنترل قراردادهای نسخهٔ فعلی نوا، بررسی syntax فایل‌های JavaScript و Python داخل نصب‌کننده و `bash -n`.
-- نمونه‌گیری منابع کنترلر HTTP و افزونه‌ها؛ دامنهٔ دقیق و اعداد خام در `RESOURCES.md` و JSONهای همراه.
+## Exact production verifier exercised
 
-## حفظ رابط اصلی
+`tests/installer-verify.mjs` launches real pinned Nova HTTP/auth/SQLite and executes `addon/verify-install.mjs` in a child process. Both root and hidden panel paths pass. AdGuard is a loopback HTTP fixture; no AdGuard installation or network configuration is changed. A third test deliberately uses an unusable HTTPS endpoint and verifies that the production verifier fails: broken public access is not silently certified. A successful real VPS public HTTPS front door is not tested here.
 
-بلوک‌های CSS و JavaScript داخل پاسخ HTTP نوا با منابع رسمی مقایسه شدند. تمام بلوک‌ها، جز placeholder بومی آدرس پایه که خود نوا جایگزین می‌کند، حفظ شده‌اند. تزریق اصلی همچنان فقط اسکریپت قبلی برند و عنوان است؛ stylesheet جدید به سند اصلی نوا تزریق نمی‌شود. CSS جدید فقط در اسناد OpenVPN، نصب مقصد و AI بارگذاری می‌شود. کد proxy و قالب‌بندی قبلی AdGuard حفظ شده است؛ این نسخه بازطراحی جدیدی روی AdGuard ندارد.
+Five focused tests cover exact legacy OpenVPN redirect, both base paths, missing inline assets, external redirect rejection and stale panel injection. Three DOM tests execute real pinned Nova form declarations for all native preset protocols in Persian/English and submit an OpenVPN server through the inline form. Existing API/auth/AI mock-provider, OpenVPN backend, DNS and manual-form tests also ran.
 
-این مقایسهٔ کد و HTTP **جای مقایسهٔ تصویری نیست**. Chromium محلی با خروج `SIGTRAP/133` اجرا نشد. اسکرین‌شات واقعی موبایل/دسکتاپ و تطبیق پیکسلی قبل/بعد تأیید نشده‌اند. `tests/browser.mjs` برای محیط دارای مرورگر و نصب آزمایشی آماده است؛ نیاز به URL و نشست همان محیط دارد.
+Failure-cleanup tests execute the installer cleanup function in a temporary sandbox with a service-state stub. They verify preservation of exit code, phase/line, verifier output, private file mode and workdir cleanup. No actual service was restarted. Xray download/service actions use fixtures with real Bash/timeouts; they are not a live VPS install.
 
-## موارد عملاً آزمایش‌نشده
+## Feature preservation
 
-نصب apt/systemd روی VPS، ارتقای نصب زنده و restore کامل، ACME، رابط و daemon کامل AdGuard، اتصال VPN واقعی، تمام پروتکل‌ها و نودهای نوا، SSH/کلید/ sudo روی مقصد واقعی، نصب/آپدیت HyperDNS، سهمیهٔ واقعی Gemini و سرور با محدودیت دقیق یک هسته/یک گیگ RAM. آیندهٔ نوا یا HyperDNS نیز تضمین نشده؛ کنترل سازگاری جلوی تغییرات شناخته‌شدهٔ ناسازگار را می‌گیرد، نه همهٔ ناسازگاری‌های ممکن.
+`RC4-BASELINE.json` records all 77 addon files embedded in the current GitHub rc.3 installer at commit 90b0f3554a09829e9ae38c9601ada8623ebab247. All existing addon bytes except NOTICE.txt and verify-install.mjs are unchanged from that authoritative payload. Two files are new: verify-inbounds.mjs and install-diagnostics.sh. Standalone sources had diverged from the installer and were restored to its contents. Source/installer equality and preferred carrier source checks passed. Main UI, protocol engines, bot payload, Hosts, tunnels and AdGuard were not redesigned in this hotfix.
 
-## اجرای مجدد
+## Unverified
 
-در ریشهٔ checkout با Node.js 24+ و Python 3:
+The deleted VPS cannot be inspected. The stale HTTP-200 verification predicate is a confirmed code defect, but the historical inability to log in cannot be attributed definitively without its logs. Full apt/systemd fresh install/upgrade/restore, public WAN access, actual VPN client load, all-service 1CPU/1GiB capacity and visual browser/mobile layout were not tested. No new Telegram/Gemini requests with real credentials were made. Historical logs in this repository are not current-run results. This package is a release candidate, not a no-bug/Stable certification.
 
-```bash
-bash install.sh --self-test
-python3 tests/regressions.py
-python3 tests/ssh.py
-node --test tests/backend.mjs tests/ai.mjs tests/dns.mjs tests/dns-readonly.mjs
-```
+The upstream bot miniapp preferred frontend source issue remains documented in SOURCES.md; public redistribution readiness is not certified.
 
-برای آزمون نوا، آرشیو pinned را مطابق `SOURCES.md` دانلود، hash آن را کنترل و در پوشهٔ آزمایش استخراج کنید؛ کد اصلی را تغییر ندهید:
-
-```bash
-NOVA_TEST_DIR=/absolute/path/to/extracted/nova node --test tests/native.mjs
-```
-
-تست DOM نیازمند نصب توسعه‌ای jsdom 26.1.0 در پوشه‌ای جدا است؛ روی VPS تولیدی لازم نیست:
-
-```bash
-UI_TEST_JSDOM=/absolute/path/to/jsdom/lib/api.js node --test tests/ui.mjs
-```
-
-تست مرورگر فقط علیه نصب آزمایشی:
-
-```bash
-TEST_PANEL_URL=https://test.example/hidden-path TEST_STORAGE_STATE=/path/to/test-session.json node tests/browser.mjs
-```
-
-فایل نشست تست محرمانه است و نباید در GitHub آپلود شود.
+Raw current evidence: test-node-rc4.log, test-python-rc4.log, test-xray-rc4.log, test-diagnostics-rc4.log, test-integrity-rc4.log, test-selftest-rc4.log, test-compat-rc4.log and resources-rc4.json.

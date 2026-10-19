@@ -1,0 +1,26 @@
+{
+  "mode": "native-http+addons-0.8.0-rc.5",
+  "node": "v24.19.0",
+  "nodeFlags": [
+    "--expose-gc",
+    "--max-old-space-size=192"
+  ],
+  "rssLimitation": "Current RSS unavailable: /proc/self is not exposed. Peak RSS uses getrusage, heap uses V8.",
+  "scope": "Loopback HTTP/controller only; no agent jobs, AdGuard, OpenVPN, protocol daemons or VPN clients",
+  "idle": {
+    "rssMiB": null,
+    "peakRSSMiB": 101.95703125,
+    "heapUsedMiB": 29.886627197265625,
+    "cpuMs": 5.114,
+    "wallMs": 1201.0965310000001
+  },
+  "load": {
+    "requests": 50,
+    "concurrency": 1,
+    "wallMs": 383.678048,
+    "cpuMs": 712.735,
+    "rssAfterGCMiB": null,
+    "heapAfterGCMiB": 28.75,
+    "maxRSSMiB": 176.625
+  }
+}

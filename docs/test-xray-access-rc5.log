@@ -1,0 +1,12 @@
+✔ Repeated actual native atomic writes keep configured group readability under umask 077 (2.616959ms)
+﹣ A real non-root Xray identity can read while other identities cannot (0.423872ms) # Runtime has no UID/GID mapping for 65534; real non-root identity test unavailable
+✔ Unrelated native runtime JSON retains original 0600 permissions (0.529642ms)
+✔ Unsafe symlink targets are rejected without changing the original file (0.567799ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 142.448478

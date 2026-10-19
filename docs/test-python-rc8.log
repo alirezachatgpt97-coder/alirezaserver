@@ -1,0 +1,52 @@
+test_failure_preserves_error_status_and_private_verifier_evidence (check_0.Diagnostics.test_failure_preserves_error_status_and_private_verifier_evidence) ... ok
+test_success_does_not_create_failure_metadata (check_0.Diagnostics.test_success_does_not_create_failure_metadata) ... ok
+test_adguard_proxy_is_unchanged_and_legacy_migration_is_not_invoked (check_1.RegressionTests.test_adguard_proxy_is_unchanged_and_legacy_migration_is_not_invoked) ... ok
+test_backup_includes_encrypted_ai_and_consistent_database (check_1.RegressionTests.test_backup_includes_encrypted_ai_and_consistent_database) ... ok
+test_bootstrap_sha_is_exact (check_1.RegressionTests.test_bootstrap_sha_is_exact) ... ok
+test_destination_preflight_never_installs_packages_or_stops_services (check_1.RegressionTests.test_destination_preflight_never_installs_packages_or_stops_services) ... ok
+test_embedded_sources_match_maintainable_sources (check_1.RegressionTests.test_embedded_sources_match_maintainable_sources) ... ok
+test_guarded_update_backups_precede_activation (check_1.RegressionTests.test_guarded_update_backups_precede_activation) ... ok
+test_no_css_or_extension_ai_injection_into_main_panel (check_1.RegressionTests.test_no_css_or_extension_ai_injection_into_main_panel) ... ok
+test_repair_compares_service_artifacts_and_avoids_source_builds (check_1.RegressionTests.test_repair_compares_service_artifacts_and_avoids_source_builds) ... ok
+test_sensitive_unchanged_baseline_modules (check_1.RegressionTests.test_sensitive_unchanged_baseline_modules) ... ok
+test_updater_rejects_archive_traversal_symlinks_and_preserves_safe_members (check_1.RegressionTests.test_updater_rejects_archive_traversal_symlinks_and_preserves_safe_members) ... ok
+test_new_verifier_and_diagnostics_are_embedded_exactly (check_2.Integrity.test_new_verifier_and_diagnostics_are_embedded_exactly) ... ok
+test_preferred_carrier_source_is_included_and_unchanged (check_2.Integrity.test_preferred_carrier_source_is_included_and_unchanged) ... ok
+test_unrelated_addons_match_authoritative_embedded_rc3_payload (check_2.Integrity.test_unrelated_addons_match_authoritative_embedded_rc3_payload) ... ok
+test_changed_host_key_refuses_before_secret_authentication (check_3.Tests.test_changed_host_key_refuses_before_secret_authentication) ... ok
+test_preflight_supports_selected_user_and_passwordless_sudo (check_3.Tests.test_preflight_supports_selected_user_and_passwordless_sudo) ... ok
+test_private_destination_refused (check_3.Tests.test_private_destination_refused) ... ok
+test_probe_never_authenticates_or_runs_commands (check_3.Tests.test_probe_never_authenticates_or_runs_commands) ... ok
+test_no_persian_interface_literals_and_menu_exits_cleanly (check_4.English.test_no_persian_interface_literals_and_menu_exits_cleanly) ... ok
+test_no_shell_and_no_token_argv (check_4.English.test_no_shell_and_no_token_argv) ... ok
+test_tls_and_renewal_are_embedded_and_private (check_4.English.test_tls_and_renewal_are_embedded_and_private) ... ok
+test_bot_repair_changes_only_legacy_error_log_and_requires_socket_health (check_5.Repair.test_bot_repair_changes_only_legacy_error_log_and_requires_socket_health) ... ok
+test_console_dropin_migrates_with_backup_and_custom_commands_are_rejected (check_5.Repair.test_console_dropin_migrates_with_backup_and_custom_commands_are_rejected) ... ok
+test_installer_installs_persistent_hook_cli_and_repairs_existing_bot (check_5.Repair.test_installer_installs_persistent_hook_cli_and_repairs_existing_bot) ... ok
+test_log_symlink_rejected (check_5.Repair.test_log_symlink_rejected) ... ok
+test_password_reset_is_independent_keeps_non_session_state_and_uses_stdin (check_5.Repair.test_password_reset_is_independent_keeps_non_session_state_and_uses_stdin) ... ok
+test_repeated_runtime_repair_after_atomic_config_replacement_preserves_content (check_5.Repair.test_repeated_runtime_repair_after_atomic_config_replacement_preserves_content) ... ok
+test_terminal_requires_interactive_password_and_service_allowlist (check_5.Repair.test_terminal_requires_interactive_password_and_service_allowlist) ... ok
+test_both_mirror_architectures_install_after_verification (check_6.XrayInstallTests.test_both_mirror_architectures_install_after_verification) ... ok
+test_changed_contract_refuses_patch (check_6.XrayInstallTests.test_changed_contract_refuses_patch) ... ok
+test_embedded_patch_matches_source (check_6.XrayInstallTests.test_embedded_patch_matches_source) ... ok
+test_failure_uses_mirror (check_6.XrayInstallTests.test_failure_uses_mirror) ... ok
+test_hung_child_group_terminates_and_falls_back (check_6.XrayInstallTests.test_hung_child_group_terminates_and_falls_back) ... ok
+test_installer_skips_healthy_base_and_resumes_incomplete_base (check_6.XrayInstallTests.test_installer_skips_healthy_base_and_resumes_incomplete_base) ... ok
+test_mirror_checksum_failure_never_installs (check_6.XrayInstallTests.test_mirror_checksum_failure_never_installs) ... ok
+test_mirror_unusable_binary_never_installs (check_6.XrayInstallTests.test_mirror_unusable_binary_never_installs) ... ok
+test_only_main_integration_defers_tls_and_reuses_first_prompt (check_6.XrayInstallTests.test_only_main_integration_defers_tls_and_reuses_first_prompt) ... ok
+test_patch_is_confined_to_xray_and_deferred_tls_stages (check_6.XrayInstallTests.test_patch_is_confined_to_xray_and_deferred_tls_stages) ... ok
+test_success_does_not_use_mirror (check_6.XrayInstallTests.test_success_does_not_use_mirror) ... ok
+test_total_failure_is_not_ok (check_6.XrayInstallTests.test_total_failure_is_not_ok) ... ok
+test_custom_unit_config_fails_before_changing_files (check_7.Permissions.test_custom_unit_config_fails_before_changing_files) ... ok
+test_repair_is_targeted_preserves_contents_and_original_permissions_snapshot (check_7.Permissions.test_repair_is_targeted_preserves_contents_and_original_permissions_snapshot) ... ok
+
+----------------------------------------------------------------------
+Ran 43 tests in 2.503s
+
+OK
+Xray runtime access configured for its existing service identity; config contents unchanged.
+Xray runtime access configured for its existing service identity; config contents unchanged.
+Xray runtime access configured for its existing service identity; config contents unchanged.
+Xray runtime access configured for its existing service identity; config contents unchanged.

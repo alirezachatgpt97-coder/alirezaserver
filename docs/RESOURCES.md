@@ -1,71 +1,19 @@
-# اندازه‌گیری controller در ۰٫۷٫۱
+# rc.7 — current controller sample
 
-Node 24.19.0 با max-old-space-size=192: heap بیکار 29.69MiB، peakRSS تا زمان بیکار 102.14MiB، peakRSS کل نمونهٔ ۵۰ درخواست 160.98MiB، CPU بیکار 3.872ms در 1201ms و CPU ۵۰ درخواست 585.302ms. JSON واقعی در resources-manual-0.7.1.json است. این اندازه‌گیری فقط HTTP/controller نوا و افزونه‌ها روی loopback است؛ مصرف جاری RSS، مصرف جداگانهٔ سرویس‌ها، ترافیک VPN و نصب روی ماشین محدودشدهٔ یک گیگابایتی بررسی نشده‌اند. نتایج تضمین ظرفیت نیستند.
+[Current validation](RC7-VALIDATION.md) and [raw sample](resources-rc7.json): idle heap 30.10MiB, idle peak RSS 109.81MiB, whole 50-request sample peak 173.30MiB. This excludes all protocol daemons, certificate issuance/renewal, PHP/DB and user traffic. It is not 1GiB certification.
 
-فرم گرافیکی فقط هنگام کلیک ساخته می‌شود. تولید X25519 در همان Node process و بدون subprocess انجام می‌شود؛ سرویس دائمی یا مدل محلی اضافه نشده است. frontend با کلاس‌ها و افکت‌های اصلی نوا کار می‌کند و assetها سبک‌اند؛ backend OpenVPN/AdGuard یا protocol lifecycle تغییر نکرده است.
+# rc.6 — current measurement
 
-## سابقهٔ اندازه‌گیری
+See [RC6-VALIDATION](RC6-VALIDATION.md) and [raw sample](resources-rc6.json). Controller-only idle peak RSS 101.79MiB; whole 50-request sample peak 176.19MiB. Other services and total 1GiB capacity are unmeasured. Runtime repair now also runs briefly before Xray starts; it adds no resident process. Historical samples below are not current certification.
 
-# اندازه‌گیری ۰٫۷٫۰
+# rc.5 controller-only measurement
 
-controller HTTP نوا + افزونه‌ها، Node 24.19.0 با max-old-space-size=192: heap بیکار 29.69MiB، peakRSS تا زمان بیکار 103.95MiB، peakRSS کل نمونهٔ ۵۰ درخواست 167.32MiB؛ CPU بیکار 4.06ms در 1201ms و CPU ۵۰ درخواست 631.72ms. این اندازه‌گیری یک نمونهٔ واقعی loopback است؛ RSS جاری در این محیط در دسترس نیست. JSON: resources-inbounds.json.
+Actual measured peak RSS: idle 101.96MiB, entire 50 sequential HTTP request sample 176.62MiB. Heap after GC 28.75MiB. Node v24.19.0 with 192MiB heap cap. Raw sample: resources-rc5.json. Current RSS unavailable without /proc; peak is getrusage. No PHP/DB/protocol daemons or VPN users are included, so this is not a 1GiB VPS capacity certification. Permission repair runs only on installation/repair; the small writer adapter runs in the existing agent on configuration writes. No extra background process is installed.
 
-فرم انتخاب پروتکل فقط در کلیک ساخته می‌شود. مدیریت OpenVPN هنگام بازکردن details بارگذاری و با بستن آن آزاد می‌شود؛ process سرور جدید یا npm/build اضافه نشده است. این اعداد مصرف کل VPS/AdGuard/Xray/OpenVPN/کرنل نیستند و تضمین یک گیگ RAM با هر تعداد کاربر نیستند. سرویس‌ها و load واقعی هنوز اندازه‌گیری نشده‌اند.
+## Prior rc.4 sample
 
-## اندازه‌گیری‌های تاریخی
+# rc.4 actual controller measurement
 
-# منابع و هدف سرور یک گیگابایتی
+Node v24.19.0, --max-old-space-size=192, real pinned Nova HTTP plus addons. Idle peak RSS 102.25MiB, idle heap 29.87MiB. For 50 sequential HTTP requests: 302.85ms wall, 550.20ms CPU, total peak RSS 176.91MiB, heap after GC 28.74MiB. Idle sample: 3.97ms CPU over 1200.96ms. Current RSS is unavailable because /proc/self is not exposed; peak uses getrusage. Raw values: resources-rc4.json.
 
-هدف نصب پایه، یک هسته و ۱ GiB RAM است؛ گواهی اجرای تمام سرویس‌ها با هر تعداد کاربر نیست. ساخت از سورس، مدل AI محلی و وابستگی runtime جدید npm اضافه نشده است. آرشیو آمادهٔ رسمی نوا و باینری آمادهٔ AdGuard/HyperDNS با hash دریافت می‌شوند. HyperDNS روی **مقصد مستقل** نصب می‌شود.
-
-## تغییرات دارای اثر مشخص
-
-- وضعیت تمام سرورهای OpenVPN با یک `systemctl show` خوانده می‌شود؛ قبلاً برای هر سرور و AdGuard یک subprocess جدا بود. درخواست‌های هم‌زمان به همان Promise مشترک متصل می‌شوند.
-- جمع‌آوری accounting هم‌زمان مشترک است و stamp تکراری فایل وضعیت دوباره پردازش نمی‌شود. سهمیه‌ها، hookهای احراز هویت، قطع اتصال، وضعیت زنده و آمار حذف نشده‌اند.
-- بررسی قطع حساب‌ها فقط برای نام‌های دارای نشست ثبت‌شده انجام می‌شود؛ حساب غیرفعال بدون اتصال به‌طور تکراری management request تولید نمی‌کند.
-- پاسخ ثابت پنل دارای یک cache محدود تک‌ورودی است؛ تغییر HTML یا basePath ورودی را عوض می‌کند. تم و فونت استخراج‌شده نیز در همان process cache می‌شوند. هیچ stylesheet یا افکت اصلی نوا حذف نشده است.
-- polling صفحات افزونه در پس‌زمینهٔ مخفی متوقف می‌شود و درخواست هم‌پوشان ایجاد نمی‌کند. OpenVPN همان فاصلهٔ ۱۵ ثانیه و DNS همان ۵ ثانیه را حفظ می‌کنند؛ آمار اصلی نوا تغییر نکرده است.
-- نمایش AI در یک frame به‌روزرسانی می‌شود، جریان پاسخ محدود و cancelable است و رمزهای ورودی بعد از ذخیره پاک می‌شوند. تاریخچه روی جدول پیام‌های SQLite است و هر بار ۵۰ پیام بارگذاری می‌شود؛ پیام‌های قدیمی‌تر با دکمهٔ جدا قابل دریافت‌اند. هر درخواست کل تاریخچه را بازنویسی نمی‌کند؛ حداکثر ۴۰ پیام/۴۸ هزار نویسه از انتهای گفت‌وگو برای زمینهٔ هر درخواست انتخاب می‌شود. **تاریخچهٔ ذخیره‌شده حذف نمی‌شود**؛ کاربر می‌تواند آن را مدیریت کند.
-- فایل‌های status OpenVPN طبق عملکرد قبلی overwrite می‌شوند. لاگ نصب rotate/compress می‌شود. سیاست journal سیستم و لاگ‌های اصلی نوا/AdGuard تغییر نکرده است؛ آن‌ها را متناسب با دیسک سرور بررسی کنید.
-- تعمیر بدون تغییر فایل‌ها، سرویس سالم را بی‌دلیل restart نمی‌کند. تغییر فقط UI نباید OpenVPN را restart کند؛ تغییر config/unit یا قواعد وابسته نیاز به اعمال سرویس دارد.
-- مرز هم‌زمانی کارهای سنگین SSH، کنترل صف نوشتن موجود و کنترل مصرف AI برای حفاظت از منابع است؛ محدودیت تازه‌ای برای تعداد کاربران یا پروتکل‌های نوا ایجاد نشده است.
-
-## اندازه‌گیری واقعی در این محیط
-
-Node.js 24.19.0، `--max-old-space-size=192 --expose-gc`، سرور HTTP نوا روی loopback، بدون daemonهای VPN و AdGuard. ابتدا یک صفحه خوانده شد، سپس حدود ۱٫۲ ثانیه بی‌کاری و ۵۰ درخواست متوالی با concurrency=1. اجراها روی محیط توسعه انجام شدند، **با محدودیت یک هسته/یک گیگ اجرا نشده‌اند**.
-
-| سناریو | V8 heap بعد از گرم‌شدن | peak RSS ثبت‌شده تا آن مرحله | peak RSS کل آزمون | CPU برای ۵۰ درخواست |
-|---|---:|---:|---:|---:|
-| HTTP نوا بدون افزونه | 25.90 MiB | 95.84 MiB | 108.20 MiB | 488.46 ms |
-| HTTP نوا + افزونهٔ قبلی ۰٫۵ | 26.19 MiB | 102.93 MiB | 193.82 MiB | 1230.29 ms |
-| HTTP نوا + افزونهٔ جدید ۰٫۶ | 29.69 MiB | 105.21 MiB | 162.48 MiB | 610.09 ms |
-
-این یک smoke benchmark تک‌اجراست، نه برآورد ظرفیت یا تضمین کاهش دائمی مصرف. cache جدید heap ماندگار را کمی افزایش می‌دهد و در این اجرا هزینهٔ درخواست‌های تکراری و peak ثبت‌شده نسبت به افزونهٔ قبلی کمتر بود. CPU بی‌کاری نسخهٔ جدید حدود 3.89 ms در 1202 ms بود؛ agent اصلی و jobهای آن در این عدد نیستند.
-
-**RSS لحظه‌ای در این محیط قابل خواندن نبود**؛ `/proc/self` در دسترس نیست. ستون‌ها از `getrusage` برای peak و V8 برای heap آمده‌اند؛ peak را نباید RSS پایه نامید. اعداد خام و روش اجرا در JSONهای همراه و `tests/resources.mjs` هستند.
-
-## تفکیک سرویس‌ها و بار واقعی
-
-| سرویس | چه چیزی اندازه‌گیری شد؟ | چه چیزی هنوز لازم است؟ |
-|---|---|---|
-| HTTP/auth/SQLite نوا و افزونه‌ها | نمونه‌گیری بالا | agent کامل و تعامل طولانی مرورگر |
-| AdGuard Home | daemon اجرا نشد؛ مصرف اندازه‌گیری نشده | تعداد query، فهرست فیلترها و cache واقعی |
-| OpenVPN | hook و حساب‌ها آزمایش شدند؛ مصرف daemon اندازه‌گیری نشده | تونل واقعی، رمزنگاری، دستگاه و پهنای باند |
-| Xray / sing-box و سایر پروتکل‌های نوا | تغییر نکردند و مصرف اندازه‌گیری نشده | سرویس‌ها و تعداد کاربران واقعی |
-| SSH نصب مقصد | مسیرهای کنترل با mock بررسی شدند | مصرف Paramiko و نصب واقعی مقصد |
-| Gemini | SSE mock؛ مدل محلی وجود ندارد | شبکه، پاسخ و concurrency واقعی |
-
-Heap نوا در واحد قبلی 192 MiB و `GOMEMLIMIT=160MiB` AdGuard حفظ شده‌اند؛ این‌ها **RAM کل فرایند نیستند** و GOMEMLIMIT سقف سخت RSS نیست. نیازهای زیر بار ممکن است از RAM پایه بیشتر شوند. تعداد کاربران، پروتکل‌ها، DNS cache و فیلترها و پهنای باند تعیین‌کننده‌اند. swap به‌عنوان بهینه‌سازی افزوده نشده است.
-
-روی VPS آزمایشی بعد از نصب، مصرف هر سرویس را جدا ثبت کنید:
-
-```bash
-free -h
-ps -eo pid,comm,rss,%cpu --sort=-rss
-systemctl show nova-agent.service AdGuardHome.service -p Id,MemoryCurrent,CPUUsageNSec
-systemctl list-units 'alireza-openvpn@*.service'
-journalctl --disk-usage
-sudo du -sh /var/log/alirezaserver /var/lib/alirezaserver /var/lib/nova
-```
-
-این دستورات در این محیط روی VPS اجرا نشده‌اند. سپس با تعداد مشخص کاربر، پروتکل و ترافیک تکرار کنید؛ اتصال و DNS را هم‌زمان بررسی کنید. اجرای سرویس در ۱ GiB بدون این آزمون ظرفیت‌بندی نمی‌شود.
+This is not total VPS consumption. No agent jobs, AdGuard daemon, PHP/MariaDB, protocol daemons or VPN clients are included. No 1GiB capacity claim is made. This hotfix adds no resident daemon or frontend build dependency. The verifier and diagnostics only run on explicit checks/install/update; existing UI effects and protocol features are retained.
