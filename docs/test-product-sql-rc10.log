@@ -1,0 +1,9 @@
+✔ rc.10 actual manager upgrade repairs SQL; fresh bootstrap and web plan CRUD preserve old data (2780.436553ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5751.404617

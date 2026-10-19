@@ -88,3 +88,8 @@ Based strictly on the previously delivered rc.7 source, preserving its pinned No
 MHSanaei/3x-ui (GPL-3.0), `frontend/src/lib/xray/inbound-link.ts`, blob `05681202fba5a2fd23ccad6c8b11d84a4ac36fdf`, was reviewed as a reference for independent dial-address / Host / TLS server-name handling. No 3x-ui implementation or UI was copied into this release. The repair is an original narrow adapter over the existing pinned Nova export paths.
 
 Primary compatibility references: https://developers.cloudflare.com/fundamentals/reference/network-ports/ and https://developers.cloudflare.com/network/websockets/ . Real Cloudflare transit is not part of the local tests.
+
+
+## rc.10 product-schema repair
+
+The only new preferred bot source is `core/alirezabot/db/migrations/013_alirezaserver_product_schema.php` (AGPL-3.0-or-later). Its identical copy `addon/bot-product-schema.php`, root-side `addon/bot_schema.py`, and `addon/bot-schema-tool.php` provide private streamed product-table backup and safe existing-install migration. Existing protocol/TLS/UI sources are unmodified. `tools/package-bot.py` rebuilds the readable source into the verified bot payload; `tools/build.py` embeds exact addon sources into install.sh and updates the bootstrap checksum. See RC10-BASELINE/VALIDATION for provenance and scope.

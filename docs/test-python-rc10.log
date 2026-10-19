@@ -1,0 +1,58 @@
+test_changed_host_key_refuses_before_secret_authentication (ssh.Tests.test_changed_host_key_refuses_before_secret_authentication) ... ok
+test_preflight_supports_selected_user_and_passwordless_sudo (ssh.Tests.test_preflight_supports_selected_user_and_passwordless_sudo) ... ok
+test_private_destination_refused (ssh.Tests.test_private_destination_refused) ... ok
+test_probe_never_authenticates_or_runs_commands (ssh.Tests.test_probe_never_authenticates_or_runs_commands) ... ok
+test_new_verifier_and_diagnostics_are_embedded_exactly (release-integrity.Integrity.test_new_verifier_and_diagnostics_are_embedded_exactly) ... ok
+test_preferred_carrier_source_is_included_and_unchanged (release-integrity.Integrity.test_preferred_carrier_source_is_included_and_unchanged) ... ok
+test_unrelated_addons_match_authoritative_embedded_rc3_payload (release-integrity.Integrity.test_unrelated_addons_match_authoritative_embedded_rc3_payload) ... ok
+test_failure_preserves_error_status_and_private_verifier_evidence (installer-diagnostics.Diagnostics.test_failure_preserves_error_status_and_private_verifier_evidence) ... ok
+test_success_does_not_create_failure_metadata (installer-diagnostics.Diagnostics.test_success_does_not_create_failure_metadata) ... ok
+test_adguard_proxy_is_unchanged_and_legacy_migration_is_not_invoked (regressions.RegressionTests.test_adguard_proxy_is_unchanged_and_legacy_migration_is_not_invoked) ... ok
+test_backup_includes_encrypted_ai_and_consistent_database (regressions.RegressionTests.test_backup_includes_encrypted_ai_and_consistent_database) ... ok
+test_bootstrap_sha_is_exact (regressions.RegressionTests.test_bootstrap_sha_is_exact) ... ok
+test_destination_preflight_never_installs_packages_or_stops_services (regressions.RegressionTests.test_destination_preflight_never_installs_packages_or_stops_services) ... ok
+test_embedded_sources_match_maintainable_sources (regressions.RegressionTests.test_embedded_sources_match_maintainable_sources) ... ok
+test_guarded_update_backups_precede_activation (regressions.RegressionTests.test_guarded_update_backups_precede_activation) ... ok
+test_no_css_or_extension_ai_injection_into_main_panel (regressions.RegressionTests.test_no_css_or_extension_ai_injection_into_main_panel) ... ok
+test_repair_compares_service_artifacts_and_avoids_source_builds (regressions.RegressionTests.test_repair_compares_service_artifacts_and_avoids_source_builds) ... ok
+test_sensitive_unchanged_baseline_modules (regressions.RegressionTests.test_sensitive_unchanged_baseline_modules) ... ok
+test_updater_rejects_archive_traversal_symlinks_and_preserves_safe_members (regressions.RegressionTests.test_updater_rejects_archive_traversal_symlinks_and_preserves_safe_members) ... ok
+test_all_protected_rc9_files_remain_byte_identical (bot-schema.BotSchema.test_all_protected_rc9_files_remain_byte_identical) ... ok
+test_existing_install_lock_is_respected (bot-schema.BotSchema.test_existing_install_lock_is_respected) ... ok
+test_installer_handles_existing_db_and_fresh_bootstrap (bot-schema.BotSchema.test_installer_handles_existing_db_and_fresh_bootstrap) ... ok
+test_preferred_source_matches_both_embedded_payload_and_helper (bot-schema.BotSchema.test_preferred_source_matches_both_embedded_payload_and_helper) ... ok
+test_reject_relative_and_symlink_paths (bot-schema.BotSchema.test_reject_relative_and_symlink_paths) ... ok
+test_runtime_modules_are_embedded_exactly (bot-schema.BotSchema.test_runtime_modules_are_embedded_exactly) ... ok
+test_both_mirror_architectures_install_after_verification (xray-install.XrayInstallTests.test_both_mirror_architectures_install_after_verification) ... ok
+test_changed_contract_refuses_patch (xray-install.XrayInstallTests.test_changed_contract_refuses_patch) ... ok
+test_embedded_patch_matches_source (xray-install.XrayInstallTests.test_embedded_patch_matches_source) ... ok
+test_failure_uses_mirror (xray-install.XrayInstallTests.test_failure_uses_mirror) ... ok
+test_hung_child_group_terminates_and_falls_back (xray-install.XrayInstallTests.test_hung_child_group_terminates_and_falls_back) ... ok
+test_installer_skips_healthy_base_and_resumes_incomplete_base (xray-install.XrayInstallTests.test_installer_skips_healthy_base_and_resumes_incomplete_base) ... ok
+test_mirror_checksum_failure_never_installs (xray-install.XrayInstallTests.test_mirror_checksum_failure_never_installs) ... ok
+test_mirror_unusable_binary_never_installs (xray-install.XrayInstallTests.test_mirror_unusable_binary_never_installs) ... ok
+test_only_main_integration_defers_tls_and_reuses_first_prompt (xray-install.XrayInstallTests.test_only_main_integration_defers_tls_and_reuses_first_prompt) ... ok
+test_patch_is_confined_to_xray_and_deferred_tls_stages (xray-install.XrayInstallTests.test_patch_is_confined_to_xray_and_deferred_tls_stages) ... ok
+test_success_does_not_use_mirror (xray-install.XrayInstallTests.test_success_does_not_use_mirror) ... ok
+test_total_failure_is_not_ok (xray-install.XrayInstallTests.test_total_failure_is_not_ok) ... ok
+test_bot_repair_changes_only_legacy_error_log_and_requires_socket_health (terminal-repair.Repair.test_bot_repair_changes_only_legacy_error_log_and_requires_socket_health) ... ok
+test_console_dropin_migrates_with_backup_and_custom_commands_are_rejected (terminal-repair.Repair.test_console_dropin_migrates_with_backup_and_custom_commands_are_rejected) ... ok
+test_installer_installs_persistent_hook_cli_and_repairs_existing_bot (terminal-repair.Repair.test_installer_installs_persistent_hook_cli_and_repairs_existing_bot) ... ok
+test_log_symlink_rejected (terminal-repair.Repair.test_log_symlink_rejected) ... ok
+test_password_reset_is_independent_keeps_non_session_state_and_uses_stdin (terminal-repair.Repair.test_password_reset_is_independent_keeps_non_session_state_and_uses_stdin) ... ok
+test_repeated_runtime_repair_after_atomic_config_replacement_preserves_content (terminal-repair.Repair.test_repeated_runtime_repair_after_atomic_config_replacement_preserves_content) ... ok
+test_terminal_requires_interactive_password_and_service_allowlist (terminal-repair.Repair.test_terminal_requires_interactive_password_and_service_allowlist) ... ok
+test_custom_unit_config_fails_before_changing_files (xray-permissions.Permissions.test_custom_unit_config_fails_before_changing_files) ... ok
+test_repair_is_targeted_preserves_contents_and_original_permissions_snapshot (xray-permissions.Permissions.test_repair_is_targeted_preserves_contents_and_original_permissions_snapshot) ... ok
+test_no_persian_interface_literals_and_menu_exits_cleanly (terminal-english.English.test_no_persian_interface_literals_and_menu_exits_cleanly) ... ok
+test_no_shell_and_no_token_argv (terminal-english.English.test_no_shell_and_no_token_argv) ... ok
+test_tls_and_renewal_are_embedded_and_private (terminal-english.English.test_tls_and_renewal_are_embedded_and_private) ... ok
+
+----------------------------------------------------------------------
+Ran 49 tests in 2.966s
+
+OK
+Xray runtime access configured for its existing service identity; config contents unchanged.
+Xray runtime access configured for its existing service identity; config contents unchanged.
+Xray runtime access configured for its existing service identity; config contents unchanged.
+Xray runtime access configured for its existing service identity; config contents unchanged.
