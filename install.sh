@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# alirezaserver 0.8.0-rc.6 — single-file ONLINE installer; rerun to repair/resume.
+# alirezaserver 0.8.0-rc.7 — single-file ONLINE installer; rerun to repair/resume.
 # Supported target: Ubuntu 24.04 or Debian 12/13, systemd, amd64/arm64.
 # Add-on source and notices are embedded below; original upstream programs are
 # downloaded from pinned official URLs. This is not an offline bundle.
@@ -35,7 +35,7 @@ verify(){ printf '%s  %s\n' "$2" "$1" | sha256sum --check --status || die "Check
 patch_nova_xray(){
 python3 - "$1" <<'NOVA_XRAY_PATCH'
 #!/usr/bin/env python3
-"""Patch only the hash-verified initial Nova installer's Xray download stage."""
+"""Patch the verified Nova Xray download and defer trusted TLS until integration is ready."""
 import pathlib,sys
 OLD='if bash "$XRAY_SH" "${XRAY_ARGS[@]}" >"$XRAY_LOG" 2>&1; then'
 NEW='''# Bound the entire child process group, including the installer's own curl.
@@ -52,6 +52,10 @@ def patch(source):
     for old,new in replacements:
         if source.count(old)!=1:raise ValueError('Unsupported Nova installer contract: '+old[:65])
         source=source.replace(old,new)
+    domain_anchor="if [ -n \"${NOVA_DOMAIN:-}\" ]; then\n  say \"Getting a certificate for $NOVA_DOMAIN (Let's Encrypt)\""
+    if source.count(domain_anchor)!=1:raise ValueError('Unsupported Nova TLS installer contract')
+    source=source.replace(domain_anchor,domain_anchor.replace('if [ -n "${NOVA_DOMAIN:-}" ]; then','if false; then # Trusted TLS is issued after the integration is ready.'))
+    source += '\n# Preserve the requested identity for post-integration certificate verification.\nif [ -n "${NOVA_DOMAIN:-}" ]; then\n  install -d -m 700 /var/lib/alirezaserver\n  printf "%s\\n" "$NOVA_DOMAIN" > /var/lib/alirezaserver/requested-domain\n  chmod 600 /var/lib/alirezaserver/requested-domain\nfi\n'
     return source
 if __name__=='__main__':
     p=pathlib.Path(sys.argv[1]);s=patch(p.read_text());p.write_text(s)
@@ -1246,9 +1250,9 @@ with tempfile.TemporaryDirectory(prefix='alirezaserver-backup-') as temp:
         if entry.name.endswith('/management.sock') or entry.name.endswith('/openvpn.pid'):return None
         return entry
     with tarfile.open(target,'w:gz') as tar:
-        for name in ['etc/systemd/system/xray.service.d/90-alirezaserver-access.conf','etc/logrotate.d/alirezaserver-xray','usr/local/bin/alireza','opt/alirezaserver','var/lib/alirezaserver','opt/alirezabot','opt/alirezaserver-hashem','var/lib/alirezabot','etc/alirezaserver-hashem','etc/logrotate.d/alirezabot','etc/systemd/system/AdGuardHome.service','etc/systemd/system/alireza-firewall.service','etc/systemd/system/alireza-openvpn@.service','etc/systemd/system/nova-agent.service.d/alirezaserver.conf','etc/systemd/system/nova-agent.service.d/zz-alirezaserver.conf']:
+        for name in ['etc/nova/origin.pem','etc/nova/origin.key','etc/nova/certs','etc/systemd/system/xray.service.d/90-alirezaserver-access.conf','etc/logrotate.d/alirezaserver-xray','usr/local/bin/alireza','opt/alirezaserver','var/lib/alirezaserver','opt/alirezabot','opt/alirezaserver-hashem','var/lib/alirezabot','etc/alirezaserver-hashem','etc/logrotate.d/alirezabot','etc/systemd/system/AdGuardHome.service','etc/systemd/system/alireza-firewall.service','etc/systemd/system/alireza-openvpn@.service','etc/systemd/system/nova-agent.service.d/alirezaserver.conf','etc/systemd/system/nova-agent.service.d/zz-alirezaserver.conf']:
             if pathlib.Path('/'+name).exists():tar.add('/'+name,arcname=name,filter=filter_entry)
-        for name in ['alireza-update.service','alireza-update.timer','alireza-update-recover.service']:
+        for name in ['alireza-cert-renew.service','alireza-cert-renew.timer','alireza-update.service','alireza-update.timer','alireza-update-recover.service']:
             path=pathlib.Path('/etc/systemd/system')/name
             if path.exists():tar.add(path,arcname='etc/systemd/system/'+name)
         for pattern in ['alirezabot-*.service','alirezabot-*.timer','alireza-hashem-*.service','alireza-hashem-*.timer']:
@@ -1590,6 +1594,7 @@ import {createMatching} from './hashem-inbounds.mjs';
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Loaded only into Nova's existing Node process. Original Nova files are unmodified.
 import './host-hooks.mjs';
+import {challenge,redirectHTTP} from './tls-core.mjs';
 import * as hosts from './hosts.mjs';
 import http from 'node:http';
 import {createHash,generateKeyPairSync,randomBytes,createPrivateKey,createPublicKey,timingSafeEqual} from 'node:crypto';
@@ -1827,7 +1832,7 @@ async function handle(req,res,base,tail) {
 if(process.env.ALIREZA_NO_HOOK!=='1') {
   http.Server.prototype.emit=function(event,...args) {
     if(event!=='request')return previous.call(this,event,...args);
-    const[req,res]=args;if(shareHTTP(req,res))return true;const base=basePath();
+    const[req,res]=args;if(challenge(req,res))return true;if(redirectHTTP(req,res,settings()?.host,process.env.NOVA_FRONT_PORT||443))return true;if(shareHTTP(req,res))return true;const base=basePath();
     if(base!==null&&req.url?.startsWith(base+'/alireza/')) {
       // Reject ambiguous URL spellings instead of passing them to another handler.
       const tail=req.url.slice((base+'/alireza/').length);
@@ -1859,6 +1864,8 @@ cat > "$APP/rollback.sh" <<'ALIREZA_4FEA9F087DEBF8260202EFC1'
 # Disable only alirezaserver additions. Keep user databases/certificates for recovery.
 set -euo pipefail
 [[ $EUID == 0 ]] || { echo 'Run as root.' >&2; exit 1; }
+systemctl disable --now alireza-cert-renew.timer || true
+systemctl stop alireza-cert-renew.service || true
 systemctl disable --now alireza-update.timer || true
 systemctl stop alireza-update.service || true
 systemctl list-unit-files 'alireza-openvpn@*.service' --no-legend | while read -r unit _; do
@@ -1873,6 +1880,8 @@ systemctl daemon-reload
 if systemctl cat nova-agent.service >/dev/null 2>&1; then systemctl restart nova-agent.service
 elif systemctl cat nova-node-agent.service >/dev/null 2>&1; then systemctl restart nova-node-agent.service; fi
 echo 'alirezaserver add-ons disabled; original Nova files and add-on data preserved.'
+
+if [[ -f /var/lib/alirezaserver/ip-certificate.json ]]; then echo 'WARNING: managed short-lived IP renewal is now disabled. Restore your previous TLS pair or configure another renewal client before the certificate expires.' >&2; fi
 ALIREZA_4FEA9F087DEBF8260202EFC1
 
 cat > "$APP/share-http.mjs" <<'ALIREZA_EE2C49E550F5F1E16A7BEAB9'
@@ -72696,7 +72705,9 @@ cat > "$APP/host-contracts.json" <<'ALIREZA_02720EF4FBC55851D3F37B3B'
   "src/subscription.mjs": "4a866640e7212efac5c4560b747dd90fa9e99292aa6c4d8e6556efcb4c899808",
   "src/sub-formats.mjs": "639a4abe3cacf34df44a28a847780e0a90cbf430d7197249e2052c4c8e67371a",
   "src/xray-json.mjs": "4f14817f0d1bcd41c8cc9c674f92b85e005072cf5603fd0f430faf6579bb5d2a",
-  "src/xray/manager.mjs": "deb37645d23c5a83b32582b5249a19b1d5aeb8fca5a964ff073e431540891720"
+  "src/xray/manager.mjs": "deb37645d23c5a83b32582b5249a19b1d5aeb8fca5a964ff073e431540891720",
+  "src/cert.mjs": "be62f596a474f221659eba75f5970f19a90d7c7cfc50ed61d7935504fef84790",
+  "src/server.mjs": "8e1e4ddd367a3f999c23f17ecd24a4e06217bd1090d942d8cb509d52a9b3eb2f"
 }
 ALIREZA_02720EF4FBC55851D3F37B3B
 
@@ -72736,15 +72747,18 @@ cat > "$APP/host-hooks.mjs" <<'ALIREZA_90CF5B5C35C36DBC1DB912D3'
 // Narrow, hash-guarded ESM decorators. Native files on disk remain unchanged.
 import{registerHooks}from'node:module';import{readFileSync}from'node:fs';import{createHash}from'node:crypto';import{resolve}from'node:path';import{pathToFileURL,fileURLToPath}from'node:url';
 const dir=resolve(process.env.ALIREZA_NOVA_DIR||'/opt/nova-node-agent');const expected=JSON.parse(readFileSync(new URL('./host-contracts.json',import.meta.url)));const helper=new URL('./host-core.mjs',import.meta.url).href;
+const tls=new URL('./tls-core.mjs',import.meta.url).href;
 const access=new URL('./xray-access.mjs',import.meta.url).href;
 const decorators={
+ 'src/server.mjs':`const __azHealth=certHealth;certHealth=(f,h)=>__azTLS.certificateHealth(__azHealth,f,h);`,
+ 'src/cert.mjs':`withPort80Free=action=>action();const __azCert=provisionCert,__azValid=isValidDomain,__azCovers=certCoversDomain;isValidDomain=v=>__azTLS.validIP(String(v))||__azValid(v);certCoversDomain=(c,h)=>__azTLS.covers(__azCovers,c,h);provisionCert=o=>__azTLS.provision(__azCert,o,{writeFileAtomic});`,
  'src/xray/manager.mjs':`const __azWriteRuntime=writeJsonAtomic;writeJsonAtomic=(p,v,o)=>__azAccess.writeRuntimeJSON(__azWriteRuntime,p,v,o);`,
  'src/xray/inbounds.mjs':`const __azNormalizeProfile=normalizeProfile,__azApplyProfile=applyProfile;normalizeProfile=v=>__az.normalizeHost(__azNormalizeProfile,v);applyProfile=(i,p)=>__azApplyProfile(i,p?.keepSniBlank?{...p,sni:''}:p);`,
  'src/subscription.mjs':`const __azLine=inboundLine;inboundLine=(u,i,o)=>__az.inboundURI(__azLine,u,i,o);const __azBuildSub=buildSub;buildSub=(u,o)=>__az.rawSubscription(__azBuildSub,u,o,normalizeInbound);`,
  'src/sub-formats.mjs':`const __azEnumerate=enumerateProxies,__azClash=toClash,__azSingbox=toSingbox;enumerateProxies=(u,o)=>__az.enumerate(__azEnumerate,u,o,normalizeInbound);toClash=(p,o)=>__az.clash(__azClash,p,o);toSingbox=(p,o)=>__az.singbox(__azSingbox,p,o);`,
  'src/xray-json.mjs':`const __azClient=xrayClientConfig;xrayClientConfig=(p,o)=>__az.xrayConfig(__azClient,p,o);`
 };
-registerHooks({load(url,context,next){const key=Object.keys(decorators).find(k=>url===pathToFileURL(resolve(dir,k)).href);const result=next(url,context);if(!key)return result;const source=typeof result.source==='string'?result.source:Buffer.from(result.source).toString();if(createHash('sha256').update(source).digest('hex')!==expected[key])throw Error('HOST_NATIVE_CONTRACT_CHANGED: '+key);return{...result,source:source+'\nimport * as __az from '+JSON.stringify(helper)+';\n'+(key==='src/xray/manager.mjs'?'import * as __azAccess from '+JSON.stringify(access)+';\n':'')+decorators[key]+'\n'};}});
+registerHooks({load(url,context,next){const key=Object.keys(decorators).find(k=>url===pathToFileURL(resolve(dir,k)).href);const result=next(url,context);if(!key)return result;const source=typeof result.source==='string'?result.source:Buffer.from(result.source).toString();if(createHash('sha256').update(source).digest('hex')!==expected[key])throw Error('HOST_NATIVE_CONTRACT_CHANGED: '+key);return{...result,source:source+'\nimport * as __az from '+JSON.stringify(helper)+';\n'+(key==='src/xray/manager.mjs'?'import * as __azAccess from '+JSON.stringify(access)+';\n':'')+(['src/cert.mjs','src/server.mjs'].includes(key)?'import * as __azTLS from '+JSON.stringify(tls)+';\n':'')+decorators[key]+'\n'};}});
 ALIREZA_90CF5B5C35C36DBC1DB912D3
 
 cat > "$APP/hosts.mjs" <<'ALIREZA_B1B8921B3A8C4828EF87A6B8'
@@ -73019,90 +73033,142 @@ ALIREZA_26206AAF1F82F7755E82996F
 
 cat > "$APP/alireza.py" <<'ALIREZA_495916A9954F00B8C5975C03'
 #!/usr/bin/env python3
-"""On-demand root terminal manager; no daemon, no shell interpolation."""
-import argparse,getpass,json,os,pathlib,secrets,subprocess,sys
+"""On-demand English root terminal manager. No resident process or password argv."""
+import argparse,datetime,getpass,json,os,pathlib,secrets,shutil,socket,ssl,subprocess,sys,urllib.request
 APP=pathlib.Path('/opt/alirezaserver')
 UNITS={'panel':'nova-agent.service','xray':'xray.service','bot':'alirezabot-php.service','telegram':'alirezabot-poller.service','dns':'AdGuardHome.service'}
 def run(args,**kw):return subprocess.run([str(x) for x in args],check=True,**kw)
-def bot(operation,**data):
- p=run(['python3',APP/'bot-manager.py'],input=json.dumps({'operation':operation,**data}),capture_output=True,text=True)
- return json.loads(p.stdout)
+def bot(operation,**data):return json.loads(run(['python3',APP/'bot-manager.py'],input=json.dumps({'operation':operation,**data}),capture_output=True,text=True).stdout)
+def tls_call(value,capture=False):
+ return run(['node',APP/'tls-control.mjs'],input=json.dumps(value),capture_output=capture,text=True)
 def panels():
  p=run(['nova-access'],capture_output=True,text=True);print(p.stdout,end='')
  for line in p.stdout.splitlines():
   if line.startswith('Panel URL: '):
    url=line.split(': ',1)[1].rstrip('/')+'/'
-   print('Bot: '+url+'alireza/bot/web/panel/')
-   print('AI: '+url+'alireza/ai/')
-   print('AdGuard: '+url+'alireza/dns/')
-   print('Remote DNS: '+url+'alireza/alirezadns/')
- print('AdGuard / DNS / OpenVPN: از منوی پنل اصلی؛ ورود با نشست همان پنل.')
- print('رمزهای قبلی هش شده‌اند و قابل نمایش نیستند. Password reset یک رمز تازه می‌سازد.')
+   for name,tail in [('Bot','bot/web/panel/'),('AI','ai/'),('AdGuard','dns/'),('Remote DNS','alirezadns/')]:print(f'{name:12} {url}alireza/{tail}')
+ print('\nInternal sections use the main panel session. OpenVPN is under Inbounds.')
+ print('Hashed panel passwords cannot be recovered. Choose Password reset for a new one.')
 def openvpn():
- if not sys.stdin.isatty():raise RuntimeError('فقط ترمینال تعاملی؛ اطلاعات حساب‌ها در خروجی خودکار چاپ نمی‌شوند.')
+ if not sys.stdin.isatty():raise RuntimeError('Credential display requires an interactive terminal.')
  def query(v):return json.loads(run(['node',APP/'terminal-accounts.mjs'],input=json.dumps(v),capture_output=True,text=True).stdout)
  accounts=query({'operation':'list'})
- for n,account in enumerate(accounts,1):print(str(n)+'. '+account['username']+' · '+('فعال' if account['enabled'] else 'غیرفعال'))
- if not accounts:print('حساب OpenVPN ثبت نشده است.');return
- selected=input('شماره حساب برای نمایش مشخصات (Enter: بازگشت): ').strip()
+ for n,a in enumerate(accounts,1):print(f"{n:2}. {a['username']} / {'enabled' if a['enabled'] else 'disabled'}")
+ if not accounts:print('No OpenVPN accounts configured.');return
+ selected=input('Account number (Enter to return): ').strip()
  if not selected:return
- if not selected.isdigit() or not 1<=int(selected)<=len(accounts):raise RuntimeError('شماره نامعتبر')
- if input('رمز همین حساب در ترمینال نمایش داده شود؟ [y/N] ').lower()!='y':return
- c=query({'operation':'credentials','id':accounts[int(selected)-1]['id']})
- print('Username: '+c['username'])
- print('Password: '+c['password'] if not c.get('needsPassword') else 'برای این حساب قدیمی رمز قابل بازیابی ذخیره نشده؛ از اینباندها رمز تازه تعیین کنید.')
+ if not selected.isdigit() or not 1<=int(selected)<=len(accounts):raise RuntimeError('Invalid account number.')
+ if input('Display the selected password on this terminal? [y/N] ').lower()!='y':return
+ c=query({'operation':'credentials','id':accounts[int(selected)-1]['id']});print('Username: '+c['username'])
+ print('Password: '+c['password'] if not c.get('needsPassword') else 'Legacy account: set a new password in Inbounds; no recoverable password exists.')
 def password(target):
- if not sys.stdin.isatty():raise RuntimeError('برای نمایش امن رمز، این دستور را در ترمینال تعاملی SSH اجرا کنید.')
- choice=input('رمز دلخواه وارد شود؟ [y/N] ').strip().lower()
- value=getpass.getpass('رمز جدید (حداقل ۱۲ نویسه): ') if choice=='y' else secrets.token_urlsafe(18)
- if not 12<=len(value)<=128:raise RuntimeError('طول رمز باید ۱۲ تا ۱۲۸ نویسه باشد.')
- if choice=='y' and value!=getpass.getpass('تکرار رمز: '):raise RuntimeError('رمزها یکسان نیستند.')
- if target=='panel':
-  # Native reset supports stdin. Password never appears in process arguments.
-  run(['nova-passwd','-'],input=value+'\n',text=True);name='Owner (ورود اصلی نوا)'
+ if not sys.stdin.isatty():raise RuntimeError('Password reset requires an interactive SSH terminal.')
+ choice=input('Choose your own password? [y/N] ').strip().lower()
+ value=getpass.getpass('New password (12-128 characters): ') if choice=='y' else secrets.token_urlsafe(18)
+ if not 12<=len(value)<=128:raise RuntimeError('Password length must be 12-128 characters.')
+ if choice=='y' and value!=getpass.getpass('Repeat new password: '):raise RuntimeError('Passwords do not match.')
+ if target=='panel':run(['nova-passwd','-'],input=value+'\n',text=True);name='Owner (native Nova sign-in)'
  elif target=='bot':name=bot('reset-password',password=value)['username']
- else:raise RuntimeError('فقط panel یا bot. AdGuard در این بسته از ورود یکپارچه استفاده می‌کند.')
- print('Username: '+name+'\nNew password: '+value+'\nهمین حالا امن ذخیره کنید؛ دوباره قابل خواندن نیست.')
+ else:raise RuntimeError('Choose panel or bot. AdGuard uses the existing panel session.')
+ print('Username: '+name+'\nNew password: '+value+'\nSave it securely now. It will not be shown again.')
+def tls_setup():
+ if not sys.stdin.isatty():raise RuntimeError('TLS setup requires an interactive terminal.')
+ print('\nTLS SETUP\n1. Trusted public IP certificate (short-lived, automatic renewal)\n2. Domain / HTTP-01 (public port 80 must reach this server)\n3. Domain / Cloudflare DNS-01 (no inbound port 80 validation)')
+ mode=input('Mode [1/2/3]: ').strip()
+ if mode not in ['1','2','3']:return
+ host=input('Public IP address: ' if mode=='1' else 'Domain name: ').strip();email=input('ACME email (optional): ').strip()
+ data={'operation':'issue','host':host,'email':email,'method':'cloudflare' if mode=='3' else 'letsencrypt'}
+ if mode=='3':
+  print('Use Cloudflare Full (strict), not Flexible. Token requires Zone DNS Edit and Zone Read for this zone.')
+  data['token']=getpass.getpass('Cloudflare API token (empty = keep connected token): ').strip()
+  data['proxied']=input('Enable Cloudflare proxy for this domain? [y/N] ').lower()=='y'
+ print('Issuance can take several minutes. Existing native certificate snapshots/rollback remain active.')
+ if input('Request and activate this certificate now? [y/N] ').lower()=='y':tls_call(data)
+def network():
+ s=json.loads(tls_call({'operation':'status'},capture=True).stdout);host=s.get('host','').strip('[]')
+ print('\nCONNECTIVITY / TLS CHECK\nHost: '+host+'\nNative TLS state: '+str(s.get('tls'))+'\nCertificate: '+json.dumps(s.get('cert',{})))
+ if not host:print('No host configured.');return
+ try:
+  addresses=sorted({v[4][0] for v in socket.getaddrinfo(host,None,type=socket.SOCK_STREAM)});print('System DNS A/AAAA: '+', '.join(addresses))
+ except OSError as e:print('DNS FAILED: '+str(e))
+ front=443
+ try:
+  for line in pathlib.Path('/etc/nova/agent.env').read_text().splitlines():
+   if line.startswith('NOVA_FRONT_PORT='):front=int(line.split('=',1)[1])
+ except (OSError,ValueError):pass
+ for address,port in [('127.0.0.1',front),(host,front)]:
+  try:
+   with socket.create_connection((address,port),timeout=7):print(f'TCP {address}:{port}: reachable')
+  except OSError as e:print(f'TCP {address}:{port}: FAILED ({e})')
+ h='['+host+']' if ':' in host else host
+ try:
+  request=urllib.request.Request('https://'+h+(':'+str(front) if front!=443 else '/') ,method='HEAD')
+  with urllib.request.urlopen(request,timeout=10,context=ssl.create_default_context()) as response:print('Public HTTPS with CA verification: HTTP '+str(response.status))
+ except Exception as e:print('Public HTTPS result: '+str(e))
+ print('This checks from the VPS, not your ISP. IP blocking, routing, ISP DNS and Cloudflare WAF need a client-side comparison. No firewall/DNS settings were changed.')
 def repair():
  run(['python3',APP/'xray-access.py'])
- if pathlib.Path('/opt/alirezabot/.alirezaserver-managed').exists():print(json.dumps(bot('repair-web'),ensure_ascii=False))
- run(['systemctl','reset-failed','xray.service']);run(['systemctl','restart','xray.service'])
- run(['bash',APP/'check.sh'])
+ if pathlib.Path('/opt/alirezabot/.alirezaserver-managed').exists():print(json.dumps(bot('repair-web')))
+ run(['systemctl','reset-failed','xray.service']);run(['systemctl','restart','xray.service']);run(['bash',APP/'check.sh'])
 def perform(command,target=None):
  if command in ['panel','panels']:panels()
  elif command=='openvpn':openvpn()
  elif command=='ports':run(['ss','-lntup'])
  elif command=='status':run(['systemctl','show',*UNITS.values(),'-p','Id,ActiveState,SubState,Result','--no-pager'])
  elif command=='password':password(target)
+ elif command=='tls':tls_setup()
+ elif command=='tls-status':print(tls_call({'operation':'status'},capture=True).stdout)
+ elif command=='network':network()
  elif command in ['start','stop','restart']:
-  if target not in UNITS:raise RuntimeError('سرویس مجاز: '+', '.join(UNITS))
-  if target=='bot':print(json.dumps(bot(command),ensure_ascii=False))
+  if target not in UNITS:raise RuntimeError('Allowed services: '+', '.join(UNITS))
+  if target=='bot':print(json.dumps(bot(command)))
   else:run(['systemctl',command,UNITS[target]])
  elif command=='doctor':run(['bash',APP/'install-diagnostics.sh']);run(['bash',APP/'check.sh'])
  elif command=='repair':repair()
  elif command=='backup':run(['python3',APP/'backup.py'])
  elif command=='update':run(['python3',APP/'update.py','--retry'])
- elif command=='logs':run(['journalctl','-u',UNITS.get(target,'nova-agent.service'),'-n','60','--no-pager'])
- else:raise RuntimeError('دستور ناشناخته')
+ elif command=='logs':
+  if target not in [None,*UNITS]:raise RuntimeError('Unknown service.')
+  run(['journalctl','-u',UNITS.get(target,'nova-agent.service'),'-n','60','--no-pager'])
+ else:raise RuntimeError('Unknown command.')
+def service_summary():
+ values={k:'unknown' for k in UNITS}
+ try:
+  result=subprocess.run(['systemctl','show',*UNITS.values(),'-p','Id,ActiveState,LoadState','--no-pager'],capture_output=True,text=True,timeout=5)
+  reverse={v:k for k,v in UNITS.items()}
+  for block in result.stdout.split('\n\n'):
+   row=dict(line.split('=',1) for line in block.splitlines() if '=' in line)
+   if row.get('Id') in reverse:values[reverse[row['Id']]]='not installed' if row.get('LoadState')=='not-found' else row.get('ActiveState','unknown')
+ except (OSError,subprocess.SubprocessError):pass
+ return values
 def menu():
- options=[('مشخصات حساب OpenVPN انتخابی','openvpn',None),('پورت‌های در حال گوش‌دادن','ports',None),('آدرس پنل‌ها و راهنمای رمز','panels',None),('وضعیت سرویس‌ها','status',None),('بازنشانی رمز پنل اصلی','password','panel'),('بازنشانی رمز پنل ربات','password','bot'),('بررسی نصب و اتصال امن','doctor',None),('تعمیر دسترسی Xray و PHP ربات','repair',None),('پشتیبان‌گیری داده‌های افزونه','backup',None),('به‌روزرسانی با بررسی سازگاری','update',None),('راه‌اندازی مجدد پنل','restart','panel'),('راه‌اندازی مجدد Xray','restart','xray'),('راه‌اندازی مجدد ربات','restart','bot'),('لاگ Xray','logs','xray'),('لاگ ربات','logs','bot')]
+ groups=[('ACCESS & SECURITY',[('Panel addresses','panels',None),('Reset main panel password','password','panel'),('Reset bot password','password','bot'),('Selected OpenVPN credentials','openvpn',None),('TLS certificate setup','tls',None),('TLS certificate status','tls-status',None)]),('HEALTH & RECOVERY',[('Service status','status',None),('Connection / DNS / TLS doctor','network',None),('Verify installed integration','doctor',None),('Repair Xray / bot web runtime','repair',None),('Create add-on backup','backup',None),('Guarded Nova update','update',None)]),('SERVICES & LOGS',[('Restart panel','restart','panel'),('Restart Xray','restart','xray'),('Restart bot','restart','bot'),('Listening TCP / UDP ports','ports',None),('Xray journal','logs','xray'),('Bot web journal','logs','bot'),('Telegram journal','logs','telegram')])]
+ color=sys.stdout.isatty() and 'NO_COLOR' not in os.environ
+ def c(value,code):return '\033['+code+'m'+value+'\033[0m' if color else value
  while True:
-  print('\n\033[1;36m◆ ALIREZA · SERVER CONTROL\033[0m')
-  for i,(label,_,__) in enumerate(options,1):print(f'{i:2}. {label}')
-  print(' 0. خروج')
-  choice=input('انتخاب: ').strip()
-  if choice=='0':return
-  if not choice.isdigit() or not 1<=int(choice)<=len(options):continue
+  width=max(44,min(76,shutil.get_terminal_size((76,24)).columns-2));line='='*width
+  print('\n'+c(line,'36'));print(c('  ALIREZA  /  SERVER CONTROL','1;36'));print('  rc.7  |  '+datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'));print(c(line,'36'))
+  states=service_summary()
+  for names in [('panel','xray','dns'),('bot','telegram')]:
+   print('  '+'  |  '.join(name.upper()+': '+c(states[name],'32' if states[name]=='active' else '31' if states[name]=='failed' else '2') for name in names))
+  options=[]
+  for title,items in groups:
+   print('\n  '+c(title,'1;34'))
+   for item in items:
+    options.append(item);print(f'  {len(options):02}. {item[0]}')
+  print('\n  00. Exit\n'+c('-'*width,'36'))
+  choice=input('  Select an option: ').strip()
+  if choice in ['0','00']:return
+  if not choice.isdigit() or not 1<=int(choice)<=len(options):print('Invalid selection.');continue
   label,cmd,target=options[int(choice)-1]
-  if cmd in ['repair','update','restart'] and input(label+' انجام شود؟ [y/N] ').lower()!='y':continue
+  if cmd in ['repair','update','restart'] and input(label+' now? Connections may be interrupted. [y/N] ').lower()!='y':continue
   try:perform(cmd,target)
-  except (RuntimeError,subprocess.SubprocessError,OSError) as e:print('عملیات ناموفق: '+str(e))
-  input('Enter برای بازگشت…')
+  except (RuntimeError,subprocess.SubprocessError,OSError) as e:print(c('Operation failed: '+str(e),'31'))
+  input('\nPress Enter to return...')
 def main():
- parser=argparse.ArgumentParser(description='alireza — terminal manager; passwords are reset, never recovered')
- parser.add_argument('command',nargs='?',choices=['openvpn','ports','status','panel','panels','password','start','stop','restart','doctor','repair','backup','update','logs'])
- parser.add_argument('target',nargs='?');a=parser.parse_args()
- if os.geteuid()!=0:raise RuntimeError('با sudo alireza اجرا کنید.')
+ parser=argparse.ArgumentParser(description='alireza - English server control; passwords are reset, never recovered')
+ parser.add_argument('command',nargs='?',choices=['openvpn','ports','status','panel','panels','password','tls','tls-status','network','start','stop','restart','doctor','repair','backup','update','logs']);parser.add_argument('target',nargs='?');a=parser.parse_args()
+ if os.geteuid()!=0:raise RuntimeError('Run with sudo alireza.')
  if a.command:perform(a.command,a.target)
  elif sys.stdin.isatty():menu()
  else:parser.print_help()
@@ -73119,6 +73185,125 @@ if(process.getuid?.()!==0)throw Error('ROOT_REQUIRED');
 let input='';for await(const chunk of process.stdin){input+=chunk;if(input.length>4096)throw Error('INPUT_TOO_LARGE');}
 try{const v=JSON.parse(input);if(v.operation==='list')console.log(JSON.stringify(users().map(({id,username,enabled})=>({id,username,enabled}))));else if(v.operation==='credentials')console.log(JSON.stringify(accountCredentials(v.id)));else throw Error('INVALID_OPERATION');}finally{database().close();}
 ALIREZA_A1C0F0477A5F5AFEED3CD969
+
+cat > "$APP/tls-control.mjs" <<'ALIREZA_EDA310E3D36DC970DFFA0022'
+// Root CLI/installer bridge to native domain jobs: keep native snapshots and rollback.
+import fs from 'node:fs';import {execFile} from 'node:child_process';import {promisify} from 'node:util';import {isIP} from 'node:net';import {publicTLS} from './tls-core.mjs';import {nativeClient} from './native-client.mjs';
+if(process.getuid?.()!==0)throw Error('ROOT_REQUIRED');
+const env=Object.fromEntries(fs.readFileSync('/etc/nova/agent.env','utf8').split('\n').filter(l=>/^[A-Z_]+=/.test(l)).map(l=>{const i=l.indexOf('=');return[l.slice(0,i),l.slice(i+1).replace(/^['"]|['"]$/g,'')];}));
+process.env.NOVA_DB=env.NOVA_DB||process.env.NOVA_DB||'/var/lib/nova/nova.db';
+// Discover the hidden path from the authoritative local settings, never from input URLs.
+const {openKv}=await import('file:///opt/nova-node-agent/src/kv/sqlite.mjs');const kv=openKv(process.env.NOVA_DB);const settings=JSON.parse(await kv.get('network-settings.json')||'{}');kv.close();
+const base=settings.panelPath?'/'+settings.panelPath.replace(/^\/+|\/+$/g,''):'',api=nativeClient(Number(env.NOVA_PORT||8088),base);
+async function checkPublic(host){const status=await publicTLS(host,Number(env.NOVA_FRONT_PORT||443),base+'/');console.log('Public HTTPS / CA verification: HTTP '+status);if(status===403)console.log('Cloudflare/WAF may be blocking this client. Review its events; no rules were disabled.');}
+let value='';for await(const b of process.stdin)value+=b;if(value.length>8192)throw Error('TLS_INPUT_TOO_LARGE');const input=value?JSON.parse(value):{operation:'auto'};
+try{
+ if(!['status','auto','issue','verify'].includes(input.operation))throw Error('TLS_INVALID_OPERATION');
+ if(input.operation==='verify'){const s=await api('/admin/domain');if(!s.cert?.ok||s.cert.selfSigned)throw Error('TLS_TRUSTED_CERTIFICATE_REQUIRED');await checkPublic(s.host);console.log('Trusted certificate verified for '+s.host);}
+ else if(input.operation==='status'){console.log(JSON.stringify(await api('/admin/domain')));}
+ else{
+  const status=await api('/admin/domain');let host=String(input.host||settings.host||'').replace(/^\[|\]$/g,'');
+  if(input.operation==='auto'){
+   if(status.cert?.ok&&!status.cert.selfSigned&&status.cert.expiresAt>Date.now()+172800000){await checkPublic(status.host);console.log('Trusted TLS already active.');process.exit(0);}
+   const pending='/var/lib/alirezaserver/requested-domain';if(isIP(host)&&fs.existsSync(pending)){const wanted=fs.readFileSync(pending,'utf8').trim();if(wanted)host=wanted;}
+  }
+  if(!host)throw Error('TLS_HOST_MISSING: choose a public IP or domain with alireza tls');
+  if(input.token){await api('/admin/cloudflare','POST',{token:input.token});}
+  if(isIP(host))await promisify(execFile)('python3',['/opt/alirezaserver/tls-runtime.py'],{timeout:600000,maxBuffer:1048576});
+  const method=input.method||'letsencrypt';
+  await api('/admin/domain','POST',{domain:host,method,email:input.email||'',proxied:input.proxied===true});
+  let done=false;
+  for(let i=0;i<180;i++){await new Promise(r=>setTimeout(r,2000));const s=await api('/admin/domain');if(s.state==='active'){if(!s.cert?.ok||s.cert.selfSigned)throw Error('TLS_CERTIFICATE_NOT_TRUSTED');await checkPublic(s.host);console.log('Trusted TLS active for '+s.host);done=true;break;}if(s.state==='error')throw Error(s.error||'TLS_ISSUANCE_FAILED');if(i%15===0)console.log('Certificate request running ('+(i*2)+'s).');}
+  if(!done)throw Error('TLS_JOB_STILL_RUNNING: use alireza tls-status; do not request repeatedly');
+ }
+}catch(e){console.error('TLS: '+e.message);process.exitCode=1;}finally{process.exit(process.exitCode||0);}
+ALIREZA_EDA310E3D36DC970DFFA0022
+
+cat > "$APP/tls-core.mjs" <<'ALIREZA_EF96F10A5E9CBF6AC5AEFB61'
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Narrow certificate adapter. No firewall/DNS changes and no TLS verification bypass.
+import fs from 'node:fs';import tls from 'node:tls';import path from 'node:path';import {isIP} from 'node:net';import {createHash,X509Certificate,createPrivateKey} from 'node:crypto';import {execFile} from 'node:child_process';import {promisify} from 'node:util';
+const execute=promisify(execFile);const ROOT=process.env.ALIREZA_ROOT||'/var/lib/alirezaserver';
+export const IP_CONFIG=path.join(ROOT,'ip-acme/config');
+export const WEBROOT=path.join(ROOT,'acme-webroot');
+export function validIP(host){if(!isIP(host))return false;if(isIP(host)===4){const a=host.split('.').map(Number);return !(a[0]===0||a[0]===10||a[0]===127||a[0]>=224||(a[0]===169&&a[1]===254)||(a[0]===172&&a[1]>=16&&a[1]<=31)||(a[0]===192&&a[1]===168)||(a[0]===100&&a[1]>=64&&a[1]<=127)||(a[0]===192&&a[1]===0&&[0,2].includes(a[2]))||(a[0]===198&&[18,19].includes(a[1]))||(a[0]===198&&a[1]===51&&a[2]===100)||(a[0]===203&&a[1]===0&&a[2]===113));}return /^[23]/.test(host)&&!/^2001:db8:/i.test(host);}
+export function covers(original,cert,host){if(!isIP(host))return original(cert,host);try{return !!new X509Certificate(cert).checkIP(host);}catch{return false;}}
+export function verifyPair(cert,key,host){const x=new X509Certificate(cert);if(!(isIP(host)?x.checkIP(host):x.checkHost(host)))throw Error('TLS_CERTIFICATE_NAME_MISMATCH');if(!x.checkPrivateKey(createPrivateKey(key)))throw Error('TLS_PRIVATE_KEY_MISMATCH');if(Date.parse(x.validFrom)>Date.now()||Date.parse(x.validTo)<=Date.now())throw Error('TLS_CERTIFICATE_EXPIRED_OR_NOT_YET_VALID');return x;}
+function directory(dir){fs.mkdirSync(dir,{recursive:true,mode:0o750});let p=path.resolve(dir);while(p!=='/'){const s=fs.lstatSync(p);if(s.isSymbolicLink()||s.uid!==0||(s.mode&0o022))throw Error('TLS_UNSAFE_DIRECTORY: '+p);p=path.dirname(p);}}
+export function challenge(req,res,root=WEBROOT){const raw=(req.url||'').split('?')[0];if(!raw.startsWith('/.well-known/acme-challenge/'))return false;
+ if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);res.end();return true;}
+ const token=raw.slice('/.well-known/acme-challenge/'.length);if(!/^[A-Za-z0-9_-]{20,256}$/.test(token)){res.writeHead(404);res.end();return true;}
+ let fd;try{for(const p of [root,path.join(root,'.well-known'),path.join(root,'.well-known/acme-challenge')])if(fs.lstatSync(p).isSymbolicLink())throw Error('unsafe');fd=fs.openSync(path.join(root,'.well-known/acme-challenge',token),fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW);const s=fs.fstatSync(fd);if(!s.isFile()||s.size>8192)throw Error('unsafe');const value=fs.readFileSync(fd);res.writeHead(200,{'content-type':'text/plain','cache-control':'no-store','x-content-type-options':'nosniff'});res.end(req.method==='HEAD'?undefined:value);}catch{res.writeHead(404);res.end();}finally{if(fd!==undefined)fs.closeSync(fd);}return true;}
+export function webrootArgs(args){if(!args.includes('--standalone'))return args;const out=[];for(let i=0;i<args.length;i++){if(['--pre-hook','--post-hook'].includes(args[i])){i++;continue;}if(args[i]==='--standalone')out.push('--webroot','--webroot-path',WEBROOT);else out.push(args[i]);}out.push('--pre-hook','','--post-hook','');return out;}
+export async function runtimeGroup(run=execute){const {stdout}=await run('systemctl',['show','xray.service','-p','User','-p','Group'],{timeout:10000});const v=Object.fromEntries(stdout.trim().split('\n').map(l=>l.split('=')));let group=v.Group;if(!group){const result=await run('id',['-gn',v.User||'root'],{timeout:10000});group=result.stdout.trim();}if(!/^[A-Za-z0-9_-]+$/.test(group))throw Error('TLS_INVALID_SERVICE_GROUP');return group;}
+export async function provision(original,options,helpers){const host=String(options.domain||'').toLowerCase(),run=options.runExec||execute,group=await runtimeGroup(run);const opts={...options,certGroup:group};saveCertificateBackup(opts,helpers.writeFileAtomic);
+ if(!isIP(host))return original({...opts,runExec:async(file,args,extra)=>{if(file==='certbot'&&args.includes('--standalone')){directory(path.join(WEBROOT,'.well-known/acme-challenge'));return run(file,webrootArgs(args),extra);}return run(file,args,extra);}});
+ if(!validIP(host))throw Error('TLS_PUBLIC_IP_REQUIRED');if(options.method&&options.method!=='letsencrypt')throw Error('TLS_IP_REQUIRES_HTTP_VALIDATION');
+ const certPem=options.certPem||'/etc/nova/origin.pem',certKey=options.certKey||'/etc/nova/origin.key';if(certPem!=='/etc/nova/origin.pem'||certKey!=='/etc/nova/origin.key')throw Error('TLS_CUSTOM_IP_LAYOUT_REQUIRES_REVIEW');
+ directory(path.join(WEBROOT,'.well-known/acme-challenge'));directory('/etc/nova');
+ await run('python3',['/opt/alirezaserver/tls-runtime.py'],{timeout:600000,maxBuffer:1048576});
+ const name='alireza-ip-'+createHash('sha256').update(host).digest('hex').slice(0,16);
+ const args=['--config-dir',IP_CONFIG,'--work-dir',path.join(ROOT,'ip-acme/work'),'--logs-dir',path.join(ROOT,'ip-acme/logs'),'certonly','--webroot','--webroot-path',WEBROOT,'--non-interactive','--agree-tos','--cert-name',name,'--preferred-profile','shortlived','--ip-address',host];
+ if(options.email&&/^[^\s@]+@[^\s@]+$/.test(options.email))args.push('--email',options.email);else args.push('--register-unsafely-without-email');
+ await run('/opt/alirezaserver-acme/bin/certbot',args,{timeout:240000,maxBuffer:1048576});
+ const lineage=path.join(IP_CONFIG,'live',name),cert=fs.readFileSync(lineage+'/fullchain.pem'),key=fs.readFileSync(lineage+'/privkey.pem');verifyPair(cert,key,host);
+ helpers.writeFileAtomic(certPem,cert);helpers.writeFileAtomic(certKey,key);await run('chown',['root:'+group,certPem,certKey],{timeout:10000});await run('chmod',['640',certPem,certKey],{timeout:10000});
+ const manifest={host,name,certPem,certKey,lastFingerprint:new X509Certificate(cert).fingerprint256};helpers.writeFileAtomic(path.join(ROOT,'ip-certificate.json'),JSON.stringify(manifest)+'\n',0o600);
+ await run('systemctl',['enable','--now','alireza-cert-renew.timer'],{timeout:15000});return {domain:host};
+}
+export async function deployIP({root=ROOT,read=fs.readFileSync,write,run=execute,probe=probeFront}={}){const m=JSON.parse(read(path.join(root,'ip-certificate.json'),'utf8'));if(!validIP(m.host)||m.name!=='alireza-ip-'+createHash('sha256').update(m.host).digest('hex').slice(0,16)||m.certPem!=='/etc/nova/origin.pem'||m.certKey!=='/etc/nova/origin.key')throw Error('TLS_INVALID_RENEWAL_POLICY');
+ const current=new X509Certificate(read(m.certPem));if(current.fingerprint256!==m.lastFingerprint)return {skipped:'Primary certificate changed; preserving current certificate'};
+ const lineage=path.join(root,'ip-acme/config/live',m.name),cert=read(lineage+'/fullchain.pem'),key=read(lineage+'/privkey.pem');const x=verifyPair(cert,key,m.host);if(x.fingerprint256===current.fingerprint256)return {changed:false};
+ const oldCert=read(m.certPem),oldKey=read(m.certKey);try{write(m.certPem,cert);write(m.certKey,key);await run('python3',['/opt/alirezaserver/xray-access.py','--before-start'],{timeout:15000});await run('/usr/local/bin/xray',['run','-test','-config','/usr/local/etc/xray/config.json'],{timeout:15000});await run('systemctl',['restart','xray.service'],{timeout:20000});await run('systemctl',['is-active','--quiet','xray.service'],{timeout:10000});if(!await probe(m.host,x.fingerprint256))throw Error('TLS_RENEWAL_HTTPS_HEALTH_FAILED');}catch(e){write(m.certPem,oldCert);write(m.certKey,oldKey);await run('systemctl',['restart','xray.service'],{timeout:20000}).catch(()=>{});throw e;}
+ m.lastFingerprint=x.fingerprint256;write(path.join(root,'ip-certificate.json'),JSON.stringify(m)+'\n',0o600);return {changed:true};}
+export function redirectHTTP(req,res,host,frontPort=443){if(req.socket?.localPort!==80)return false;let raw=String(host||'').trim(),h;if(isIP(raw))h=isIP(raw)===6?'['+raw+']':raw;else if(/^[A-Za-z0-9.-]+$/.test(raw)&&!raw.startsWith('.')&&!raw.includes('..'))h=raw;else return false;
+ const port=Number(frontPort);if(!Number.isInteger(port)||port<1||port>65535)return false;
+ const url=String(req.url||'/');if(!url.startsWith('/')||/[\r\n\x00]/.test(url))return false;
+ res.writeHead(308,{location:'https://'+h+(port===443?'':':'+port)+url,'cache-control':'no-store'});res.end();return true;}
+export function certificateHealth(original,file,host=''){const base=original(file,host);if(!base.present)return base;try{const x=new X509Certificate(fs.readFileSync(file||process.env.NOVA_CERT_PEM||'/etc/nova/origin.pem'));const h=String(host||'').trim().replace(/^\[|\]$/g,'');const match=!h||!!(isIP(h)?x.checkIP(h):x.checkHost(h));const expired=Date.parse(x.validTo)<=Date.now(),future=Date.parse(x.validFrom)>Date.now();return{...base,ok:match&&!expired&&!future,covers:match,expired,reason:expired?'expired':future?'not-yet-valid':!match?'wrong-name':''};}catch{return base;}}
+
+export async function probeFront(host,fingerprint){let port=443;try{const v=fs.readFileSync('/etc/nova/agent.env','utf8').match(/^NOVA_FRONT_PORT=(\d+)$/m);if(v)port=Number(v[1]);}catch{}
+ for(let i=0;i<12;i++){const ok=await new Promise(resolve=>{const socket=tls.connect({host:'127.0.0.1',port,rejectUnauthorized:true,servername:isIP(host)?undefined:host,checkServerIdentity:(_,cert)=>tls.checkServerIdentity(host,cert)},()=>{const same=socket.authorized&&socket.getPeerCertificate().fingerprint256===fingerprint;socket.destroy();resolve(same);});socket.setTimeout(1000,()=>{socket.destroy();resolve(false);});socket.on('error',()=>resolve(false));});if(ok)return true;await new Promise(r=>setTimeout(r,250));}return false;}
+export async function publicTLS(host,port=443,panelPath='/',request){const https=await import('node:https');request ||= https.request;return new Promise((resolve,reject)=>{const req=request({hostname:host,port,path:panelPath,method:'GET',rejectUnauthorized:true,headers:{'user-agent':'alirezaserver-tls-check'}},res=>{res.resume();if(res.statusCode>=500)reject(Error('TLS_PUBLIC_ORIGIN_HTTP_'+res.statusCode+': check Cloudflare SSL mode / origin reachability'));else resolve(res.statusCode);});req.setTimeout(15000,()=>req.destroy(Error('TLS_PUBLIC_CONNECTION_TIMEOUT')));req.on('error',reject);req.end();});}
+
+export function saveCertificateBackup(options,write,root=ROOT){const cert=options.certPem||'/etc/nova/origin.pem',key=options.certKey||'/etc/nova/origin.key';if(!fs.existsSync(cert)||!fs.existsSync(key))return null;for(const p of [cert,key]){const s=fs.lstatSync(p);if(s.isSymbolicLink()||!s.isFile()||s.uid!==0)throw Error('TLS_BACKUP_UNSAFE_SOURCE');}const c=fs.readFileSync(cert),k=fs.readFileSync(key),x=new X509Certificate(c);if(!x.checkPrivateKey(createPrivateKey(k)))throw Error('TLS_BACKUP_KEY_MISMATCH');const dir=path.join(root,'tls-backups',createHash('sha256').update(c).digest('hex'));directory(dir);fs.chmodSync(dir,0o700);if(!fs.existsSync(dir+'/pair.json')){write(dir+'/origin.pem',c,0o600);write(dir+'/origin.key',k,0o600);write(dir+'/pair.json',JSON.stringify({certPem:cert,certKey:key,fingerprint:x.fingerprint256})+'\n',0o600);}return dir;}
+ALIREZA_EF96F10A5E9CBF6AC5AEFB61
+
+cat > "$APP/tls-renew.mjs" <<'ALIREZA_D2B25B610EC0442211942A4A'
+import {deployIP,validIP} from './tls-core.mjs';import {pathToFileURL} from 'node:url';import fs from 'node:fs';import {createHash,X509Certificate} from 'node:crypto';import {execFile} from 'node:child_process';import {promisify} from 'node:util';
+if(process.getuid?.()!==0)throw Error('ROOT_REQUIRED');
+const policy='/var/lib/alirezaserver/ip-certificate.json';
+if(fs.existsSync(policy)){
+ const m=JSON.parse(fs.readFileSync(policy,'utf8'));if(!validIP(m.host)||m.name!=='alireza-ip-'+createHash('sha256').update(m.host).digest('hex').slice(0,16)||m.certPem!=='/etc/nova/origin.pem')throw Error('TLS_INVALID_RENEWAL_POLICY');
+ if(new X509Certificate(fs.readFileSync(m.certPem)).fingerprint256===m.lastFingerprint){
+  await promisify(execFile)('/opt/alirezaserver-acme/bin/certbot',['--config-dir','/var/lib/alirezaserver/ip-acme/config','--work-dir','/var/lib/alirezaserver/ip-acme/work','--logs-dir','/var/lib/alirezaserver/ip-acme/logs','renew','--cert-name',m.name,'--quiet'],{timeout:240000,maxBuffer:1048576});
+  const{writeFileAtomic}=await import(pathToFileURL((process.env.ALIREZA_NOVA_DIR||'/opt/nova-node-agent')+'/src/cert.mjs'));console.log(JSON.stringify(await deployIP({write:writeFileAtomic})));
+ }else console.log('IP renewal inactive: the primary certificate was replaced.');
+}
+ALIREZA_D2B25B610EC0442211942A4A
+
+cat > "$APP/tls-runtime.py" <<'ALIREZA_5F9FDFE6F56F229DDE883075'
+#!/usr/bin/env python3
+"""Install isolated, pinned IP-capable Certbot wheels; never compile on the VPS."""
+import json,os,pathlib,subprocess
+ROOT=pathlib.Path('/opt/alirezaserver-acme');VERSION='5.8.0'
+def run(args,**kw):return subprocess.run(args,check=True,timeout=480,**kw)
+def install():
+ if os.geteuid()!=0:raise RuntimeError('ROOT_REQUIRED')
+ if ROOT.is_symlink():raise RuntimeError('TLS_VENV_SYMLINK_REFUSED')
+ binary=ROOT/'bin/certbot'
+ if binary.exists():
+  version=subprocess.check_output([str(binary),'--version'],text=True,timeout=20).strip()
+  if version=='certbot '+VERSION:return
+ probe=subprocess.run(['python3','-m','venv','--help'],capture_output=True).returncode==0
+ if not probe or not pathlib.Path('/usr/share/python3-wheels').exists():
+  run(['apt-get','update']);run(['apt-get','install','-y','python3-venv'])
+ run(['python3','-m','venv',str(ROOT)])
+ run([str(ROOT/'bin/pip'),'install','--disable-pip-version-check','--no-cache-dir','--only-binary=:all:','--index-url','https://pypi.org/simple','certbot=='+VERSION,'--report',str(ROOT/'installation-report.json')])
+ if subprocess.check_output([str(binary),'--version'],text=True,timeout=20).strip()!='certbot '+VERSION:raise RuntimeError('TLS_CERTBOT_VERSION_MISMATCH')
+ with (ROOT/'installed-packages.json').open('w') as f:run([str(ROOT/'bin/pip'),'list','--format=json'],stdout=f)
+if __name__=='__main__':install()
+ALIREZA_5F9FDFE6F56F229DDE883075
 
 export ALIREZA_ROOT="$ROOT"
 STAGE=xray-runtime-access
@@ -73303,6 +73488,35 @@ if ! systemctl is-active --quiet xray.service; then
   systemctl restart xray.service
 fi
 systemctl is-active --quiet xray.service || die 'Xray is still unhealthy; inspect journalctl -u xray.service.'
+STAGE=trusted-tls
+cat > /etc/systemd/system/alireza-cert-renew.service <<TLS_RENEW_SERVICE
+[Unit]
+Description=alirezaserver managed IP certificate renewal
+After=network-online.target nova-agent.service
+[Service]
+Type=oneshot
+ExecStart=$NODE_BIN /opt/alirezaserver/tls-renew.mjs
+TimeoutStartSec=300
+UMask=0077
+TLS_RENEW_SERVICE
+cat > /etc/systemd/system/alireza-cert-renew.timer <<'TLS_RENEW_TIMER'
+[Unit]
+Description=Check short-lived IP certificate renewal every six hours
+[Timer]
+OnCalendar=*-*-* 00,06,12,18:00:00
+RandomizedDelaySec=900
+Persistent=true
+[Install]
+WantedBy=timers.target
+TLS_RENEW_TIMER
+systemctl daemon-reload
+if ! printf '%s\n' '{"operation":"auto"}' | node "$APP/tls-control.mjs"; then
+  if [[ -t 0 ]]; then
+    log 'Automatic certificate request failed. Choose the matching validation method below; Cloudflare proxy users can use DNS-01.'
+    python3 "$APP/alireza.py" tls
+  fi
+  printf '%s\n' '{"operation":"verify"}' | node "$APP/tls-control.mjs" || die 'Trusted certificate setup is incomplete. Existing HTTPS and data were retained. Check DNS/CAA/port 80, or run alireza tls for Cloudflare DNS validation, then rerun this installer.'
+fi
 STAGE=dns-configuration-repair
 for attempt in {1..20}; do
   if curl -fsS --max-time 2 http://127.0.0.1:18085/control/status >/dev/null; then break; fi
@@ -73324,7 +73538,7 @@ cp "$WORK/verify.log" "$INSTALL_LOG.verify"; chmod 600 "$INSTALL_LOG.verify"
 [[ $VERIFIED == 1 ]] || die 'The integrated panel did not pass verification. Existing add-on data is retained; rerun this file to repair.'
 bash "$APP/check.sh"
 NOVA_VERSION=$(node -p 'require("/opt/nova-node-agent/package.json").version')
-printf '{"version":"0.8.0-rc.6","nova":"%s","adguard":"%s"}\n' "$NOVA_VERSION" "$AG_VERSION" > "$ROOT/installed.json"
+printf '{"version":"0.8.0-rc.7","nova":"%s","adguard":"%s"}\n' "$NOVA_VERSION" "$AG_VERSION" > "$ROOT/installed.json"
 install -d /etc/logrotate.d
 cat > /etc/logrotate.d/alirezaserver <<'ROTATE'
 /var/log/alirezaserver/*.log {
