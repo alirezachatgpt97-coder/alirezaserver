@@ -1,11 +1,3 @@
-# rc.10 SQL upgrade
-
-Use the complete new install.sh for both fresh install and upgrade. For a managed existing bot, the normal installer calls repair-schema under the existing bot operation lock before UI repair. This snapshots the product table, adds only missing columns/valid defaults and verifies readiness. New bot installs contain the migration in their packaged source, check existing schema before bootstrap where applicable, and verify the result afterwards. No separate repair file is needed.
-
-The private backup contains SHOW CREATE TABLE and streamed JSONL rows. It is not a backup of the entire database. SQL DDL cannot be rolled back as an ordinary transaction; on error the previous migration file is restored but added columns are not destructively dropped. Data is retained and retry is idempotent. A failed DB permission/connection check stops installation at the reported stage instead of reporting success. Back up from the existing alireza menu before the overall upgrade.
-
----
-
 # ارتقای rc.7
 
 از snapshot و پشتیبان rc.6 شروع کنید. تمام محتوای بسته را در ریشهٔ همین مخزن جایگزین و از پوشهٔ جدید `sudo bash install.sh --repair` اجرا کنید. مرحلهٔ Trusted TLS گواهی موجود معتبر را بررسی یا برای IP/دامنه درخواست ثبت می‌کند. در خطای CA، DNS، CAA یا Cloudflare، داده و HTTPS قبلی باقی می‌ماند؛ خطا را طبق [TLS](TLS.md) رفع و با `alireza tls` روش درست را انتخاب کنید. سپس همان نصاب را دوباره اجرا کنید. `alireza` اکنون انگلیسی است؛ `alireza network` تشخیص خواندنی اتصال دارد.

@@ -1,11 +1,3 @@
-# 0.8.0-rc.10 — 2026-10-19
-
-- Integrate product SQL migration into the complete bot source/payload and installer.
-- Repair missing limitip and NULL status default; preserve explicit status/limits and prices.
-- Snapshot existing product data before repair; verify fresh bootstrap and existing upgrade explicitly rather than swallowing migration failures.
-- Existing bot databases are repaired automatically by the normal panel installer. No separate hotfix command is required.
-- All non-SQL runtime files remain byte-identical to the supplied rc.9, including protocol/config/TLS/UI/AdGuard modules.
-
 # 0.8.0-rc.9 — 2026-10-19
 
 - Repair default origin-IP/domain-certificate SNI mismatch in native raw and structured subscriptions.
