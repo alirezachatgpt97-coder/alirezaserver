@@ -1,3 +1,17 @@
+# rc.13 — fix the installed updater before retrying Nova
+
+Back up using sudo alireza. Install the NEW full install.sh first, then run sudo bash install.sh --update. Running --update using an old installer merely invokes the old installed updater and cannot repair its whitelist. Publish all new root files before using the README download command. Keep source-code.zip compressed on GitHub.
+
+The new updater supports official Nova 1.92.1 and preflights future candidates in a temporary native DB/config tree. A local adapter/file-bound receipt is issued only after the full preflight succeeds. A compatible future version no longer needs a hand-maintained whole-file hash list entry just because its content changed. Breaking runtime/API/theme contracts still block safely. Auto-check remains six-hourly.
+
+Existing bot products including rc.12 geo exits, database, certificates, DNS, manual inbounds, names and optimization modules are retained. No clean VPS reinstall or data reset is required. Use --update-status and journalctl -u alireza-update.service when failures remain; reason and failedStage are now included. No promise of all future upstream compatibility or untested WAN connectivity is made.
+
+# rc.12 — bot product country-exit option
+
+Back up with `sudo alireza` and run the new complete install.sh. The managed bot product schema gains geo_exits with default 0, after a private product-table snapshot. Existing users and old products retain their behavior. The bot editor/driver/API/language updates are backed up and installed through the existing upgrade-ui path. Re-running is idempotent. No manual SQL or separate hotfix is required.
+
+Nova update, TLS, AdGuard, protocol and config-export modules are unchanged from rc.11. Configure country exits in Nova first, then opt in per product in the bot web editor. Product changes apply to new account creation, not a bulk rewrite of existing sold accounts.
+
 # rc.11 upgrade
 
 Back up using `sudo alireza`, then run the new complete `install.sh`. Do not reinstall the VPS. Existing Nova installation is retained; the guarded update timer remains enabled. The owner-only native update button now queues `alireza-update.service`.

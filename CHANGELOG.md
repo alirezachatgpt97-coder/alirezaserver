@@ -1,3 +1,22 @@
+# 0.8.0-rc.13
+
+- Reproduced previous whitelist rejection of official Nova 1.92.1; reviewed its exact official commit/checksum.
+- Replace hash-only rejection of future candidates with isolated syntax/API/auth/account/subscription/config behavior preflight, then an exact-file/adapter compatibility receipt.
+- Unknown candidates remain blocked at runtime without a valid receipt; broken API and post-approval modification tests fail closed.
+- Include reason and failedStage, retain primary JS errors in long minified stack output, distinguish cleanup warnings from activation failures.
+- Preserve six-hour timer, owner-only native update button, snapshots, ownership/cert access and rollback.
+- Keep rc.12 product country-exit option and all other 1,259 prior runtime files unchanged. No new permanent service or on-VPS source build.
+- Local tests and limitations in docs/RC13-VALIDATION.md.
+
+# 0.8.0-rc.12
+
+- Bot product opt-in for native Nova per-user country exits (geoExits), default off for old plans.
+- Create/edit web forms, four language labels, strict product API flag validation and managed local driver mapping.
+- Remote providers do not receive the Nova-only field. Existing users remain unchanged; ordinary updates retain their flag.
+- Additive schema repair with existing private product backup; managed bot editor/driver upgrade backed up and idempotent.
+- Nova updater/TLS/protocol/DNS/UI optimizations unchanged; 1,246 existing runtime files preserved.
+- Actual PHP 8.2.32 / MariaDB 10.11.18 CRUD/migration, driver, UI and native API tests. See docs/RC12-VALIDATION.md.
+
 # 0.8.0-rc.11
 
 - Reviewed compatibility profiles for official Nova 1.85.4 and 1.91.1; unknown bridge contracts fail closed.

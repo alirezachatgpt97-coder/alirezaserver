@@ -1,3 +1,7 @@
+## rc.13 official Nova review
+
+IRNova/Nova-Server 1.92.1, commit 8c57ea6bfa4909bf1ae3b21a69bc6bbb390b7880, archive SHA256 85b62c753db12aecf3e3805398926ae39d2499575a4d2f412cf1e4c04e834b84. Downloaded from the official fixed commit and checksum verified. GitHub connector also checked current version and the user's repository source. The upstream fixture is not embedded as duplicated source/binary in this add-on release; original dependency/license notices follow unchanged.
+
 ## rc.11 reviewed Nova update profiles
 
 Official IRNova/Nova-Server releases were downloaded and checksummed for local compatibility tests:
