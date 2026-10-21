@@ -1,9 +1,3 @@
-# rc.12 — bot product country-exit option
-
-Back up with `sudo alireza` and run the new complete install.sh. The managed bot product schema gains geo_exits with default 0, after a private product-table snapshot. Existing users and old products retain their behavior. The bot editor/driver/API/language updates are backed up and installed through the existing upgrade-ui path. Re-running is idempotent. No manual SQL or separate hotfix is required.
-
-Nova update, TLS, AdGuard, protocol and config-export modules are unchanged from rc.11. Configure country exits in Nova first, then opt in per product in the bot web editor. Product changes apply to new account creation, not a bulk rewrite of existing sold accounts.
-
 # rc.11 upgrade
 
 Back up using `sudo alireza`, then run the new complete `install.sh`. Do not reinstall the VPS. Existing Nova installation is retained; the guarded update timer remains enabled. The owner-only native update button now queues `alireza-update.service`.

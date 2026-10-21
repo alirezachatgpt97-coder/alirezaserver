@@ -8,7 +8,7 @@ umask 077
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 VERSION=0.8.0-rc.8
 REF=main
-SHA256=f7cc242183c873c481ddf0a4586b05ecab08c2fdb1c5297370c639a2444e5cb1
+SHA256=acbd4aad148316fe83cc43ef380e500ffe814f132992a3affcbeea8b380d6b77
 URL="https://raw.githubusercontent.com/alirezachatgpt97-coder/alirezaserver/$REF/install.sh"
 CACHE=/var/cache/alirezaserver
 PARTIAL=''

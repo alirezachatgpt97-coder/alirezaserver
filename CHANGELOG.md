@@ -1,12 +1,3 @@
-# 0.8.0-rc.12
-
-- Bot product opt-in for native Nova per-user country exits (geoExits), default off for old plans.
-- Create/edit web forms, four language labels, strict product API flag validation and managed local driver mapping.
-- Remote providers do not receive the Nova-only field. Existing users remain unchanged; ordinary updates retain their flag.
-- Additive schema repair with existing private product backup; managed bot editor/driver upgrade backed up and idempotent.
-- Nova updater/TLS/protocol/DNS/UI optimizations unchanged; 1,246 existing runtime files preserved.
-- Actual PHP 8.2.32 / MariaDB 10.11.18 CRUD/migration, driver, UI and native API tests. See docs/RC12-VALIDATION.md.
-
 # 0.8.0-rc.11
 
 - Reviewed compatibility profiles for official Nova 1.85.4 and 1.91.1; unknown bridge contracts fail closed.
