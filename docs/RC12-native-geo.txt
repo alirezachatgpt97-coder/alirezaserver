@@ -1,0 +1,14 @@
+✔ Local bot creates legacy inbound account and supplies native configs without public self-fetch (65.833233ms)
+[nova] primary domain bad.example.com (letsencrypt) failed at stage runtime: simulated runtime failure | reported: Nova could not activate the certificate for bad.example.com safely. The previous working configuration was kept. Check Xray and try again.
+✔ Product geoExits opt-in is persisted per native user and preserved by ordinary changes (166.313657ms)
+✔ Native domain transaction preserves origin for direct configs and rolls back on runtime failure (9.085736ms)
+✔ Bot subscription follows current canonical domain; rotation and removal revoke old links (48.586264ms)
+✔ Instance endpoint contains no session or account data and rejects wrong mounts (128.652313ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1066.503849

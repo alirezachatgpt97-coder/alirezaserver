@@ -1,0 +1,29 @@
+✔ Local bot creates legacy inbound account and supplies native configs without public self-fetch (70.053066ms)
+✔ Product geoExits opt-in is persisted per native user and preserved by ordinary changes (39.63867ms)
+✔ Native domain transaction preserves origin for direct configs and rolls back on runtime failure (7.291317ms)
+✔ Bot subscription follows current canonical domain; rotation and removal revoke old links (31.036525ms)
+✔ Instance endpoint contains no session or account data and rejects wrong mounts (18.290405ms)
+✔ Native panel HTML retains all original style blocks, scripts and effects (79.80613ms)
+✔ Native owner authentication reaches all extension UIs; absent or cross-origin auth fails (24.093886ms)
+alirezaserver: AI_FORBIDDEN
+✔ Create real native reseller, authenticate, isolate AI and deny service-management privileges (74.040331ms)
+alirezaserver: AI_KEY_MISSING
+✔ No-key Gemini is isolated from normal panel and assets (7.135368ms)
+✔ Traversal and ambiguous paths rejected before native handlers (2.210479ms)
+✔ Public inbound bridge survives login; embedded OpenVPN still enforces owner auth (22.823827ms)
+✔ Reality key generation is owner-only and same-origin (14.806653ms)
+✔ Manual form assets are static and load before sign-in (2.88757ms)
+✔ Bot job credentials remain owner-only and same-origin (14.706649ms)
+✔ Native update button enforces owner, session and origin then queues guarded updater (8.150849ms)
+✔ Both root and custom native mounts remain supported (2.67199ms)
+✔ Native update queues only the guarded systemd unit (2.677473ms)
+✔ Failed queue is a visible 503, never a false success (0.932405ms)
+✔ Missing service is a visible error (0.366734ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 783.973321
