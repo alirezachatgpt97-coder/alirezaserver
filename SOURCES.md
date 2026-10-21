@@ -1,3 +1,11 @@
+## rc.11 reviewed Nova update profiles
+
+Official IRNova/Nova-Server releases were downloaded and checksummed for local compatibility tests:
+- 1.85.4 / 17e9373ec17ceede95369fcd26d6fabfda83b504 / SHA256 544adcbfd54d09df4ba637a5abeb0803258076308a2abe025e41ea550fa039dc
+- 1.91.1 / 554a7e6dccd15d7ec7aa817ee7a68a9cdfd79b3e / SHA256 e16cd1accf8e6004a77253f3d2c14a6c840a432e5b008fe9156483d913265a69
+
+The upstream distributions are test fixtures and are not embedded in this source ZIP. Fresh install base remains pinned. SPDX notices and original third-party sources/license notices below are retained.
+
 # منابع و وابستگی‌ها
 
 Baseline: `alirezachatgpt97-coder/alirezaserver`, commit `5c6af8114764bee28a5ed3c9aecb83186fbcc434` (0.5.0), branch main. Retrieved 2026-10-09. The unrelated alirezapanel repository is not a source for this release.
@@ -88,3 +96,8 @@ Based strictly on the previously delivered rc.7 source, preserving its pinned No
 MHSanaei/3x-ui (GPL-3.0), `frontend/src/lib/xray/inbound-link.ts`, blob `05681202fba5a2fd23ccad6c8b11d84a4ac36fdf`, was reviewed as a reference for independent dial-address / Host / TLS server-name handling. No 3x-ui implementation or UI was copied into this release. The repair is an original narrow adapter over the existing pinned Nova export paths.
 
 Primary compatibility references: https://developers.cloudflare.com/fundamentals/reference/network-ports/ and https://developers.cloudflare.com/network/websockets/ . Real Cloudflare transit is not part of the local tests.
+
+
+## rc.10 product-schema repair
+
+The only new preferred bot source is `core/alirezabot/db/migrations/013_alirezaserver_product_schema.php` (AGPL-3.0-or-later). Its identical copy `addon/bot-product-schema.php`, root-side `addon/bot_schema.py`, and `addon/bot-schema-tool.php` provide private streamed product-table backup and safe existing-install migration. Existing protocol/TLS/UI sources are unmodified. `tools/package-bot.py` rebuilds the readable source into the verified bot payload; `tools/build.py` embeds exact addon sources into install.sh and updates the bootstrap checksum. See RC10-BASELINE/VALIDATION for provenance and scope.

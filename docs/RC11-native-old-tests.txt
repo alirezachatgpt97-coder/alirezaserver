@@ -1,0 +1,21 @@
+✔ Native panel HTML retains all original style blocks, scripts and effects (57.632663ms)
+✔ Native owner authentication reaches all extension UIs; absent or cross-origin auth fails (14.925288ms)
+alirezaserver: AI_FORBIDDEN
+✔ Create real native reseller, authenticate, isolate AI and deny service-management privileges (56.171466ms)
+alirezaserver: AI_KEY_MISSING
+✔ No-key Gemini is isolated from normal panel and assets (3.74018ms)
+✔ Traversal and ambiguous paths rejected before native handlers (1.711452ms)
+✔ Public inbound bridge survives login; embedded OpenVPN still enforces owner auth (14.912759ms)
+✔ Reality key generation is owner-only and same-origin (10.402802ms)
+✔ Manual form assets are static and load before sign-in (1.457861ms)
+✔ Bot job credentials remain owner-only and same-origin (9.150681ms)
+✔ Native update button enforces owner, session and origin then queues guarded updater (5.441477ms)
+✔ Both root and custom native mounts remain supported (2.208148ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 584.64933

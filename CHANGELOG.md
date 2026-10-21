@@ -1,3 +1,22 @@
+# 0.8.0-rc.11
+
+- Reviewed compatibility profiles for official Nova 1.85.4 and 1.91.1; unknown bridge contracts fail closed.
+- Authenticated owner-only native update-button route to the external guarded updater.
+- Snapshot actual /usr/local/etc/xray and sing-box paths, preserve UID/GID and permissions, repair Xray runtime on rollback.
+- Preserve legacy journal path mapping; validate rollback paths before changing code.
+- Re-evaluate cached rejected releases after compatibility guard updates; report blocked status explicitly.
+- Stream archive hashing and backup traversal; retain six-hour timer and two snapshots.
+- Preserve 1,256 original runtime files, including protocol, bot SQL, UI, DNS and TLS adapters.
+- Tests and honest local-only validation in docs/RC11-VALIDATION.md.
+
+# 0.8.0-rc.10 — 2026-10-19
+
+- Integrate product SQL migration into the complete bot source/payload and installer.
+- Repair missing limitip and NULL status default; preserve explicit status/limits and prices.
+- Snapshot existing product data before repair; verify fresh bootstrap and existing upgrade explicitly rather than swallowing migration failures.
+- Existing bot databases are repaired automatically by the normal panel installer. No separate hotfix command is required.
+- All non-SQL runtime files remain byte-identical to the supplied rc.9, including protocol/config/TLS/UI/AdGuard modules.
+
 # 0.8.0-rc.9 — 2026-10-19
 
 - Repair default origin-IP/domain-certificate SNI mismatch in native raw and structured subscriptions.
