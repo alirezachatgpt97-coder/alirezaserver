@@ -1,3 +1,7 @@
+## rc.14 official Nova review
+
+Nova Server 1.92.3, commit `c72fed38575e682ea44ad63e6e755acaa9c1f765`, official archive SHA256 `f650eb8aae659a8519096e338cfca1464a618b8f2b639419fcdfc1e0926a89c7`; installer SHA256 `1ac7b3ffbce79641e92f949a2ef21ad3a679a6d6fc145450becf133433f238d9`. Downloaded immutable official sources and verified locally. Default fresh install now uses this version; final guarded check can select a newer compatible official release. Prior source/version entries below are historical. New commerce integration is separate from native protocol sources.
+
 ## rc.13 official Nova review
 
 IRNova/Nova-Server 1.92.1, commit 8c57ea6bfa4909bf1ae3b21a69bc6bbb390b7880, archive SHA256 85b62c753db12aecf3e3805398926ae39d2499575a4d2f412cf1e4c04e834b84. Downloaded from the official fixed commit and checksum verified. GitHub connector also checked current version and the user's repository source. The upstream fixture is not embedded as duplicated source/binary in this add-on release; original dependency/license notices follow unchanged.

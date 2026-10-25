@@ -1,3 +1,15 @@
+# 0.8.0-rc.14
+
+- Base Nova 1.92.3 with checked installer/archive hashes; fresh installs check latest compatible official release after activation.
+- Extend isolated update preflight to native reseller quota and scoped identity, binding commerce adapter hashes to compatibility receipts.
+- Remove Network navigation; retain existing endpoint/TLS/protocol and AdGuard behavior.
+- Polish AI, remote DNS deployment and Alirezabot with native design tokens; add sidebar bot icon.
+- Native reseller/admin plan sales through main bot wallet, durable/idempotent orders, approved native capabilities and private credential delivery.
+- Per-seller sales studios and independent bot tokens/wallet receipts; enforce native seller scope/quota.
+- Reuse existing Node worker and bot cron for recovery; snapshot commerce SQLite in backups.
+- Update/verify installed runtime security packages without source builds or adding Nginx.
+- See docs/RC14-VALIDATION.md for tests, actual controller measurements and untested VPS/browser/Telegram/load scenarios.
+
 # 0.8.0-rc.13
 
 - Reproduced previous whitelist rejection of official Nova 1.92.1; reviewed its exact official commit/checksum.
