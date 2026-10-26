@@ -1,3 +1,14 @@
+# 0.8.0-rc.15
+
+- Replace the separate seller studio entry with full isolated Mirza bot instances for native reseller/admin accounts; owner-only reseller-panel sales stay inside Mirza web management.
+- Separate instance DBs, service identities, sockets, sessions, tokens and appearance state; scoped native bridge and explicit bot quota/user/geo guards.
+- Root-owned instance executable code/config; designated writable runtime directories; tracked child process cleanup and serialized dependency installation.
+- Telegram My panels: buyer-bound actual quota, private delivery credentials, confirmation-based native password rotation and encrypted retry state.
+- Emoji navigation and explicit bounded custom-GB purchase; existing main Mirza wallet/idempotent purchase/refund retained.
+- Remove main Hosts manager UI/API and deprecated separate storefront UI; retain connection host profiles and legacy financial data.
+- Include managed instances in private backups and installer UI upgrades. Native protocol/TLS/runtime/update implementation preserved.
+- See RC15 validation for tests and remaining real-VPS/Telegram/browser/load limitations.
+
 # 0.8.0-rc.14
 
 - Base Nova 1.92.3 with checked installer/archive hashes; fresh installs check latest compatible official release after activation.

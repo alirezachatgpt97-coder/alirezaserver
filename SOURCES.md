@@ -1,3 +1,7 @@
+## rc.15 Mirza instance integration
+
+Reuses the exact bundled Mirza application and checked installer template from rc.14; independent instance namespaces and scoped native API integration are new local code. Original license notices remain in the full source archive. No unrelated panel source or protocol implementation was substituted. Nova base/update sources below remain unchanged.
+
 ## rc.14 official Nova review
 
 Nova Server 1.92.3, commit `c72fed38575e682ea44ad63e6e755acaa9c1f765`, official archive SHA256 `f650eb8aae659a8519096e338cfca1464a618b8f2b639419fcdfc1e0926a89c7`; installer SHA256 `1ac7b3ffbce79641e92f949a2ef21ad3a679a6d6fc145450becf133433f238d9`. Downloaded immutable official sources and verified locally. Default fresh install now uses this version; final guarded check can select a newer compatible official release. Prior source/version entries below are historical. New commerce integration is separate from native protocol sources.
