@@ -1,3 +1,7 @@
+## rc.16 reseller UI and bulk access
+
+New scoped Mirza page styling and local JavaScript reuse the existing bundled font/theme assets. New owner-only bulk access code calls official Nova APIs; no third-party protocol core was replaced. Temporary Debian Chromium files used for the attempted development browser check are not production dependencies and are not included in this package.
+
 ## rc.15 Mirza instance integration
 
 Reuses the exact bundled Mirza application and checked installer template from rc.14; independent instance namespaces and scoped native API integration are new local code. Original license notices remain in the full source archive. No unrelated panel source or protocol implementation was substituted. Nova base/update sources below remain unchanged.

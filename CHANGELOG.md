@@ -1,3 +1,13 @@
+# 0.8.0-rc.16
+
+- Scoped Mirza reseller-page typography, padding, responsive fields and readable permission/inbound cards with local font and existing theme tokens.
+- Search/select-visible/count for plan permissions and inbounds; remove stale separate-studio hint.
+- Owner-only bulk additive inbound grants for native reseller accounts and VPN users: search, paginated/select-all results, explicit preview/confirm, durable background progress, pause/resume and conditional undo preview.
+- Native partial user updates preserve quota/UUID/status; actual admin update preserves caps/mode/quota. Unknown/concurrently edited accounts are not blindly overwritten.
+- Encrypted per-account job snapshots reuse existing private SQLite/backup and controller; no new daemon or production dependency.
+- Extend Nova update compatibility probe to partial inbound-access preservation. Protocol/TLS/updater sources remain unchanged.
+- See RC16 validation for actual tests and browser/VPS/load limitations.
+
 # 0.8.0-rc.15
 
 - Replace the separate seller studio entry with full isolated Mirza bot instances for native reseller/admin accounts; owner-only reseller-panel sales stay inside Mirza web management.
