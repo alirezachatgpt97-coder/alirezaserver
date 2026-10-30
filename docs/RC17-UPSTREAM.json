@@ -1,0 +1,8 @@
+{
+  "repository": "IRNova/Nova-Server",
+  "tag": "v1.94.3",
+  "commit": "3b19813ee96591d491eb1dd3030cff0f26e77b98",
+  "releaseURL": "https://github.com/IRNova/Nova-Server/releases/tag/v1.94.3",
+  "agentSHA256": "8668c40e0721f7ff861c06b32bf0e1a5605c2b4d93f8ca2821be5bf5a5310722",
+  "installerSHA256": "1ac7b3ffbce79641e92f949a2ef21ad3a679a6d6fc145450becf133433f238d9"
+}

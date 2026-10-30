@@ -164,3 +164,11 @@ Unified manual protocol selection with native engine forms; inline OpenVPN manag
 - Added maintainable addon sources and standalone-installer generator, baseline hashes, regression/native/DOM tests, optional browser checks, honest resource measurements and Persian installation/upgrade/rollback docs.
 
 Live VPS installation, protocol traffic, SSH destination installation, real Gemini quotas, full AdGuard daemon, visual browser QA and one-core/1 GiB load certification remain untested in this environment. See docs/VALIDATION.md.
+
+## 0.8.0-rc.17
+
+- Nova base 1.94.3 pinned to official commit and archive digest; both installation and upgrade check the latest release through the existing guard. New Smart DNS product contract is included in candidate smoke tests when that module is present.
+- Primary Mirza bot can be installed locally or on a fingerprint-approved SSH destination. Restricted forwarding key, private gateway, remote status/control, one-time credentials and remote backup snapshot; existing installations are not silently relocated.
+- Additive `product.az_service` schema; actual per-user Nova grants, standalone OpenVPN and enrolled alirezadns products, destination-aware lifecycle and uncertain-create reconciliation.
+- Existing product mode, quotas, branding, TLS, manual inbound core, AdGuard, updater transaction code and rc.16 bulk permissions retained. Renewal service compatibility is checked before payment in the primary Telegram flow.
+- Short Persian README and test/limitation report. No production VPS or whole-stack 1 GiB certification claim.

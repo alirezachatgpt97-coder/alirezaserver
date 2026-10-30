@@ -117,3 +117,11 @@ Primary compatibility references: https://developers.cloudflare.com/fundamentals
 ## rc.10 product-schema repair
 
 The only new preferred bot source is `core/alirezabot/db/migrations/013_alirezaserver_product_schema.php` (AGPL-3.0-or-later). Its identical copy `addon/bot-product-schema.php`, root-side `addon/bot_schema.py`, and `addon/bot-schema-tool.php` provide private streamed product-table backup and safe existing-install migration. Existing protocol/TLS/UI sources are unmodified. `tools/package-bot.py` rebuilds the readable source into the verified bot payload; `tools/build.py` embeds exact addon sources into install.sh and updates the bootstrap checksum. See RC10-BASELINE/VALIDATION for provenance and scope.
+
+### rc.17 integration sources
+
+- Official Nova release: https://github.com/IRNova/Nova-Server/releases/tag/v1.94.3 ; commit `3b19813ee96591d491eb1dd3030cff0f26e77b98`.
+- Official release agent archive SHA-256: `8668c40e0721f7ff861c06b32bf0e1a5605c2b4d93f8ca2821be5bf5a5310722`. Installer script SHA-256: `1ac7b3ffbce79641e92f949a2ef21ad3a679a6d6fc145450becf133433f238d9`.
+- Input alirezaserver modular rc.16 ZIP fetched from the user's current repository: SHA-256 `c2b08510aac1a1c5b714d31652e73108da8d58cab124821db916a293a36c1a9d`.
+- HyperDNS v2 client lifecycle contract reviewed against https://github.com/IzumiRain/HyperDNS/blob/v2.2.0-beta.1/docs/API.md and `internal/api/router_v2.go`; per-client byte usage uses the documented v1 read response. No AdGuard API or interface was modified.
+- New SSH bootstrap / private FastCGI gateway and product adapters are maintained in `addon/bot-remote*`, `addon/bot-services.mjs` and the Mirza integration files. New addon files retain GPL-3.0-or-later headers; Mirza-side additions retain AGPL-3.0-or-later headers. Upstream notices and complete preferred sources remain included.
