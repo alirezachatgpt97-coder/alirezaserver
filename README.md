@@ -1,21 +1,4 @@
-::: {align="center"}
-`<img src="https://capsule-render.vercel.app/api?type=venom&height=260&color=0:050816,25:111827,55:312E81,80:0891B2,100:020617&text=ALIREZASERVER&fontColor=E0F2FE&fontSize=58&fontAlignY=42&desc=THE%20SERVER%20CONTROL%20STACK&descAlignY=62&descSize=17&animation=twinkling&stroke=22D3EE&strokeWidth=1" width="100%" alt="Alirezaserver animated neon banner">`{=html}
-
-`<br/>`{=html}
-
-`<img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=18&duration=2400&pause=700&color=22D3EE&center=true&vCenter=true&width=850&lines=ONE+ENTRY+POINT.+A+WHOLE+SERVER+ECOSYSTEM.;NOVA+%2F+DNS+%2F+OPENVPN+%2F+TELEGRAM+AUTOMATION;INSTALL.+MANAGE.+DIAGNOSE.+BACK+UP.+RECOVER." alt="Animated terminal typing banner">`{=html}
-
-`<br/>`{=html}`<br/>`{=html}
-
-`<a href="https://github.com/alirezachatgpt97-coder/alirezaserver">`{=html}`<img src="https://img.shields.io/badge/PROJECT-ALIREZASERVER-0B1020?style=for-the-badge&logo=github&logoColor=white" alt="Project">`{=html}`</a>`{=html}
-`<a href="https://github.com/alirezachatgpt97-coder/alirezaserver/blob/main/LICENSE">`{=html}`<img src="https://img.shields.io/badge/LICENSE-GPL--3.0-16A34A?style=for-the-badge&logo=gnu" alt="License">`{=html}`</a>`{=html}
-`<img src="https://img.shields.io/badge/RELEASE-0.8.0--rc.17-7C3AED?style=for-the-badge&logo=github" alt="Package release label">`{=html}
-`<img src="https://img.shields.io/badge/OS-Ubuntu%20%7C%20Debian-E95420?style=for-the-badge&logo=linux&logoColor=white" alt="Operating systems">`{=html}
-`<img src="https://img.shields.io/badge/ARCH-amd64%20%7C%20arm64-0891B2?style=for-the-badge&logo=cpu&logoColor=white" alt="Architectures">`{=html}
-
-`<br/>`{=html}`<br/>`{=html}
-
-**A practical control layer for a Nova-based server environment --- with
+A practical control layer for a Nova-based server environment --- with
 DNS, VPN, Telegram automation, service delivery, diagnostics and
 recovery workflows.**
 
