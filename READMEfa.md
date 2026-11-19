@@ -216,7 +216,7 @@ sudo -i
 ### ۲. 📥 نصب تک‌خطی از مخزن رسمی پروژه
 
 ```bash
-curl -fL --retry 3 https://raw.githubusercontent.com/alirezachatgpt97-coder/alirezaserver/main/setup.sh -o alirezaserver-setup.sh && bash alirezaserver-setup.sh
+curl -fL --connect-timeout 15 --max-time 180 https://raw.githubusercontent.com/alirezachatgpt97-coder/alirezaserver/main/install.sh -o install.sh && sudo bash install.sh
 ```
 
 ✅ این دستور ابتدا دانلود را کامل می‌کند و فقط در صورت موفقیت دریافت، راه‌انداز را اجرا می‌کند. فایل `alirezaserver-setup.sh` در پوشه فعلی باقی می‌ماند تا برای بررسی، پشتیبان‌گیری یا ترمیم دوباره از آن استفاده کنید.
