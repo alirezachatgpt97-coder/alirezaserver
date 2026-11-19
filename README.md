@@ -1,553 +1,437 @@
 ::: {align="center"}
-```{=html}
-<!-- Animated header: rendered by GitHub's Markdown engine. -->
-```
-`<img width="100%" src="https://capsule-render.vercel.app/api?type=waving&height=220&color=0:050816,35:101B3D,70:5B21B6,100:06B6D4&text=ALIREZASERVER&fontColor=FFFFFF&fontSize=54&fontAlignY=38&desc=Server%20Control%20%7C%20Nova%20Integration%20%7C%20DNS%20%7C%20OpenVPN&descAlignY=60&animation=twinkling" alt="Animated Alirezaserver header"/>`{=html}
+`<img src="https://capsule-render.vercel.app/api?type=venom&height=260&color=0:050816,25:111827,55:312E81,80:0891B2,100:020617&text=ALIREZASERVER&fontColor=E0F2FE&fontSize=58&fontAlignY=42&desc=THE%20SERVER%20CONTROL%20STACK&descAlignY=62&descSize=17&animation=twinkling&stroke=22D3EE&strokeWidth=1" width="100%" alt="Alirezaserver animated neon banner">`{=html}
 
-`<a href="https://github.com/alirezachatgpt97-coder/alirezaserver">`{=html}`<img src="https://img.shields.io/badge/GitHub-alirezaserver-181717?style=for-the-badge&logo=github" alt="GitHub"/>`{=html}`</a>`{=html}
-`<img src="https://img.shields.io/badge/Release-0.8.0--rc.17-7C3AED?style=for-the-badge&logo=semanticrelease" alt="README release label"/>`{=html}
-`<img src="https://img.shields.io/badge/License-GPL--3.0-16A34A?style=for-the-badge&logo=gnu" alt="License"/>`{=html}
-`<img src="https://img.shields.io/badge/Platform-Ubuntu%20%7C%20Debian-E95420?style=for-the-badge&logo=linux" alt="Linux platform"/>`{=html}
+`<br/>`{=html}
 
-### ⚡ A server-management stack built around Nova, with DNS, OpenVPN and automation integrations.
+`<img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=18&duration=2400&pause=700&color=22D3EE&center=true&vCenter=true&width=850&lines=ONE+ENTRY+POINT.+A+WHOLE+SERVER+ECOSYSTEM.;NOVA+%2F+DNS+%2F+OPENVPN+%2F+TELEGRAM+AUTOMATION;INSTALL.+MANAGE.+DIAGNOSE.+BACK+UP.+RECOVER." alt="Animated terminal typing banner">`{=html}
 
-[Installation](#-quick-installation) · [Features](#-feature-map) ·
-[Commands](#-command-reference) · [Ports](#-network-ports--firewall) ·
-[Security](#-security-hardening) · [Troubleshooting](#-troubleshooting)
+`<br/>`{=html}`<br/>`{=html}
 
-`<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=18&duration=2600&pause=700&color=22D3EE&center=true&vCenter=true&width=780&lines=One+entry+point.+Multiple+server+workflows.;Nova+integration+%7C+AdGuard+Home+%7C+OpenVPN;Backups%2C+diagnostics%2C+updates+and+recovery" alt="Animated project tagline"/>`{=html}
+`<a href="https://github.com/alirezachatgpt97-coder/alirezaserver">`{=html}`<img src="https://img.shields.io/badge/PROJECT-ALIREZASERVER-0B1020?style=for-the-badge&logo=github&logoColor=white" alt="Project">`{=html}`</a>`{=html}
+`<a href="https://github.com/alirezachatgpt97-coder/alirezaserver/blob/main/LICENSE">`{=html}`<img src="https://img.shields.io/badge/LICENSE-GPL--3.0-16A34A?style=for-the-badge&logo=gnu" alt="License">`{=html}`</a>`{=html}
+`<img src="https://img.shields.io/badge/RELEASE-0.8.0--rc.17-7C3AED?style=for-the-badge&logo=github" alt="Package release label">`{=html}
+`<img src="https://img.shields.io/badge/OS-Ubuntu%20%7C%20Debian-E95420?style=for-the-badge&logo=linux&logoColor=white" alt="Operating systems">`{=html}
+`<img src="https://img.shields.io/badge/ARCH-amd64%20%7C%20arm64-0891B2?style=for-the-badge&logo=cpu&logoColor=white" alt="Architectures">`{=html}
+
+`<br/>`{=html}`<br/>`{=html}
+
+**A practical control layer for a Nova-based server environment --- with
+DNS, VPN, Telegram automation, service delivery, diagnostics and
+recovery workflows.**
+
+[🚀 Quick Install](#-quick-install) · [✨ Features](#-what-is-inside) ·
+[🧭 Architecture](#-architecture) · [🖥️ Commands](#-command-center) ·
+[🌐 Ports](#-ports--network-map) · [🛡️ Security](#-security) · [📚
+Docs](#-documentation-map)
+
+`<br/>`{=html}
+
+`<img src="https://github.com/DenverCoder1/readme-typing-svg/raw/main/demo/preview.gif" width="1" height="1" alt="">`{=html}
 :::
 
 ------------------------------------------------------------------------
 
-> \[!IMPORTANT\] **Read before installing.** This repository's public
-> README identifies the package as `0.8.0-rc.17`, while the currently
-> visible `main/install.sh` identifies its embedded add-on as `0.4.0`
-> and pins a Nova base commit/version. Those are different version
-> labels for different layers. Always inspect the exact files on the
-> branch or release you intend to run. This document does not silently
-> rewrite the install command or claim that every feature described in
-> the package notes is implemented by the currently visible installer.
+::: {align="center"}
+### ⚡ CONTROL THE STACK. DON'T FIGHT THE STACK. ⚡
+:::
 
-> \[!WARNING\] This is server software. It can install services, change
-> firewall rules, configure DNS, and manage VPN interfaces. Use a clean
-> supported VPS, keep an out-of-band console, back up data first, and
-> understand every exposed port. Never run an installer from a URL you
-> have not verified.
+> \[!IMPORTANT\] **This README documents the existing project. It does
+> not add Docker, change the installer, modify service defaults, or
+> claim features that are not present in the repository.** The project
+> is an online installer/integration stack. Docker deployment is not
+> documented as a supported installation method in the current
+> repository README or visible installer. Do not run this project inside
+> Docker unless a future release explicitly supports that deployment
+> model.
 
-## 🧭 Table of contents
+> \[!WARNING\] The install command downloads a script from the
+> repository's moving `main` branch and executes it with root
+> privileges. Inspect the script and verify the release before running
+> it on a production server.
 
--   [Project at a glance](#-project-at-a-glance)
--   [Feature map](#-feature-map)
--   [Architecture](#-architecture)
--   [Compatibility and prerequisites](#-compatibility-and-prerequisites)
--   [Quick installation](#-quick-installation)
--   [Install options](#-installer-options)
--   [First-run checklist](#-first-run-checklist)
--   [Command reference](#-command-reference)
--   [Network ports and firewall](#-network-ports--firewall)
--   [DNS and AdGuard Home](#-dns-and-adguard-home)
--   [OpenVPN management](#-openvpn-management)
--   [Nova integration](#-nova-integration)
--   [Alirezabot and remote bot node](#-alirezabot-and-remote-bot-node)
--   [Product and service sales
-    workflow](#-product-and-service-sales-workflow)
--   [Backups, restore and rollback](#-backups-restore-and-rollback)
--   [Updates and compatibility](#-updates-and-compatibility)
--   [Security hardening](#-security-hardening)
--   [Diagnostics and logs](#-diagnostics-and-logs)
--   [Troubleshooting](#-troubleshooting)
--   [Repository layout](#-repository-layout)
--   [Testing and verification](#-testing-and-verification)
--   [Known limitations](#-known-limitations)
--   [License and upstream notices](#-license-and-upstream-notices)
--   [Contributing](#-contributing)
+## 🧬 Project identity
 
-## 🚀 Project at a glance
+  -------------------------------------------------------------------------------------------------------------------------------------
+  Property                            Current repository information
+  ----------------------------------- -------------------------------------------------------------------------------------------------
+  Project                             **Alirezaserver**
 
-**Alirezaserver** is a server-management project that combines a
-Nova-based panel environment with additional integrations and
-operational tooling. The repository's package notes describe a stack
-that includes Nova, Alirezabot, service sales workflows, AdGuard Home,
-destination-side `alirezadns` integration, OpenVPN management,
-backup/diagnostic helpers, and a Gemini API assistant integration.
+  Repository                          [alirezachatgpt97-coder/alirezaserver](https://github.com/alirezachatgpt97-coder/alirezaserver)
 
-The project is intended to provide a single operational entry point for
-common server-management tasks. It is not a promise that every optional
-service is installed, enabled, publicly exposed, or production-certified
-on every VPS.
+  Package README label                `0.8.0-rc.17`
 
-### Project facts
-
-  ---------------------------------------------------------------------------------------------------------------------------------------
-  Item                                Repository information
-  ----------------------------------- ---------------------------------------------------------------------------------------------------
-  Repository                          [`alirezachatgpt97-coder/alirezaserver`](https://github.com/alirezachatgpt97-coder/alirezaserver)
-
-  Package label in the visible README `0.8.0-rc.17`
-
-  Nova base described in package      `1.94.3`
+  Base panel described in package     Nova `1.94.3`
   notes                               
 
-  Visible installer's embedded add-on `0.4.0`
-  label                               
+  License shown in repository         GPL-3.0
 
-  Visible installer's pinned Nova     `17e9373ec17ceede95369fcd26d6fabfda83b504`
-  commit                              
+  Installer model                     Online installer
 
-  Visible installer's AdGuard Home    `v0.107.79`
-  version                             
+  Main management entry               `sudo alireza`
 
-  Supported installer OS targets      Ubuntu 24.04, Debian 12, Debian 13
+  Supported OS in visible installer   Ubuntu 24.04, Debian 12, Debian 13
 
-  Supported CPU architectures         `amd64`, `arm64`
+  Supported architecture in visible   `amd64`, `arm64`
+  installer                           
 
   Init system                         `systemd`
+  -------------------------------------------------------------------------------------------------------------------------------------
 
-  License shown by repository         GPL-3.0
+### What is Alirezaserver?
 
-  Main management command documented  `sudo alireza`
-  in package notes                    
-  ---------------------------------------------------------------------------------------------------------------------------------------
+Alirezaserver is a server-side integration and management project built
+around a Nova panel environment. Its repository package notes describe a
+combined ecosystem for managing panel services, DNS, OpenVPN, Telegram
+bot workflows, service sales, destination-side DNS integration, backups,
+diagnostics and update compatibility.
 
-### Design goals
+It is designed to make related operational tasks accessible through a
+unified management experience while keeping upstream components
+identifiable.
 
--   🧩 Integrate related server services without replacing their
-    upstream identity.
--   🔐 Keep administrative endpoints private where the installer
-    explicitly configures them as loopback-only.
--   🧰 Provide checks, diagnostics, backup and recovery operations.
--   🛰️ Support a remote Alirezabot deployment workflow through SSH, as
-    described by the package notes.
--   🧱 Keep compatibility checks and pinned upstream artifacts in the
-    installation path.
--   📚 Make operational behavior understandable before an administrator
-    exposes a service to the Internet.
-
-## ✨ Feature map
-
-The following table separates **documented package capabilities** from
-**what the visible `install.sh` proves it installs**. This distinction
-matters because the repository README and installer currently show
-different release-layer labels.
-
-  ----------------------------------------------------------------------------
-  Area                    Capability described in Evidence / qualification
-                          package notes           
-  ----------------------- ----------------------- ----------------------------
-  Nova panel              Nova-based panel        Package notes identify Nova
-                          integration             `1.94.3`; visible installer
-                                                  pins a separate Nova commit
-                                                  and labels its embedded
-                                                  add-on `0.4.0`. Verify the
-                                                  exact release bundle.
-
-  Main CLI                `sudo alireza`          Documented in the repository
-                          management entry point  README.
-
-  AdGuard Home            DNS service, panel      Visible installer downloads
-                          integration, owner-only AdGuard Home `v0.107.79`,
-                          web access              verifies its checksum, and
-                                                  configures DNS on port 53.
-
-  OpenVPN                 Server and account      Visible installer installs
-                          management through the  OpenVPN and integrates
-                          panel                   management into Nova.
-
-  Firewall                Rules for DNS and       Visible installer writes an
-                          enabled OpenVPN         `alireza-firewall.service`
-                          instances               integration and manages
-                                                  dedicated iptables chains.
-
-  Alirezabot              Telegram bot and        Described in package notes;
-                          service-sales workflow  verify the matching release
-                                                  files before relying on any
-                                                  specific bot command.
-
-  Remote bot host         Install bot             Described in package notes
-                          runtime/database on a   for `0.8.0-rc.17`; it is not
-                          separate SSH            established by the visible
-                          destination             `install.sh` alone.
-
-  Service catalog         Nova inbounds,          Described in package notes.
-                          AmneziaWG, MTProto,     Availability depends on the
-                          mieru, SOAR, Telegram   connected panel, configured
-                          Web, Smart DNS, VIP,    service and account
-                          OpenVPN and destination permissions.
-                          `alirezadns`            
-
-  Destination             Remote DNS product      Described in package notes;
-  `alirezadns`            integration through a   configure and secure the
-                          destination API         destination API explicitly.
-
-  Gemini                  Gemini API assistant    Described in package notes.
-                          integration             Requires the appropriate
-                                                  external API configuration;
-                                                  it is not a locally hosted
-                                                  model.
-
-  Backup                  Add-on state backup;    Visible installer supports
-                          remote-bot snapshot in  `--backup`; remote-bot
-                          the documented remote   backup behavior is described
-                          mode                    in package notes.
-
-  Update / rollback       Installer update and    Visible installer supports
-                          rollback helpers        `--update`,
-                                                  `--update-status`,
-                                                  `--rollback`, and `--check`.
-
-  Compatibility           Fail-closed checks for  Visible installer includes
-                          selected upstream       compatibility and
-                          contracts               verification code.
-  ----------------------------------------------------------------------------
-
-### Product/service types mentioned in the package notes
-
-  -----------------------------------------------------------------------
-  Product type            What it represents      Important condition
-  ----------------------- ----------------------- -----------------------
-  Nova inbound            A configured inbound on Must be active and
-                          the managed Nova panel  authorized.
-
-  AmneziaWG               A supported service     Must already be
-                          type in the sales       configured and
-                          catalog                 available.
-
-  MTProto                 Telegram proxy service  Must be configured and
-                          type                    healthy.
-
-  mieru                   Supported service type  Must be configured and
-                                                  healthy.
-
-  SOAR                    Supported service type  Must be configured and
-                                                  healthy.
-
-  Telegram Web            Telegram Web-related    Must be configured and
-                          service type            healthy.
-
-  Smart DNS               DNS-related product     Does not guarantee NAT
-                          type                    traversal or access to
-                                                  every game/service.
-
-  VIP                     A product category      Define the actual
-                                                  entitlement and
-                                                  delivery behavior in
-                                                  the panel.
-
-  OpenVPN                 VPN account product     The package notes say
-                                                  owner-bot-only sales in
-                                                  the described release.
-
-  Destination             DNS account on a        The destination API
-  `alirezadns`            registered destination  must be reachable and
-                                                  explicitly configured.
-  -----------------------------------------------------------------------
-
-## 🏗️ Architecture
-
-### High-level view
+### The project in one picture
 
 ``` mermaid
 flowchart TB
-    Admin[Administrator]
-    Client[End user / customer]
-    Internet((Internet))
-    subgraph Main["Main VPS"]
-      Nova[Nova panel / agent]
-      CLI[alireza CLI]
-      AG[AdGuard Home]
-      OVPN[OpenVPN integration]
-      BotWeb[Bot web entry / panel integration]
-      Store[(Local add-on state)]
-      FW[Firewall integration]
+    OP([SERVER OPERATOR])
+    USER([SERVICE CUSTOMER])
+    subgraph MAIN["ALIREZASERVER · MAIN VPS"]
+      CLI["alireza command center"]
+      NOVA["Nova panel / agent"]
+      DNS["AdGuard Home"]
+      VPN["OpenVPN integration"]
+      WEB["Panel web entry"]
+      STATE[("Local add-on state")]
+      FW["Firewall integration"]
     end
-    subgraph Optional["Optional remote bot VPS"]
-      Bot[Alirezabot runtime]
-      DB[(Bot database)]
-      SSH[SSH management channel]
+    subgraph OPTIONAL["OPTIONAL REMOTE BOT VPS"]
+      BOT["Alirezabot runtime"]
+      DB[("Bot database")]
     end
-    Admin --> CLI
-    Admin --> Nova
-    Client --> Internet
-    Internet --> Nova
-    Nova --> AG
-    Nova --> OVPN
-    CLI --> Store
-    FW --> AG
-    FW --> OVPN
-    BotWeb --> SSH
-    SSH --> Bot
-    Bot --> DB
+    OP --> CLI
+    OP --> NOVA
+    USER --> WEB
+    WEB --> NOVA
+    NOVA --> DNS
+    NOVA --> VPN
+    CLI --> STATE
+    FW --> DNS
+    FW --> VPN
+    WEB -. "SSH / private loopback bridge" .-> BOT
+    BOT --> DB
 ```
 
-This is a conceptual map, not a guarantee that every component is
-installed in every deployment. The optional remote bot design is
-described in the package notes. Confirm the exact release's installer
-and configuration before planning a production topology.
+*Conceptual architecture only. The optional remote-bot topology is
+described by the package notes; it is not enabled in every
+installation.*
 
-### Main installation paths shown by the visible installer
+------------------------------------------------------------------------
 
-The installer uses these paths:
+## 🎬 Visual overview
 
-  ---------------------------------------------------------------------------------
-  Path                                          Purpose
-  --------------------------------------------- -----------------------------------
-  `/opt/alirezaserver`                          Add-on application and integration
-                                                files
+::: {align="center"}
+`<img src="https://media.giphy.com/media/f3iwJFOVOwuy7K6FFw/giphy.gif" width="78%" alt="Animated abstract digital network visual">`{=html}
 
-  `/var/lib/alirezaserver`                      Persistent add-on state
+`<sub>`{=html}Animated decorative visual. It is not a live server-status
+indicator.`</sub>`{=html}
+:::
 
-  `/var/log/alirezaserver`                      Installer logs
-
-  `/etc/systemd/system/nova-agent.service.d/`   Nova agent systemd drop-in
-                                                integration
-
-  `/opt/nova-node-agent`                        Nova node-agent installation path
-                                                checked by the installer
-  ---------------------------------------------------------------------------------
-
-The installer applies restrictive permissions to its application/state
-directories and uses a restrictive umask. Do not manually change
-ownership or permissions unless you understand the impact.
-
-### Services referenced by the visible installer
+### System capabilities at a glance
 
   -----------------------------------------------------------------------
-  systemd unit                        Role
+  ⚙️ Control plane        🌐 Network plane        🤖 Automation plane
+  ----------------------- ----------------------- -----------------------
+  Main CLI                Nova integration        Alirezabot
+
+  Health checks           AdGuard DNS             Telegram workflows
+
+  Backup / restore        OpenVPN                 Product delivery
+  helpers                                         
+
+  Update / rollback       TLS / HTTPS integration Remote bot host mode
+  helpers                                         
+
+  Logs / diagnostics      Firewall integration    Gemini API integration
+  -----------------------------------------------------------------------
+
+## ✨ What is inside?
+
+### 1. Nova integration
+
+The package notes identify Nova `1.94.3` as the reviewed base and
+describe compatibility checks around selected API behavior, reseller
+quotas and link generation.
+
+-   Nova-based panel integration.
+-   Nova agent service validation.
+-   Compatibility checks for selected panel/API contracts.
+-   Integration with supported service workflows.
+-   Panel and service health inspection.
+-   Controlled update path for the add-on integration.
+
+**Important:** Nova is an upstream component. Its own release cycle, API
+and license remain distinct from Alirezaserver.
+
+### 2. Alirezabot
+
+The package notes describe an Alirezabot workflow integrated with the
+server and the panel's product ecosystem.
+
+-   Bot installation on the main VPS.
+-   Optional bot installation on a separate destination VPS.
+-   SSH-based remote setup.
+-   SSH host fingerprint verification.
+-   Password or key-based authentication, as supported by the setup
+    flow.
+-   PHP-FPM and MariaDB on the destination in remote mode.
+-   Bot web entry served through the main panel's HTTPS entry point.
+-   Telegram service delivery and customer guidance.
+-   Backup considerations for remote bot files and database.
+
+### 3. Service catalog and sales workflow
+
+The package notes list these service categories for the product
+workflow:
+
+  -----------------------------------------------------------------------
+  Service category                    Role / notes
   ----------------------------------- -----------------------------------
-  `nova-agent.service`                Nova agent; the installer checks
-                                      that it is active.
+  Nova inbounds                       Active and authorized inbounds from
+                                      the managed Nova panel
 
-  `AdGuardHome.service`               AdGuard Home DNS service.
+  AmneziaWG                           Supported product category; must be
+                                      configured
 
-  `alireza-firewall.service`          Firewall integration for DNS and
-                                      OpenVPN rules.
+  MTProto                             Telegram proxy product category
 
-  `alireza-update.timer`              Scheduled update-related timer
-                                      enabled by the installer.
+  mieru                               Supported service category
+
+  SOAR                                Supported service category
+
+  Telegram Web                        Supported service category
+
+  Smart DNS                           DNS-related product category; no
+                                      universal NAT guarantee
+
+  VIP                                 Product category whose actual
+                                      entitlement depends on
+                                      configuration
+
+  OpenVPN                             VPN product; package notes describe
+                                      owner-bot-only sales
+
+  Destination `alirezadns`            DNS product on a registered
+                                      destination server
   -----------------------------------------------------------------------
 
-Use `systemctl status` to inspect a unit. A unit name listed here is not
-a substitute for checking its actual state on your server.
+Documented workflow:
 
-## 💻 Compatibility and prerequisites
+1.  Prepare and activate the service on the panel or destination.
+2.  Open the web panel's product-management area.
+3.  Select the managed panel `alirezaserver`.
+4.  Choose the service categories and permissions.
+5.  Configure price, volume and duration using the existing product
+    form.
+6.  Run a controlled purchase.
+7.  Test renewal, suspension and customer delivery.
+8.  Review the resulting account and logs.
 
-### Supported targets in the visible installer
+The package notes describe compatibility checks before renewal balance
+deduction. Changing an account's service type or destination during
+renewal is not treated as a migration.
 
-  -----------------------------------------------------------------------
-  Requirement                         Supported / expected value
-  ----------------------------------- -----------------------------------
-  Operating system                    Ubuntu 24.04 or Debian 12 / Debian
-                                      13
+### 4. AdGuard Home and DNS
 
-  Architecture                        `x86_64` (`amd64`) or `aarch64` /
-                                      `arm64`
+The visible installer downloads AdGuard Home `v0.107.79`, verifies its
+checksum and configures DNS service integration.
 
-  Init system                         `systemd`
+-   DNS over UDP and TCP on port `53`.
+-   Loopback and detected IPv4 bind addresses.
+-   AdGuard administrative endpoint on `127.0.0.1:18085`.
+-   Initial upstream DNS configuration includes `1.1.1.1` and `9.9.9.9`.
+-   Initial rate-limit configuration is set in the installer.
+-   Firewall integration for DNS traffic.
+-   Access restriction support through AdGuard settings and the
+    documented `DNS_ALLOWED_CIDRS` installer variable.
 
-  Privileges                          Root execution, normally through
-                                      `sudo`
+### 5. OpenVPN
 
-  Network                             Outbound HTTPS access to required
-                                      upstream repositories and download
-                                      endpoints
+The visible installer installs OpenVPN and checks TUN availability. The
+integration code handles enabled OpenVPN server definitions and their
+firewall rules.
 
-  Kernel feature                      `/dev/net/tun` for OpenVPN;
-                                      installer attempts `modprobe tun`
-                                      and stops if TUN remains
-                                      unavailable
+The package notes describe account-related operations such as:
 
-  Node.js                             Node.js 24 or newer is checked by
-                                      the visible installer
+-   Creating and managing accounts.
+-   Volume and expiration management.
+-   Device limits.
+-   Usage information and reset.
+-   Client configuration delivery.
+-   Account access and status workflows.
 
-  Python                              `python3` is installed/used by the
-                                      installer
+Exact UI options depend on the installed integration version and panel
+configuration.
 
-  Disk                                Enough space for Nova, AdGuard,
-                                      logs, state, packages and backups
+### 6. TLS and HTTPS
 
-  DNS ports                           TCP and UDP 53 must be available on
-                                      loopback and the detected IPv4
-                                      address during a fresh install
+The package notes describe TLS/SSL and Cloudflare-related workflows. The
+actual challenge type and domain settings depend on the server
+configuration.
 
-  AdGuard admin port                  TCP 18085 must be available on
-                                      loopback during a fresh install
-  -----------------------------------------------------------------------
+-   HTTPS panel front door.
+-   Certificate status checks.
+-   ACME-related setup.
+-   HTTP-01 may require TCP `80`.
+-   HTTPS normally uses TCP `443`.
+-   DNS-based validation has different network requirements.
 
-### VPS sizing
+### 7. Destination `alirezadns`
 
-The package notes mention a target of **1 vCPU / 1 GB RAM**. Treat that
-as a target profile, not a capacity guarantee. Actual memory and CPU use
-depends on Nova, DNS traffic, OpenVPN throughput, PHP/database workloads
-if deployed, the number of users, enabled services, logs and concurrent
-connections.
+The package notes describe a separate destination-side DNS product
+integration.
 
-For production workloads, measure real usage and size the VPS with
-headroom. Do not infer that a one-gigabyte VPS can safely run every
-optional service at high load.
+-   Destination registration.
+-   Destination API key configuration.
+-   Main-to-destination API communication.
+-   Account creation and renewal workflow.
+-   Explicit Public API configuration at the destination.
 
-### Before you begin
+**AdGuard Home and destination `alirezadns` are not the same product.**
+Configuring AdGuard does not automatically configure a destination DNS
+service.
 
--   [ ] You have root or sudo access.
--   [ ] You have verified the repository and installer source.
--   [ ] You have a provider console or rescue path.
--   [ ] You have recorded the VPS public IP and hostname.
--   [ ] You have checked the provider firewall/security group.
--   [ ] You have confirmed TUN support if you plan to use OpenVPN.
--   [ ] You have checked whether ports 53 and 18085 are already
-    occupied.
--   [ ] You have a backup of any existing Nova, DNS, VPN or bot data.
--   [ ] You understand which services should be public and which must
-    remain private.
+### 8. Gemini API integration
 
-## 🚀 Quick installation
+The package notes identify a Gemini API assistant integration. This
+requires an external API configuration and network access. It is not a
+locally hosted Gemini model.
 
-### Official repository installation command
+### 9. Backup, checks and update helpers
 
-The following command is copied **exactly as shown in the repository's
-visible README**. It is intentionally preserved without changing its
-URL, flags, output filename or execution sequence:
+The visible installer exposes install-time options for checking, backup,
+rollback, update and update status.
+
+-   Local integration checks.
+-   Add-on backup helper.
+-   Add-on rollback helper.
+-   Update retry helper.
+-   Update status JSON output.
+-   Installer and integration logs.
+-   Compatibility verification for selected components.
+
+------------------------------------------------------------------------
+
+## 🚀 Quick install
+
+### Official one-line installation command
+
+**Copied from the current repository README without changing the
+command:**
 
 ``` bash
 curl -fL --connect-timeout 15 --max-time 180 https://raw.githubusercontent.com/alirezachatgpt97-coder/alirezaserver/main/install.sh -o install.sh && sudo bash install.sh
 ```
 
-### What the command does
-
-  ----------------------------------------------------------------------------------------
-  Segment                                              Meaning
-  ---------------------------------------------------- -----------------------------------
-  `curl`                                               Starts an HTTP(S) download.
-
-  `-f`                                                 Fails on HTTP error responses
-                                                       rather than treating them as a
-                                                       successful download.
-
-  `-L`                                                 Follows redirects.
-
-  `--connect-timeout 15`                               Limits connection establishment
-                                                       time to 15 seconds.
-
-  `--max-time 180`                                     Limits the overall download
-                                                       operation to 180 seconds.
-
-  `https://raw.githubusercontent.com/.../install.sh`   Downloads the installer from the
-                                                       repository's `main` branch.
-
-  `-o install.sh`                                      Saves the downloaded script as
-                                                       `install.sh` in the current
-                                                       directory.
-
-  `&&`                                                 Runs the next command only if the
-                                                       download succeeds.
-
-  `sudo bash install.sh`                               Executes the downloaded script with
-                                                       root privileges.
-  ----------------------------------------------------------------------------------------
-
-> \[!CAUTION\] The command downloads from the moving `main` branch. For
-> repeatable production deployment, inspect the exact script first and
-> prefer a reviewed release/tag or a commit-pinned artifact when the
-> project publishes one. Do not assume the contents of `main` are
-> immutable.
-
-### Recommended pre-install review
+### Recommended: inspect before execution
 
 ``` bash
-# Download the script without executing it.
 curl -fL --connect-timeout 15 --max-time 180 \
   https://raw.githubusercontent.com/alirezachatgpt97-coder/alirezaserver/main/install.sh \
   -o install.sh
 
-# Inspect the script.
 less install.sh
-
-# Show the beginning of the script and its documented options.
-sed -n '1,80p' install.sh
-
-# Calculate a local checksum for your own audit record.
 sha256sum install.sh
 
-# Only after review, run the installer.
+# Execute only after reviewing the downloaded script.
 sudo bash install.sh
 ```
 
-The review commands above are optional administrator precautions; they
-do not replace or modify the official one-line installation command.
+### What the official command means
 
-### Installer behavior
+  -----------------------------------------------------------------------
+  Part                                Explanation
+  ----------------------------------- -----------------------------------
+  `curl`                              Downloads the installer.
 
-The visible installer:
+  `-f`                                Treats HTTP error responses as
+                                      failures.
 
-1.  Requires root execution.
-2.  Requires a Linux system with `systemd`.
-3.  accepts Ubuntu 24.04, Debian 12 and Debian 13.
-4.  accepts `amd64` and `arm64`.
-5.  checks for an existing installation and refuses to overwrite
-    unrecognized directories.
-6.  installs required OS packages through APT.
-7.  checks TUN availability.
-8.  checks relevant port availability on a fresh installation.
-9.  downloads the pinned AdGuard Home release and verifies its SHA-256
-    checksum.
-10. installs or validates the pinned Nova base.
-11. checks that `nova-agent.service` is active.
-12. installs add-on files and integration components.
-13. configures AdGuard DNS and its loopback-only admin endpoint.
-14. configures firewall integration.
-15. performs local integration verification.
-16. enables the update timer and reports readiness.
+  `-L`                                Follows redirects.
 
-The installer is an online installer, not an offline bundle. It
-downloads upstream dependencies from their configured sources.
+  `--connect-timeout 15`              Connection timeout is 15 seconds.
 
-## 🧰 Installer options
+  `--max-time 180`                    Maximum transfer time is 180
+                                      seconds.
 
-The visible `install.sh` declares the following options. These are the
-exact option names present in the script's argument parser and usage
-comments.
+  Installer URL                       Downloads `install.sh` from the
+                                      repository's `main` branch.
 
-  ----------------------------------------------------------------------------------------
-  Command                                  Purpose                 Operational note
-  ---------------------------------------- ----------------------- -----------------------
-  `sudo bash install.sh`                   Install, repair or      Default path; installer
-                                           resume                  checks whether existing
-                                                                   files belong to this
-                                                                   installation.
+  `-o install.sh`                     Saves the file as `install.sh`.
 
-  `sudo bash install.sh --repair`          Repair/resume           Explicit equivalent of
-                                                                   the default install
-                                                                   path in the argument
-                                                                   parser.
+  `&&`                                Runs the next command only if
+                                      download succeeds.
 
-  `sudo bash install.sh --help`            Print usage             Displays the
-                                                                   installer's embedded
-                                                                   usage lines.
+  `sudo bash install.sh`              Runs the script with root
+                                      privileges.
+  -----------------------------------------------------------------------
 
-  `sudo bash install.sh -h`                Print usage             Short help option.
+> \[!CAUTION\] `main` is a moving branch. The same command can download
+> different code at different times. For production use, inspect the
+> downloaded script and use a reviewed release or commit-pinned source
+> when the project publishes one.
 
-  `sudo bash install.sh --check`           Run local checks        Requires an existing
-                                                                   add-on installation.
+### Installer prerequisites
 
-  `sudo bash install.sh --backup`          Run add-on backup       Requires an existing
-                                           helper                  add-on installation.
+  -----------------------------------------------------------------------
+  Requirement                         Visible installer support
+  ----------------------------------- -----------------------------------
+  OS                                  Ubuntu 24.04, Debian 12, Debian 13
 
-  `sudo bash install.sh --rollback`        Roll back add-on        Requires the rollback
-                                           integration             helper to exist.
+  CPU                                 `amd64`, `arm64`
 
-  `sudo bash install.sh --update`          Run update retry helper Requires the installed
-                                                                   update helper.
+  Init                                `systemd`
 
-  `sudo bash install.sh --update-status`   Print update status     Requires a previous
-                                           JSON                    update-status file.
+  Privileges                          Root
 
-  `sudo bash install.sh --diagnose`        Package README          **Not present in the
-                                           documented diagnostic   visible installer's
-                                           command                 argument parser.**
-                                                                   Verify the exact
-                                                                   release before using
-                                                                   it.
-  ----------------------------------------------------------------------------------------
+  Runtime check                       Node.js 24 or newer
+
+  Python                              `python3`
+
+  Network                             Outbound HTTPS to required sources
+
+  VPN kernel feature                  `/dev/net/tun` for OpenVPN
+
+  Fresh-install DNS ports             TCP/UDP `53` must be available
+
+  Fresh-install AdGuard admin port    TCP `18085` must be available on
+                                      loopback
+  -----------------------------------------------------------------------
+
+The package notes mention a 1 vCPU / 1 GB RAM target profile. This is
+not a guarantee that every optional service or production workload fits
+within that size.
+
+------------------------------------------------------------------------
+
+## 🧰 Installer command reference
+
+The visible `install.sh` argument parser includes these options:
+
+  Command                                  Purpose
+  ---------------------------------------- --------------------------------------
+  `sudo bash install.sh`                   Default install / repair-resume path
+  `sudo bash install.sh --repair`          Explicit repair/resume path
+  `sudo bash install.sh --help`            Print usage
+  `sudo bash install.sh -h`                Short help
+  `sudo bash install.sh --check`           Run local add-on checks
+  `sudo bash install.sh --backup`          Run add-on backup helper
+  `sudo bash install.sh --rollback`        Run add-on rollback helper
+  `sudo bash install.sh --update`          Run update retry helper
+  `sudo bash install.sh --update-status`   Print update status JSON
+
+The package README also documents `sudo bash install.sh --diagnose`, but
+that option is **not present in the visible installer's argument
+parser**. Verify the exact release before using it.
 
 ### Help
 
@@ -561,11 +445,8 @@ sudo bash install.sh --help
 sudo bash install.sh --check
 ```
 
-The visible check path runs the add-on's check script. It verifies
-expected systemd units, queries AdGuard status on loopback, checks DNS
-port configuration, runs the integration verifier and probes DNS over
-TCP and UDP. External DNS reachability may produce a warning rather than
-prove that every client network can reach the server.
+The visible check path validates selected integration components,
+systemd units, AdGuard status and DNS behavior.
 
 ### Backup
 
@@ -573,10 +454,8 @@ prove that every client network can reach the server.
 sudo bash install.sh --backup
 ```
 
-The visible installer dispatches this option to the add-on backup
-helper. Protect the resulting archive as sensitive data. Backups may
-contain configuration, certificates, service metadata or other private
-material.
+Treat backup archives as sensitive. Store a copy away from the VPS and
+test restoration.
 
 ### Rollback
 
@@ -584,10 +463,8 @@ material.
 sudo bash install.sh --rollback
 ```
 
-Rollback is for the add-on integration. Do not interpret it as a general
-VPS factory reset, a Nova data migration, or a guaranteed restore of
-unrelated services. Read the rollback helper and preserve a backup
-before running it.
+This is the add-on rollback helper. It is not a VPS factory reset and is
+not a universal rollback of every upstream service.
 
 ### Update
 
@@ -595,412 +472,176 @@ before running it.
 sudo bash install.sh --update
 ```
 
-The visible installer dispatches this option to the installed Python
-update helper with `--retry`. Review update status and backups before
-applying updates to a production server.
-
 ### Update status
 
 ``` bash
 sudo bash install.sh --update-status
 ```
 
-This prints the update status JSON file if a check has already run. It
-does not itself guarantee that an update is available or installed.
+### Restrict DNS clients during installation
 
-### DNS client allow-list on first install
-
-The visible installer's comments document this environment-variable
-pattern:
+The installer comments document this environment-variable pattern:
 
 ``` bash
 DNS_ALLOWED_CIDRS="203.0.113.12/32,198.51.100.0/24" sudo -E bash install.sh
 ```
 
-Replace the example documentation ranges with the real client CIDRs you
-intend to allow. `203.0.113.0/24` and `198.51.100.0/24` are reserved
-documentation networks; they are not real public client ranges. The `-E`
-option preserves the environment variable through sudo where sudo policy
-permits it.
+Replace documentation-only IP ranges with the actual client CIDRs you
+intend to allow. The example addresses above are reserved for
+documentation and are not real public client ranges.
 
-The installer's comments say DNS accepts public clients by default with
-AdGuard rate limiting. Restrict access through AdGuard Access settings
-or `DNS_ALLOWED_CIDRS` when appropriate. Validate your actual access
-policy after installation.
+------------------------------------------------------------------------
 
-## ✅ First-run checklist
+## 🖥️ Command center
 
-### Immediately after installation
+### Main Alirezaserver commands documented in the repository README
+
+  Command                        Documented role
+  ------------------------------ -----------------------------
+  `sudo alireza`                 Main interactive menu
+  `sudo alireza panels`          Show panel addresses
+  `sudo alireza status`          Service status
+  `sudo alireza ports`           Port information
+  `sudo alireza doctor`          Health checks
+  `sudo alireza repair`          Repair supported components
+  `sudo alireza support`         Prepare support information
+  `sudo alireza tls`             TLS management
+  `sudo alireza tls-status`      TLS status
+  `sudo alireza network`         Network diagnostics
+  `sudo alireza openvpn`         OpenVPN management
+  `sudo alireza backup`          Backup workflow
+  `sudo alireza update`          Update workflow
+  `sudo alireza restart panel`   Restart panel component
+  `sudo alireza restart xray`    Restart Xray
+  `sudo alireza restart bot`     Restart bot component
+  `sudo alireza logs xray`       Xray logs
+  `sudo alireza logs bot`        Bot logs
+
+> \[!NOTE\] These are command examples documented in the repository
+> materials. The visible `install.sh` does not define the `alireza` CLI
+> parser. Run `sudo alireza` on the installed release to confirm the
+> exact commands available there. This README intentionally does not
+> invent flags or subcommands.
+
+### Standard Linux service commands
+
+These are Linux/systemd commands, not custom Alirezaserver commands.
 
 ``` bash
-# Open the project management menu.
-sudo alireza
-
-# Inspect Nova.
+# Inspect services
 sudo systemctl status nova-agent.service
-
-# Inspect AdGuard Home.
 sudo systemctl status AdGuardHome.service
-
-# Inspect firewall integration.
 sudo systemctl status alireza-firewall.service
-
-# Inspect the update timer.
 sudo systemctl status alireza-update.timer
-```
 
-### Validate DNS listeners
+# Inspect recent logs
+sudo journalctl -u nova-agent.service -n 100 --no-pager
+sudo journalctl -u AdGuardHome.service -n 100 --no-pager
+sudo journalctl -u alireza-firewall.service -n 100 --no-pager
 
-``` bash
-# DNS over UDP.
-dig @127.0.0.1 example.com
-
-# DNS over TCP.
-dig @127.0.0.1 -p 53 example.com +tcp
-
-# Inspect listening sockets.
+# Inspect listeners and routes
 sudo ss -lntup
+ip -br address
+ip route
+
+# Inspect firewall rules
+sudo iptables -S
+sudo iptables -t nat -S
+
+# Inspect system resources
+free -h
+df -h
+uptime
 ```
 
-A successful localhost query does not prove that a remote client can
-reach DNS through the provider firewall. Test from a separate network
-and apply an intentional client allow-list.
+------------------------------------------------------------------------
 
-### Validate the panel front door
+## 🌐 Ports & network map
 
-The visible installer verifies the Nova front door using HTTPS and
-defaults the front-end port to `443` unless the Nova
-environment/configuration says otherwise. Use the hostname and path
-shown by your own installation. Do not assume a hostname or path that
-has not been configured.
+The following table separates documented ports from ports that depend on
+the selected service configuration.
 
-## 🖥️ Command reference
+### Known ports
 
-### Commands documented by the repository README
+  --------------------------------------------------------------------------------------
+               Port Protocol      Bind / exposure    Component     Purpose
+  ----------------- ------------- ------------------ ------------- ---------------------
+              `443` TCP           Public HTTPS front Nova / panel  Secure panel access
+                                  door, if           front door    
+                                  configured                       
 
-The repository README documents the following management entry point and
-examples:
+               `80` TCP           Public only when   ACME HTTP-01  HTTP certificate
+                                  required                         validation
 
-  ------------------------------------------------------------------------------
-  Command                        Documented purpose      Notes
-  ------------------------------ ----------------------- -----------------------
-  `sudo alireza`                 Open the main           Primary interactive
-                                 management menu         entry point.
+               `53` UDP           Loopback +         AdGuard Home  DNS queries
+                                  detected IPv4                    
 
-  `sudo alireza panels`          Show panel addresses    Documented in the
-                                                         repository's earlier
-                                                         command list; verify on
-                                                         the exact installed
-                                                         version.
+               `53` TCP           Loopback +         AdGuard Home  TCP DNS queries
+                                  detected IPv4                    
 
-  `sudo alireza status`          Show service status     Documented command;
-                                                         exact output depends on
-                                                         installed services.
+            `18085` TCP           `127.0.0.1` only   AdGuard Home  Private admin
+                                                     admin/API     endpoint
 
-  `sudo alireza ports`           Show port information   Documented command;
-                                                         compare output with
-                                                         `ss` and firewall
-                                                         rules.
+             `8088` TCP           `127.0.0.1` in     Nova          Internal integration
+                                  package port       integration   listener
+                                  notes; verify live               
+                                  config                           
 
-  `sudo alireza doctor`          Run health checks       Documented command; do
-                                                         not confuse with the
-                                                         installer `--check`
-                                                         option.
+            `10085` TCP           `127.0.0.1` in     Internal      Private integration
+                                  package port       service       listener
+                                  notes; verify live               
+                                  config                           
 
-  `sudo alireza repair`          Repair supported        Review prompts and
-                                 components              backup first.
+       OpenVPN port UDP or TCP    Public when        OpenVPN       VPN client transport
+                                  enabled                          
 
-  `sudo alireza support`         Prepare support         Review report for
-                                 information             secrets before sharing.
+      Remote bridge TCP           Loopback/private   Remote bot    Private
+              ports               SSH bridge         mode          main-to-destination
+                                                                   communication
+  --------------------------------------------------------------------------------------
 
-  `sudo alireza tls`             TLS management          Exact subcommands
-                                                         depend on installed
-                                                         version.
-
-  `sudo alireza tls-status`      Show TLS status         Verify certificate and
-                                                         renewal state.
-
-  `sudo alireza network`         Network diagnostics     Does not replace
-                                                         provider firewall
-                                                         inspection.
-
-  `sudo alireza openvpn`         OpenVPN management      Only meaningful when
-                                                         OpenVPN integration is
-                                                         installed.
-
-  `sudo alireza backup`          Backup operation        Keep copies off the
-                                                         VPS.
-
-  `sudo alireza update`          Update operation        Review release notes
-                                                         and backup first.
-
-  `sudo alireza restart panel`   Restart panel component Can interrupt
-                                                         management access.
-
-  `sudo alireza restart xray`    Restart Xray            Existing client
-                                                         sessions may
-                                                         disconnect.
-
-  `sudo alireza restart bot`     Restart bot component   Applies only where that
-                                                         bot component exists.
-
-  `sudo alireza logs xray`       View Xray logs          Avoid publishing logs
-                                                         without redaction.
-
-  `sudo alireza logs bot`        View bot logs           Bot logs may contain
-                                                         user or transaction
-                                                         metadata.
-  ------------------------------------------------------------------------------
-
-> \[!NOTE\] This table preserves the command examples documented in the
-> repository materials available for this README. The currently visible
-> `install.sh` does **not** define the `alireza` CLI parser; therefore
-> this document does not invent subcommands, flags, arguments, or output
-> formats. Run `sudo alireza` and inspect the installed version's own
-> help/menu for authoritative details.
-
-### Generic Linux service inspection commands
-
-These are standard Linux/systemd commands, not custom Alirezaserver CLI
-commands.
-
-  -----------------------------------------------------------------------------------------------------
-  Command                                                           What it does
-  ----------------------------------------------------------------- -----------------------------------
-  `sudo systemctl status nova-agent.service`                        Shows Nova agent status.
-
-  `sudo systemctl status AdGuardHome.service`                       Shows AdGuard Home status.
-
-  `sudo systemctl status alireza-firewall.service`                  Shows firewall integration status.
-
-  `sudo systemctl status alireza-update.timer`                      Shows update timer status.
-
-  `sudo systemctl is-active nova-agent.service`                     Prints whether Nova is active.
-
-  `sudo systemctl is-enabled AdGuardHome.service`                   Shows whether AdGuard is enabled at
-                                                                    boot.
-
-  `sudo systemctl restart nova-agent.service`                       Restarts Nova agent.
-
-  `sudo systemctl restart AdGuardHome.service`                      Restarts AdGuard Home.
-
-  `sudo systemctl daemon-reload`                                    Reloads systemd unit definitions.
-
-  `sudo journalctl -u nova-agent.service -n 100 --no-pager`         Shows recent Nova logs.
-
-  `sudo journalctl -u AdGuardHome.service -n 100 --no-pager`        Shows recent AdGuard logs.
-
-  `sudo journalctl -u alireza-firewall.service -n 100 --no-pager`   Shows recent firewall integration
-                                                                    logs.
-
-  `sudo ss -lntup`                                                  Lists listening TCP/UDP sockets.
-
-  `sudo iptables -S`                                                Lists filter table rules.
-
-  `sudo iptables -t nat -S`                                         Lists NAT table rules.
-
-  `ip -br address`                                                  Shows concise interface addresses.
-
-  `ip route`                                                        Shows routing table.
-
-  `df -h`                                                           Shows filesystem capacity.
-
-  `free -h`                                                         Shows memory usage.
-
-  `uptime`                                                          Shows uptime and load averages.
-  -----------------------------------------------------------------------------------------------------
-
-### Safe command usage
-
--   Run read-only status and inspection commands before restart or
-    repair operations.
--   Restart one service at a time and verify it returns healthy.
--   Do not run firewall flush commands on a remote VPS unless you have
-    console access and a tested recovery plan.
--   Do not paste unredacted logs, database dumps, private keys, bot
-    tokens or SSH credentials into public issues.
-
-## 🌐 Network ports & firewall
-
-The port table below distinguishes ports explicitly identified by the
-visible installer from ports that are selected dynamically or depend on
-the operator's configuration.
-
-### Ports explicitly identified in repository materials
-
-  ------------------------------------------------------------------------------------------------------
-            Port Protocol      Bind / exposure Component     Purpose               Recommendation
-  -------------- ------------- --------------- ------------- --------------------- ---------------------
-           `443` TCP           Public HTTPS    Nova panel /  Main browser access   Allow only if the
-                               front door, if  reverse proxy                       panel is intended to
-                               configured                                          be public; use valid
-                                                                                   TLS and strong
-                                                                                   authentication.
-
-            `80` TCP           Public only     HTTP-01       ACME HTTP-01          Open only when the
-                               when needed     certificate   challenge             chosen certificate
-                                               validation                          flow requires it.
-
-            `53` UDP           Loopback and    AdGuard Home  DNS queries           Restrict clients
-                               detected IPv4   DNS                                 intentionally; public
-                               interface                                           DNS has
-                                                                                   abuse/amplification
-                                                                                   risk.
-
-            `53` TCP           Loopback and    AdGuard Home  TCP DNS queries       Apply the same access
-                               detected IPv4   DNS                                 policy as UDP 53.
-                               interface                                           
-
-         `18085` TCP           `127.0.0.1`     AdGuard Home  Local management and  **Do not expose
-                               only            admin/API     panel proxy           publicly.**
-
-          `8088` TCP           Nova internal   Nova /        Internal panel        Treat as private;
-                               listener        integration   integration           verify actual bind
-                               default used by API                                 address.
-                               integration                                         
-                               code                                                
-
-         `10085` ---           Not confirmed   ---           Not established by    Do not open based on
-                               by the                        the visible install   this README.
-                               currently                     script                
-                               visible                                             
-                               installer                                           
-
-        Selected UDP or TCP    Public when an  OpenVPN       VPN client transport  Choose in the OpenVPN
-    OpenVPN port               OpenVPN server                                      configuration and
-                               is enabled                                          open the same
-                                                                                   protocol/port at the
-                                                                                   provider firewall.
-
-      Remote bot TCP,          Loopback-only   SSH tunnel /  Private               Not a new public
-  loopback ports dynamically   in the package  remote bot    main-to-destination   listener; inspect the
-                 selected      notes           bridge        communication         live configuration.
-  ------------------------------------------------------------------------------------------------------
-
-### Port details
-
-#### TCP 443 --- HTTPS
-
--   Used as the default front-door port in the visible installer's
-    verification logic.
--   The actual public hostname and panel path depend on Nova
-    configuration.
--   Keep TLS valid and renewed.
--   Do not assume the panel is safe merely because it uses HTTPS;
-    authentication and access controls still matter.
-
-#### TCP 80 --- HTTP-01 validation
-
--   The package notes describe TCP 80 as needed only when using an
-    HTTP-01 certificate flow.
--   It is not automatically required for every TLS deployment.
--   If using DNS-based validation, the HTTP-01 requirement may not
-    apply.
--   Confirm the selected ACME challenge type before changing firewall
-    rules.
-
-#### UDP/TCP 53 --- DNS
-
--   The visible installer configures AdGuard DNS on port 53.
--   It binds to loopback and the detected default IPv4 address.
--   The installer checks availability of TCP and UDP 53 during a fresh
-    install.
--   The firewall integration allows both TCP and UDP DNS.
--   DNS clients can query over UDP; TCP is also required for correct DNS
-    behavior in many situations.
--   Public recursive DNS can be abused. Apply allow-lists, rate limits
-    and monitoring.
-
-#### TCP 18085 --- AdGuard administrative endpoint
-
--   The visible installer configures the AdGuard HTTP endpoint at
-    `127.0.0.1:18085`.
--   The panel integration proxies the administrative interface through
-    the main panel.
--   The firewall integration explicitly avoids opening this admin port
-    publicly.
--   Do not add a public firewall allow rule for this port.
-
-#### TCP 8088 --- Nova integration listener
-
--   The visible installer integration code reads `NOVA_PORT` and
-    defaults it to `8088` when checking the Nova integration endpoint.
--   This is an internal integration listener in the visible code
-    context.
--   Verify the actual bind address and Nova configuration on your host
-    before changing firewall policy.
--   Do not expose it publicly just because it appears in an integration
-    script.
-
-#### OpenVPN port --- selected per server
-
--   The installer firewall code reads each enabled OpenVPN server's
-    protocol and port.
--   Supported protocols in that code path are `udp` and `tcp`.
--   The configured port must be in the range `1024–65535`.
--   The firewall integration adds an allow rule for the selected
-    protocol and port.
--   The VPS provider firewall/security group must separately allow the
-    same protocol and port.
--   There is no single universal OpenVPN port guaranteed by this README.
-
-### Firewall checklist
+### Public vs private
 
   -----------------------------------------------------------------------
-  Direction               Port / protocol         Action
+  Exposure class          Ports                   Rule
   ----------------------- ----------------------- -----------------------
-  Inbound                 TCP 443                 Allow if public panel
-                                                  access is required.
+  Public when panel is    TCP `443`               Allow only if public
+  enabled                                         panel access is
+                                                  intended.
 
-  Inbound                 TCP 80                  Allow only if HTTP-01
-                                                  validation is used.
+  Conditional public      TCP `80`                Open only for HTTP-01
+                                                  certificate validation
+                                                  when used.
 
-  Inbound                 UDP 53                  Allow only intended DNS
-                                                  clients.
+  DNS client-facing       UDP/TCP `53`            Restrict to intended
+                                                  clients and apply rate
+                                                  limiting.
 
-  Inbound                 TCP 53                  Allow only intended DNS
-                                                  clients.
+  Loopback only           TCP `18085`             Never expose AdGuard
+                                                  administration
+                                                  publicly.
 
-  Inbound                 Selected OpenVPN        Allow when that OpenVPN
-                          UDP/TCP port            server is enabled.
+  Internal integration    TCP `8088`, TCP `10085` Keep private; verify
+                                                  actual listener
+                                                  addresses.
 
-  Inbound                 TCP 18085               Deny public access;
-                                                  loopback only.
+  Service-selected        OpenVPN UDP/TCP port    Open only the exact
+                                                  configured port and
+                                                  protocol.
 
-  Inbound                 TCP 8088                Keep private unless the
-                                                  actual deployment
-                                                  explicitly requires
-                                                  otherwise.
-
-  Inbound                 TCP 10085               Do not open based on
-                                                  current evidence.
-
-  Inbound                 SSH port                Restrict to
-                                                  administrator IPs where
-                                                  possible.
-
-  Outbound                TCP 443                 Required for HTTPS
-                                                  downloads, APIs and
-                                                  Telegram/upstream
-                                                  access as applicable.
-
-  Outbound                DNS                     Permit the server's
-                                                  configured upstream DNS
-                                                  behavior.
+  Private bridge          Dynamically selected    Do not create public
+                          loopback ports          firewall rules for the
+                                                  bridge.
   -----------------------------------------------------------------------
 
-Provider firewalls and host firewalls are separate layers. A host rule
-does not automatically update a cloud security group, and a provider
-allow rule does not guarantee the service is listening.
-
-### Inspect actual listeners
+### Inspect actual listening sockets
 
 ``` bash
 sudo ss -lntup
 sudo lsof -nP -i
 ```
 
-### Inspect firewall rules
+### Inspect firewall state
 
 ``` bash
 sudo iptables -S
@@ -1008,497 +649,346 @@ sudo iptables -t nat -S
 sudo iptables -L -n -v
 ```
 
-Do not copy firewall rules from another server without checking
-interface names, network ranges, existing chains and provider policy.
+### Firewall policy checklist
 
-## 🛡️ DNS and AdGuard Home
+-   [ ] Allow TCP 443 only if the panel is meant to be public.
+-   [ ] Allow TCP 80 only when HTTP-01 validation requires it.
+-   [ ] Restrict UDP 53 to intended DNS clients.
+-   [ ] Restrict TCP 53 to intended DNS clients.
+-   [ ] Never expose TCP 18085 publicly.
+-   [ ] Keep TCP 8088 and TCP 10085 private unless a verified deployment
+    design requires otherwise.
+-   [ ] Open only the configured OpenVPN port/protocol.
+-   [ ] Restrict SSH to trusted administrator sources where practical.
+-   [ ] Check the VPS provider firewall separately from the host
+    firewall.
 
-### DNS behavior in the visible installer
+**A provider firewall and a Linux host firewall are two different
+control layers.** Both must agree with the intended service exposure.
 
-The visible installer:
+------------------------------------------------------------------------
 
--   Downloads AdGuard Home `v0.107.79`.
--   Verifies the downloaded archive against an architecture-specific
-    SHA-256 value.
--   Configures DNS port `53`.
--   Configures loopback and the detected IPv4 address as DNS bind hosts.
--   Configures the administrative HTTP endpoint at `127.0.0.1:18085`.
--   Sets upstream DNS servers to `1.1.1.1` and `9.9.9.9` in the initial
-    configuration.
--   Enables filtering and installs a filter-list entry.
--   Configures a rate limit of 20 queries per second in the initial
-    configuration.
--   Preserves existing configuration during recognized repair/resume
-    operations, subject to the installer's migration logic.
+## 🧭 DNS and AdGuard operations
 
-### DNS port matrix
-
-  -------------------------------------------------------------------------
-  Listener          Transport         Address             Role
-  ----------------- ----------------- ------------------- -----------------
-  DNS               UDP               `127.0.0.1:53`      Local DNS queries
-
-  DNS               TCP               `127.0.0.1:53`      Local TCP DNS
-                                                          queries
-
-  DNS               UDP               Detected server     DNS queries from
-                                      IPv4 `:53`          permitted network
-                                                          clients
-
-  DNS               TCP               Detected server     TCP DNS queries
-                                      IPv4 `:53`          from permitted
-                                                          network clients
-
-  AdGuard admin/API TCP               `127.0.0.1:18085`   Private
-                                                          administration
-                                                          and panel proxy
-  -------------------------------------------------------------------------
-
-### Restrict DNS clients
-
-The installer comments document `DNS_ALLOWED_CIDRS` for first-install
-access restrictions. You can also use AdGuard Access settings after
-installation.
-
-Use CIDR notation carefully:
+### Installer defaults visible in the source
 
   -----------------------------------------------------------------------
-  Example                             Meaning
+  Setting                             Visible installer behavior
   ----------------------------------- -----------------------------------
-  `198.51.100.25/32`                  One IPv4 address (documentation
-                                      example only).
+  AdGuard version                     `v0.107.79`
 
-  `203.0.113.0/24`                    One IPv4 /24 network (documentation
-                                      example only).
+  DNS port                            `53`
 
-  `10.20.0.0/16`                      Private IPv4 range example.
+  DNS transports                      UDP and TCP
 
-  `192.168.10.0/24`                   Private LAN range example.
+  DNS bind                            Loopback and detected IPv4
+
+  Admin endpoint                      `127.0.0.1:18085`
+
+  Initial upstreams                   `1.1.1.1`, `9.9.9.9`
+
+  Initial rate limit                  `20` queries per second
+
+  Client restrictions                 AdGuard Access settings /
+                                      documented CIDR variable
   -----------------------------------------------------------------------
 
-Do not use the documentation-only example ranges as real public client
-IPs.
+### Test DNS locally
+
+``` bash
+dig @127.0.0.1 example.com
+dig @127.0.0.1 -p 53 example.com +tcp
+```
 
 ### DNS troubleshooting
 
-1.  Check `AdGuardHome.service`.
-2.  Confirm TCP and UDP 53 are listening.
-3.  Check AdGuard upstream DNS configuration.
-4.  Test a local UDP query.
-5.  Test a local TCP query.
-6.  Test from an authorized remote client.
-7.  Check host firewall and provider firewall independently.
-8.  Review AdGuard Access settings and rate limiting.
-9.  Confirm the upstream resolver is reachable.
-10. Avoid opening the AdGuard admin port to the Internet.
+1.  Inspect `AdGuardHome.service`.
+2.  Confirm UDP and TCP port 53 listeners.
+3.  Confirm upstream DNS reachability.
+4.  Check AdGuard Access settings.
+5.  Check the host firewall.
+6.  Check the provider firewall.
+7.  Test from an authorized external client.
+8.  Do not expose the admin endpoint to solve a DNS problem.
 
-## 🔐 OpenVPN management
+------------------------------------------------------------------------
 
-### What the visible installer establishes
+## 🔐 OpenVPN operations
 
-The visible installer installs the `openvpn` package, checks for
-`/dev/net/tun`, and includes OpenVPN management integration in the Nova
-add-on. The firewall helper handles enabled server definitions and
-permits configured `udp` or `tcp` ports in the allowed range.
+The visible installer installs OpenVPN, checks `/dev/net/tun`, and
+integrates firewall handling for enabled server configurations.
 
-The repository's package notes describe an OpenVPN product and
-account-management workflow. The exact UI actions and account fields
-should be verified in the installed panel version.
-
-### Operational concepts
+### Firewall integration chains
 
   -----------------------------------------------------------------------
-  Concept                             Explanation
-  ----------------------------------- -----------------------------------
-  Server                              A configured OpenVPN instance.
-
-  Protocol                            UDP or TCP transport.
-
-  Port                                Selected listening port,
-                                      constrained by the visible firewall
-                                      code to `1024–65535`.
-
-  Tunnel interface                    A virtual interface used by the VPN
-                                      server.
-
-  Subnet                              Private network assigned to VPN
-                                      clients.
-
-  Client profile                      Configuration material used by a
-                                      client to connect.
-
-  NAT / masquerade                    Allows VPN client traffic to leave
-                                      through the server's WAN interface
-                                      when configured.
-
-  DNS push                            Supplies DNS configuration to
-                                      connected clients.
-  -----------------------------------------------------------------------
-
-### Firewall behavior in the visible integration
-
-The firewall helper creates dedicated chains:
-
-  -----------------------------------------------------------------------
-  Chain                   Table                   Purpose
+  Chain                   Table                   Role
   ----------------------- ----------------------- -----------------------
-  `ALIREZA_IN`            `filter`                Handles inbound DNS and
-                                                  OpenVPN traffic.
+  `ALIREZA_IN`            `filter`                Inbound DNS and OpenVPN
+                                                  traffic
 
-  `ALIREZA_FWD`           `filter`                Handles forwarding
-                                                  rules for VPN client
-                                                  networks.
+  `ALIREZA_FWD`           `filter`                VPN forwarding
 
-  `ALIREZA_NAT`           `nat`                   Handles masquerading
-                                                  for VPN client
-                                                  networks.
+  `ALIREZA_NAT`           `nat`                   VPN client masquerading
 
-  `ALIREZA_DNS`           `nat`                   Handles DNS destination
+  `ALIREZA_DNS`           `nat`                   DNS destination
                                                   translation for
-                                                  configured VPN
-                                                  networks.
+                                                  configured VPN networks
   -----------------------------------------------------------------------
 
-The helper checks that each configured OpenVPN server has a valid ID,
-private IPv4 `/24` subnet, supported protocol and valid port. It enables
-IPv4 forwarding when at least one server is enabled.
+The visible firewall helper validates configured server IDs, private
+IPv4 `/24` subnets, supported `udp`/`tcp` protocol values and ports in
+the `1024–65535` range.
 
-### OpenVPN safety notes
+### OpenVPN operational checklist
 
--   Confirm TUN is available before troubleshooting client connectivity.
--   Avoid overlapping VPN subnets and existing routes.
--   Do not expose an OpenVPN port unless the matching server is enabled.
--   Match protocol and port between the application, host firewall and
-    provider firewall.
--   Protect client profiles and private keys.
--   Revoke lost or compromised client credentials.
--   Test from a real external client; local service status alone does
-    not prove end-to-end connectivity.
+-   [ ] `/dev/net/tun` exists.
+-   [ ] The configured server is enabled.
+-   [ ] The selected protocol matches the firewall rule.
+-   [ ] The selected port matches the provider firewall.
+-   [ ] The VPN subnet does not overlap existing routes.
+-   [ ] IPv4 forwarding is enabled where required.
+-   [ ] NAT/masquerade is configured as intended.
+-   [ ] Client profiles and private keys are protected.
+-   [ ] A real external client can connect and pass traffic.
 
-## 🤖 Nova integration
+------------------------------------------------------------------------
 
-The package notes identify Nova as the base panel and describe
-compatibility checks for selected API behavior, reseller quotas and link
-generation.
+## 🤖 Remote Alirezabot mode
 
-The visible installer performs a pinned Nova installation or validates
-an existing Nova node-agent layout. It checks that the Nova package
-identity is `nova-node-agent`, verifies the Nova service is active, and
-includes compatibility/integration verification.
+The package notes describe an optional topology where the bot runtime
+and database live on a separate destination VPS.
 
-### Nova integration principles
-
--   Keep upstream Nova files and notices intact.
--   Do not manually replace pinned upstream files with arbitrary
-    versions.
--   Review compatibility checks before upgrading the upstream panel.
--   Back up the panel and add-on state before a release change.
--   Treat internal API listeners as private.
--   Validate panel access through the configured HTTPS front door.
-
-### Nova service inspection
-
-``` bash
-sudo systemctl status nova-agent.service
-sudo journalctl -u nova-agent.service -n 100 --no-pager
+``` mermaid
+flowchart LR
+    BROWSER["Customer browser"]
+    MAIN["Main VPS<br/>Nova + HTTPS panel"]
+    SSH["SSH / private loopback bridge"]
+    DEST["Destination VPS<br/>PHP-FPM + MariaDB + Bot"]
+    TG["Telegram API"]
+    BROWSER --> MAIN
+    MAIN <--> SSH
+    SSH <--> DEST
+    DEST <--> TG
 ```
 
-The exact Nova CLI and API are upstream concerns and may change
-independently of this add-on. Use the matching Nova documentation for
-upstream behavior.
+### Documented setup outline
 
-## 🛰️ Alirezabot and remote bot node
+1.  Choose **Another server** in the bot setup flow.
+2.  Enter destination SSH details.
+3.  Verify the destination SSH host fingerprint against its console.
+4.  Use the supported password or key authentication mode.
+5.  Ensure the destination has the required privilege model.
+6.  Let the setup flow install the bot runtime and database on the
+    destination.
+7.  Access the bot web entry through the main panel HTTPS route.
+8.  Verify the bot state and Telegram behavior.
 
-The repository's `0.8.0-rc.17` package notes describe an owner-bot
-installation mode that can use the main server or a separate destination
-server.
+### Remote mode notes
 
-### Remote mode described by the package notes
+-   The destination is expected to use Ubuntu 24.04 or Debian 12/13 with
+    `systemd`.
+-   The destination needs public IPv4 and outbound access to required
+    repositories and Telegram.
+-   The package notes describe private SSH/loopback communication and no
+    additional public bridge port.
+-   Installing a new remote bot is not the same as migrating an existing
+    bot database.
+-   Do not run two polling processes with the same bot token unless the
+    application explicitly supports it.
+-   A complete remote bot backup requires the destination to be
+    reachable.
 
--   The operator selects **Another server** in the Alirezabot
-    installation workflow.
--   SSH credentials are provided.
--   The destination host fingerprint is checked against the destination
-    console.
--   Authentication may use a password or key, with root or passwordless
-    sudo as described in the package notes.
--   The bot runtime and database are located on the destination in this
-    mode.
--   The bot web entry remains accessible through the main panel's HTTPS
-    entry point.
--   The notes describe private loopback/SSH communication and no
-    additional public port opened for this bridge.
+### Backup caution
 
-### Suggested destination platform in package notes
+The package notes describe the remote snapshot as
+`remote-bot/alirezabot.tar.gz` inside the backup archive. Restoring only
+the main panel files does not restore the remote bot database.
 
-  -----------------------------------------------------------------------
-  Requirement                         Suggested value
-  ----------------------------------- -----------------------------------
-  OS                                  Ubuntu 24.04 or Debian 12 / 13
+------------------------------------------------------------------------
 
-  Init system                         `systemd`
+## 🛒 Product delivery workflow
 
-  Network                             Public IPv4 and outbound access to
-                                      repositories and Telegram
+### Product setup
 
-  Access                              SSH with verified host fingerprint
+    Step Action
+  ------ ---------------------------------------------------------
+       1 Prepare the service on its actual panel or destination.
+       2 Confirm service health and authorization.
+       3 Open the web panel product-management area.
+       4 Select managed panel `alirezaserver`.
+       5 Select allowed service categories.
+       6 Configure price, volume and duration.
+       7 Run a controlled test purchase.
+       8 Verify customer delivery instructions.
+       9 Test renewal and suspension.
+      10 Review logs and resulting account state.
 
-  Privilege                           Root or passwordless sudo, as
-                                      supported by the workflow
-  -----------------------------------------------------------------------
-
-### Important migration warning
-
-Installing a new remote bot instance is not the same as migrating an
-already-running bot database from the main server. The package notes
-warn that moving an existing installation needs a separate migration to
-avoid duplicate Telegram polling and lost orders. Do not run two bot
-pollers against the same bot token unless the application explicitly
-supports that architecture.
-
-### Remote bot backup warning
-
-The package notes describe a remote backup snapshot that includes the
-remote bot database and files in `remote-bot/alirezabot.tar.gz`. If the
-destination is unavailable, the remote backup is not considered
-complete. Restoring the main panel files alone does not restore the
-remote bot database.
-
-Protect SSH keys, bot tokens, database dumps and backup archives as
-secrets.
-
-## 🛒 Product and service sales workflow
-
-The package notes describe a sales workflow through the Mirza web
-panel's product area.
-
-### Documented high-level workflow
-
-1.  Configure the service on the main panel first.
-2.  Confirm that the service is active and healthy.
-3.  Open the web panel's product management area.
-4.  Select the managed panel named `alirezaserver`.
-5.  Configure the service types and permissions available for that
-    product.
-6.  Set the product price, volume and duration using the existing
-    product form.
-7.  Test a controlled purchase.
-8.  Test renewal, suspension and customer delivery.
-9.  Confirm the customer receives the expected service link or
-    instructions.
-10. Review logs and account state after each test.
-
-### Product compatibility rules in package notes
+### Important business rules described in package notes
 
 -   Only prepared and authorized services should be sold.
--   The standard product option is described as preserving legacy
-    product behavior.
--   Destination `alirezadns` and OpenVPN sales are described as
+-   OpenVPN and destination `alirezadns` sales are described as
     owner-bot-only in the referenced package notes.
--   Resellers are limited to the actual permissions of their Nova
-    accounts.
--   Renewal must validate service compatibility before deducting
-    balance.
--   Changing an account's service type or destination during renewal is
-    not a migration and is rejected.
--   Smart DNS does not guarantee NAT traversal or access to every game.
--   DNS destination renewal is constrained by the destination API's
-    full-day incremental behavior as described in the notes.
+-   Reseller permissions remain limited by the real Nova account
+    permissions.
+-   Renewal compatibility is checked before balance deduction in the
+    main bot path.
+-   Changing service type or destination during renewal is rejected
+    rather than treated as migration.
+-   Smart DNS is not a universal NAT traversal solution.
+-   Destination DNS renewal follows the destination API's supported
+    behavior.
 
-### Destination `alirezadns` setup notes
+------------------------------------------------------------------------
 
-1.  Register the destination in the destination-side `alirezadns`
-    installer.
-2.  Obtain the destination API key using the intended secure workflow.
-3.  In the main server's Alirezabot configuration, verify and save the
-    destination API key.
-4.  Confirm the API is reachable from the main server.
-5.  Configure the destination's Public API setting deliberately.
-6.  Test account creation and renewal with a controlled account.
-7.  Confirm that uncertain API responses do not cause duplicate blind
-    account creation.
+## 💾 Backup, restore and rollback
 
-The package notes explicitly distinguish AdGuard Home from the
-destination `alirezadns` product. Do not assume that configuring one
-configures the other.
+### Backup entry points
 
-## 💾 Backups, restore and rollback
+``` bash
+# Main project menu
+sudo alireza
 
-### Backup principles
+# Documented CLI backup command
+sudo alireza backup
 
--   Keep at least one backup outside the VPS.
--   Encrypt backups that contain credentials, certificates, databases or
-    private configuration.
--   Test restoration before relying on a backup.
--   Record the version and date associated with each backup.
--   Keep the remote bot backup together with the matching destination
-    metadata.
--   Do not upload backup archives to public issue trackers or public
-    repositories.
+# Add-on backup helper
+sudo bash install.sh --backup
+```
 
-### Backup command paths
+### Backup policy
 
-  -----------------------------------------------------------------------
-  Command                             Meaning
-  ----------------------------------- -----------------------------------
-  `sudo alireza`                      Open the main management interface
-                                      and use its available backup
-                                      workflow.
+-   Keep backups off the VPS.
+-   Encrypt archives that contain secrets or customer information.
+-   Keep version metadata with every backup.
+-   Test restoration before relying on it.
+-   Preserve remote bot database and files together.
+-   Never publish private keys, bot tokens or raw database dumps.
 
-  `sudo alireza backup`               Command documented by repository
-                                      materials.
-
-  `sudo bash install.sh --backup`     Invoke the visible add-on backup
-                                      helper.
-  -----------------------------------------------------------------------
-
-### Remote bot backup
-
-The package notes describe a remote snapshot containing the bot database
-and bot files. A disconnected destination causes the remote portion to
-be considered incomplete. Keep the destination backup and its restore
-instructions together.
-
-### Restore considerations
-
--   Restore to a compatible version.
--   Restore the database and files as a matched set.
--   Preserve ownership and restrictive permissions.
--   Avoid running two bot polling processes with the same token.
--   Verify the service after restoration.
--   Confirm that the restored certificates and API keys are still valid.
--   Keep the pre-restore backup until the system has passed
-    verification.
-
-### Rollback
+### Add-on rollback
 
 ``` bash
 sudo bash install.sh --rollback
 ```
 
-The visible installer routes this option to its add-on rollback helper.
-Read the helper before running it. It is not a universal rollback for
-all upstream Nova changes or all unrelated system packages.
+This invokes the add-on rollback helper. It should not be interpreted as
+a general operating-system rollback or a guaranteed rollback of
+unrelated upstream components.
 
-## 🔄 Updates and compatibility
+------------------------------------------------------------------------
 
-### Update commands
+## 🔄 Update and release discipline
+
+### Update helpers
 
 ``` bash
-# Show the current update status, if one exists.
 sudo bash install.sh --update-status
-
-# Run the installed update helper.
 sudo bash install.sh --update
 ```
 
-The package notes also describe rerunning the installer as an
-upgrade/repair path. Before doing so, back up from the management
-interface and store the backup off-server.
+### Recommended update sequence
 
-### Update safety sequence
-
-1.  Read the release notes.
-2.  Confirm the package and installer versions.
-3.  Back up panel and add-on data.
+1.  Read the matching release notes.
+2.  Confirm package version and installer version.
+3.  Back up the main panel and add-on data.
 4.  Back up remote bot data if remote mode is enabled.
-5.  Confirm sufficient disk space.
-6.  Confirm the VPS has outbound connectivity.
-7.  Run the documented update flow.
-8.  Inspect update status.
-9.  Run local checks.
-10. Verify Nova, AdGuard and firewall units.
-11. Test DNS over UDP and TCP.
-12. Test OpenVPN from an external client if enabled.
-13. Test the bot workflow if enabled.
-14. Keep the backup until the new version has been stable.
+5.  Confirm disk space and outbound connectivity.
+6.  Run the supported update workflow.
+7.  Inspect update status.
+8.  Run local checks.
+9.  Verify Nova, AdGuard and firewall services.
+10. Test DNS over UDP and TCP.
+11. Test OpenVPN externally if enabled.
+12. Test bot purchase/renewal flows if enabled.
+13. Keep the backup until the new release is stable.
 
-### Version labels are not interchangeable
+### Version labels are different layers
 
 The repository README currently labels the package `0.8.0-rc.17`. The
-visible installer source header and embedded notice label its add-on
-`0.4.0`. The installer also pins a Nova commit and AdGuard version.
-These labels refer to different layers and should not be collapsed into
-one version number.
+visible installer source also contains an embedded add-on label `0.4.0`,
+and pins upstream component revisions. These labels must not be
+represented as one interchangeable version.
 
-Always verify the exact `README.md`, `install.sh`, `CHANGELOG.md`,
-`SOURCES.md`, `SHA256SUMS` and release assets from the same commit or
-release bundle.
+------------------------------------------------------------------------
 
-## 🔒 Security hardening
+## 🐳 Docker: deployment status
 
-### Administrative access
+**Docker is not documented as a supported deployment method in the
+current Alirezaserver repository README or the visible installer.**
+
+That means this README intentionally does not provide a fabricated
+`docker compose up` command, a made-up image name, or a Docker port map.
+
+Why this matters:
+
+-   The installer expects a Linux host with `systemd`.
+-   It configures host services and firewall integration.
+-   It checks host networking and TUN availability for OpenVPN.
+-   It installs and manages components directly on the host.
+-   Containerizing the whole stack would require a separately designed
+    and tested deployment architecture.
+
+If Docker support is added in a future release, it should include a
+maintained `Dockerfile`, `compose.yaml`, persistent-volume strategy,
+host-network/TUN design, capability requirements, health checks,
+upgrade/rollback behavior and a verified port map. Until then, use the
+documented host installation path.
+
+------------------------------------------------------------------------
+
+## 🛡️ Security hardening
+
+### Host access
 
 -   Use SSH keys where possible.
--   Disable password SSH authentication only after confirming key access
-    works.
--   Restrict SSH to trusted source IPs when practical.
--   Use a separate administrator account with sudo if appropriate.
+-   Restrict SSH access to trusted sources.
 -   Keep provider console access available.
--   Protect panel credentials with unique passwords and MFA where
-    supported.
+-   Use strong unique panel credentials.
+-   Enable MFA where the upstream panel supports it.
+-   Keep the OS and upstream components patched.
 
-### Network exposure
-
--   Keep `127.0.0.1:18085` private.
--   Treat the Nova integration listener as internal.
--   Do not expose undocumented ports.
--   Limit DNS clients intentionally.
--   Open only the selected OpenVPN port/protocol.
--   Review IPv4 and IPv6 separately; the visible installer notes that
-    direct IPv6 DNS listening is not preconfigured.
--   Check both host firewall and provider firewall rules.
-
-### Secrets
-
-Never commit or publicly share:
+### Secrets that must stay private
 
 -   Telegram bot tokens.
 -   Gemini API keys.
--   SSH private keys.
--   SSH passwords.
--   Database passwords.
--   Panel session cookies.
+-   SSH private keys and passwords.
+-   Database credentials.
+-   Panel credentials and session cookies.
 -   TLS private keys.
 -   OpenVPN client private keys.
--   API keys for destination DNS services.
--   Backup archives containing credentials or customer data.
+-   Destination API keys.
+-   Backup archives containing configuration or customer data.
 
-### DNS security
+### Network exposure
 
-Public DNS services can be abused for reflection/amplification and
-unwanted recursive use. Apply access controls, rate limiting, monitoring
-and upstream policy. Confirm that the DNS service is intended to be
-public before allowing global access.
+-   Keep AdGuard admin TCP `18085` loopback-only.
+-   Keep Nova integration listeners private.
+-   Do not expose undocumented ports.
+-   Restrict DNS clients and monitor query behavior.
+-   Open only the configured OpenVPN listener.
+-   Review IPv4 and IPv6 exposure separately.
+-   Audit provider and host firewalls independently.
 
-### Supply-chain safety
+### Supply-chain checks
 
-The visible installer downloads upstream artifacts and verifies
-checksums for selected downloads. Checksum verification is useful only
-when the expected checksum itself is obtained from a trusted, reviewed
-source. Review release assets, source notices and upstream licensing
-before redistribution.
+The visible installer verifies checksums for selected downloads. A
+checksum is meaningful only when the expected value is obtained from a
+trusted, reviewed source. Review release files, upstream notices and
+licenses before redistributing.
 
-## 🩺 Diagnostics and logs
+------------------------------------------------------------------------
 
-### Installer log location
+## 🩺 Diagnostics
 
-The visible installer writes timestamped logs under:
+### Relevant systemd units
 
-``` text
-/var/log/alirezaserver/
-```
+  Unit                         Purpose
+  ---------------------------- ----------------------
+  `nova-agent.service`         Nova agent
+  `AdGuardHome.service`        AdGuard Home
+  `alireza-firewall.service`   Firewall integration
+  `alireza-update.timer`       Update-related timer
 
-A log filename follows the pattern:
-
-``` text
-install-YYYYMMDDTHHMMSSZ.log
-```
-
-The installer creates the log directory with restrictive permissions and
-sets the log file mode to `600`.
-
-### Service diagnostics
+### Inspect status
 
 ``` bash
 sudo systemctl status nova-agent.service
@@ -1507,7 +997,7 @@ sudo systemctl status alireza-firewall.service
 sudo systemctl status alireza-update.timer
 ```
 
-### Recent logs
+### Inspect logs
 
 ``` bash
 sudo journalctl -u nova-agent.service -n 100 --no-pager
@@ -1515,332 +1005,199 @@ sudo journalctl -u AdGuardHome.service -n 100 --no-pager
 sudo journalctl -u alireza-firewall.service -n 100 --no-pager
 ```
 
-### Network diagnostics
+### Installer logs
 
-``` bash
-ip -br address
-ip route
-sudo ss -lntup
-sudo iptables -S
-sudo iptables -t nat -S
+The visible installer writes timestamped logs under:
+
+``` text
+/var/log/alirezaserver/
 ```
 
-### Resource diagnostics
+Example filename pattern:
 
-``` bash
-free -h
-df -h
-uptime
-top
+``` text
+install-YYYYMMDDTHHMMSSZ.log
 ```
 
-### Support report hygiene
+The visible installer creates the log directory with restrictive
+permissions and uses mode `600` for the log file.
 
-Before sharing a support report, inspect and redact:
+------------------------------------------------------------------------
 
--   Public IPs if they should remain private.
--   Hostnames and domains.
--   Usernames.
--   Bot usernames and IDs.
--   API endpoints.
--   Tokens and passwords.
--   Private keys and certificate material.
--   Customer identifiers and order details.
+## 🧯 Troubleshooting matrix
 
-A support bundle is not automatically safe for public publication.
+  -----------------------------------------------------------------------
+  Symptom                             First checks
+  ----------------------------------- -----------------------------------
+  Root privilege error                Run with `sudo`; confirm the
+                                      command is using the intended
+                                      script.
 
-## 🧯 Troubleshooting
+  Unsupported OS                      Confirm Ubuntu 24.04 or Debian
+                                      12/13.
 
-### Installer says root is required
+  Unsupported architecture            Confirm `amd64` or `arm64`.
 
-Run the installer with sudo:
+  TUN unavailable                     Inspect `/dev/net/tun`; ask
+                                      provider to enable TUN if absent.
 
-``` bash
-sudo bash install.sh
-```
+  Port 53 conflict                    Run `sudo ss -lntup \| grep ':53'`;
+                                      identify the owner before changing
+                                      it.
 
-Do not run it as an unprivileged user and expect it to configure system
-services.
+  Port 18085 conflict                 Run
+                                      `sudo ss -lntp \| grep ':18085'`;
+                                      do not expose admin UI publicly.
 
-### Unsupported operating system
+  AdGuard unhealthy                   Inspect systemd status, journal,
+                                      config and port availability.
 
-The visible installer accepts Ubuntu 24.04 and Debian 12/13. It stops on
-other OS versions. Do not bypass the OS guard unless you have reviewed
-and tested the installer on that platform.
+  DNS local works, remote fails       Check bind address, access policy,
+                                      host firewall and provider
+                                      firewall.
 
-### Unsupported architecture
+  Nova agent unhealthy                Inspect `nova-agent.service` and
+                                      its journal; do not overwrite
+                                      upstream files manually.
 
-The visible installer accepts `amd64` and `arm64`. Other architectures
-are rejected.
+  OpenVPN clients fail                Check TUN, listener, protocol/port,
+                                      forwarding, NAT, routes and
+                                      provider firewall.
 
-### TUN device is unavailable
+  Remote bot backup incomplete        Restore destination connectivity
+                                      and repeat the appropriate backup
+                                      workflow.
 
-Check:
+  Update status missing               Run the supported update/check flow
+                                      for the installed release first.
+  -----------------------------------------------------------------------
 
-``` bash
-ls -l /dev/net/tun
-```
+------------------------------------------------------------------------
 
-The installer attempts to load the TUN module. If the device remains
-unavailable, ask the VPS provider to enable TUN support. OpenVPN cannot
-operate correctly without the required kernel/network support.
+## 📂 Repository map
 
-### Port 53 is already occupied
-
-Check:
-
-``` bash
-sudo ss -lntup | grep ':53'
-```
-
-Identify the service before changing anything. The installer
-deliberately refuses to stop an existing service just to claim the port.
-
-### Port 18085 is already occupied
-
-Check:
-
-``` bash
-sudo ss -lntp | grep ':18085'
-```
-
-The installer expects the AdGuard administrative endpoint to use
-loopback TCP 18085. Do not solve a conflict by exposing the admin
-interface publicly.
-
-### AdGuard service is not active
-
-Check:
-
-``` bash
-sudo systemctl status AdGuardHome.service
-sudo journalctl -u AdGuardHome.service -n 100 --no-pager
-```
-
-Confirm the configuration file, filesystem permissions, port
-availability and upstream DNS reachability.
-
-### DNS works locally but not remotely
-
-Check all of the following:
-
-1.  AdGuard binds to the expected IPv4 address.
-2.  TCP and UDP 53 are permitted by host firewall rules.
-3.  Provider firewall/security group permits the intended traffic.
-4.  AdGuard Access settings allow the client.
-5.  The client is using the correct server address.
-6.  The upstream DNS resolver is reachable.
-7.  The service is not rate-limiting the client.
-
-### Nova service is unhealthy
-
-Check:
-
-``` bash
-sudo systemctl status nova-agent.service
-sudo journalctl -u nova-agent.service -n 150 --no-pager
-```
-
-Do not overwrite the Nova installation manually. Review the installer
-log and the pinned upstream compatibility requirements.
-
-### Update status file does not exist
-
-The visible `--update-status` option requires a previous update check.
-Run the supported update/check workflow for the installed version and
-inspect the resulting status.
-
-### Remote bot destination is offline
-
-The package notes say a remote bot backup cannot be accepted as complete
-when the destination is disconnected. Restore connectivity and rerun the
-appropriate backup workflow. Do not assume a main-server-only archive
-contains the remote database.
-
-### OpenVPN service is active but clients cannot connect
-
-Check:
-
--   TUN availability.
--   The configured OpenVPN protocol and port.
--   Host firewall rules.
--   Provider firewall/security group.
--   VPN subnet conflicts.
--   IPv4 forwarding.
--   NAT/masquerade rules.
--   Client profile validity.
--   Whether the server is actually listening on the configured address.
-
-Use an external client test. A successful systemd status is not an
-end-to-end VPN test.
-
-## 📁 Repository layout
-
-The visible repository root contains the following entries:
+The public repository currently exposes these top-level entries:
 
   Path                Purpose
-  ------------------- ----------------------------
-  `addon/`            Add-on content
+  ------------------- ------------------------------
+  `addon/`            Add-on implementation
   `assets/`           Project assets
   `docs/`             Documentation
   `tests/`            Tests
   `tools/`            Helper tools
-  `CHANGELOG.md`      Change history
-  `LICENSE`           License file
-  `README.md`         Main project documentation
+  `CHANGELOG.md`      Release history
+  `LICENSE`           License
+  `README.md`         Main documentation
   `SHA256SUMS`        Checksums
-  `SOURCES.md`        Upstream source notices
+  `SOURCES.md`        Upstream sources and notices
   `install.sh`        Installer
-  `setup.sh`          Setup script
+  `setup.sh`          Setup helper
   `source-code.zip`   Source archive
 
-The package notes also state that `source-code.zip` is an archive
-artifact and should not be extracted when publishing the outer release
-bundle into the repository root. Follow the release packaging
-instructions for the exact version.
+Do not extract the inner `source-code.zip` when publishing the outer
+release bundle into the repository root unless the release instructions
+explicitly say to do so.
 
-## 🧪 Testing and verification
+------------------------------------------------------------------------
 
-### Checks visible in the installer
+## 🧪 Verification checklist
 
-The visible installer includes checks for:
+### Before a production release
 
--   Supported operating system and architecture.
--   Root privileges and systemd availability.
--   TUN device availability.
--   Fresh-install port availability.
--   SHA-256 verification of downloaded artifacts.
--   Nova package identity and service health.
--   AdGuard service status.
--   DNS listener configuration.
--   DNS resolution over UDP and TCP.
--   Panel front-door verification over HTTPS.
--   Integration endpoints and expected API behavior.
--   Firewall integration service state.
+-   [ ] Clean install on Ubuntu 24.04.
+-   [ ] Clean install on Debian 12.
+-   [ ] Clean install on Debian 13.
+-   [ ] Verify `amd64`.
+-   [ ] Verify `arm64`.
+-   [ ] Verify installer checksum flow.
+-   [ ] Verify Nova agent status.
+-   [ ] Verify AdGuard status.
+-   [ ] Verify DNS UDP and TCP locally.
+-   [ ] Verify DNS access policy remotely.
+-   [ ] Verify AdGuard admin is not public.
+-   [ ] Verify firewall chains and provider firewall.
+-   [ ] Verify OpenVPN from an external client.
+-   [ ] Verify backup and off-server copy.
+-   [ ] Verify restore procedure.
+-   [ ] Verify update status and rollback in a test VPS.
+-   [ ] Verify remote bot backup if remote mode is used.
+-   [ ] Verify bot delivery and renewal with a test account.
+-   [ ] Redact secrets from all support artifacts.
 
-### What a local check does not prove
+### Known limits
 
-A local check cannot prove:
-
--   Global reachability from every ISP or country.
--   Correct provider firewall policy.
--   Long-term performance under production load.
--   Compatibility with every future upstream release.
--   Successful client connectivity from every device.
--   Correctness of every external Telegram payment or messaging
-    workflow.
--   Full multi-VPS migration safety.
--   That every optional product type is configured and ready to sell.
-
-### Release validation checklist
-
--   [ ] Installer succeeds on a clean supported VPS.
--   [ ] Repair/resume succeeds without destroying recognized
-    configuration.
--   [ ] Nova service is healthy.
--   [ ] AdGuard service is healthy.
--   [ ] DNS responds over UDP and TCP locally.
--   [ ] DNS access policy matches the intended audience.
--   [ ] AdGuard admin interface is not publicly reachable.
--   [ ] OpenVPN service starts when configured.
--   [ ] OpenVPN works from a separate external client.
--   [ ] Provider firewall matches host firewall policy.
--   [ ] Backup completes and is copied off-server.
--   [ ] Restore procedure has been tested.
--   [ ] Update status is understandable and accurate.
--   [ ] Rollback behavior has been tested in a non-production
-    environment.
--   [ ] Bot token and API secrets are not present in logs or public
-    artifacts.
--   [ ] Remote bot mode has been tested on two separate VPS instances if
-    used.
-
-## ⚠️ Known limitations and important caveats
-
--   The visible installer is an online installer, not an offline
-    installation bundle.
--   The visible installer supports only the OS versions and
-    architectures listed above.
--   The visible installer requires Node.js 24 or newer.
--   The visible installer requires TUN availability for its OpenVPN
-    integration.
--   Direct IPv6 DNS listening and standalone encrypted DNS listeners are
-    not preconfigured by the visible installer.
+-   The installer is online, not an offline package.
+-   The visible installer supports only the OS/architecture matrix
+    listed above.
+-   OpenVPN requires TUN.
 -   The visible installer configures AdGuard administration on loopback.
--   The package notes describe remote bot installation, but migration of
-    an existing bot installation is a separate operation.
--   A remote bot destination must be available for a complete remote-bot
-    backup.
--   Smart DNS does not guarantee NAT traversal or universal game access.
--   The package notes do not claim that all future Nova versions are
-    compatible.
--   The package notes explicitly state that full live multi-node, real
-    Telegram, ISP-network and long-duration 1 GB load certification was
-    not completed in the referenced environment.
--   A one-vCPU/one-gigabyte target is not a production capacity
-    guarantee.
--   The `0.8.0-rc.17` package label and `0.4.0` visible installer add-on
-    label must be reconciled against the exact release bundle before
-    making release claims.
+-   Direct IPv6 DNS listening is not preconfigured by the visible
+    installer.
+-   Remote bot migration is not the same as fresh remote installation.
+-   Remote bot backup requires the destination to be reachable.
+-   A 1 vCPU / 1 GB target is not a production capacity guarantee.
+-   Full two-VPS live installation, real Telegram, ISP-path and
+    long-duration one-gigabyte load certification are not claimed by the
+    package notes.
+-   Future upstream Nova compatibility is not guaranteed.
+-   Docker deployment is not currently documented as supported.
 
-## 📜 License and upstream notices
+------------------------------------------------------------------------
 
-The repository displays a GPL-3.0 license. The visible installer embeds
-notices describing separately downloaded upstream components and their
-licensing. In particular, the installer states that Nova Server is
-separately downloaded and retains its own upstream license, while
-AdGuard Home remains under its upstream GPL-3.0 license. It also
-includes notices for OpenVPN integration conventions adapted from
-another project.
+## 📚 Documentation map
 
-Read these files before redistributing:
+  ---------------------------------------------------------------------------------------------------------------------------------
+  Resource                                                                                      What to read
+  --------------------------------------------------------------------------------------------- -----------------------------------
+  [Repository](https://github.com/alirezachatgpt97-coder/alirezaserver)                         Source, releases and issues
 
--   [`LICENSE`](./LICENSE)
--   [`SOURCES.md`](./SOURCES.md)
--   [`CHANGELOG.md`](./CHANGELOG.md)
+  [Installer](https://github.com/alirezachatgpt97-coder/alirezaserver/blob/main/install.sh)     Actual install and option behavior
 
-Do not remove upstream copyright notices or imply that third-party
-software has been relicensed by this project.
+  [Changelog](https://github.com/alirezachatgpt97-coder/alirezaserver/blob/main/CHANGELOG.md)   Version history
+
+  [Sources](https://github.com/alirezachatgpt97-coder/alirezaserver/blob/main/SOURCES.md)       Upstream components and notices
+
+  [License](https://github.com/alirezachatgpt97-coder/alirezaserver/blob/main/LICENSE)          License terms
+
+  [Issues](https://github.com/alirezachatgpt97-coder/alirezaserver/issues)                      Bug reports and questions
+  ---------------------------------------------------------------------------------------------------------------------------------
 
 ## 🤝 Contributing
 
-Contributions should improve reliability, clarity, security and
-maintainability.
+Contributions should improve security, reliability, maintainability and
+documentation.
 
-### Suggested contribution workflow
-
-1.  Open an issue describing the problem or proposal.
-2.  Include the affected version and operating system.
-3.  Provide a minimal reproduction where possible.
-4.  Remove secrets and personal data from logs.
+1.  Open an issue describing the change.
+2.  Include the exact project version and OS.
+3.  Provide minimal reproduction steps.
+4.  Redact tokens, passwords, IPs and customer data.
 5.  Keep changes focused.
 6.  Preserve upstream notices.
-7.  Add or update tests for behavior changes.
+7.  Add tests for behavior changes.
 8.  Update documentation when commands, ports or defaults change.
-9.  Verify install, repair, check, backup and rollback behavior where
-    relevant.
-10. Submit a pull request with a clear summary and test evidence.
+9.  Verify installation and recovery behavior where relevant.
+10. Submit a pull request with test evidence.
 
-### Documentation contribution rules
+### Documentation rules
 
--   Mark commands as **verified**, **documented**, or **illustrative**.
--   Never invent a port number.
--   State the bind address and protocol for every documented listener.
--   Distinguish public listeners from loopback-only listeners.
--   Keep release version, installer version and upstream version
-    separate.
--   Record whether a feature is available in the current release or only
-    planned.
+-   Mark commands as verified, documented or illustrative.
+-   Never invent ports or CLI flags.
+-   State bind address and protocol for each listener.
+-   Separate public and loopback-only services.
+-   Keep package, installer and upstream versions distinct.
 -   Explain destructive actions before showing commands.
+-   Do not label a feature as production-ready without test evidence.
 
-## 🌌 A final note
+------------------------------------------------------------------------
 
 ::: {align="center"}
-### Build carefully. Expose intentionally. Back up relentlessly.
+`<img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=20&duration=2200&pause=650&color=67E8F9&center=true&vCenter=true&width=760&lines=ENGINEERED+FOR+CONTROL.;BUILT+FOR+OPERATORS.;SECURE+THE+EDGE.+OWN+THE+STACK." alt="Animated closing message">`{=html}
 
-`<img src="https://capsule-render.vercel.app/api?type=waving&height=120&section=footer&color=0:06B6D4,50:5B21B6,100:050816" alt="Decorative footer"/>`{=html}
+`<br/>`{=html}
 
-**Alirezaserver** · Server control with a focus on practical operations.
+`<img src="https://capsule-render.vercel.app/api?type=waving&section=footer&height=150&color=0:020617,45:312E81,75:0891B2,100:050816" width="100%" alt="Animated footer">`{=html}
+
+**ALIREZASERVER** · *One control layer. Multiple server workflows.*
 
 [⬆ Back to top](#alirezaserver)
 :::
